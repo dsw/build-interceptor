@@ -18,7 +18,7 @@ my $prog = "${0}_orig";         # compute the new executable name we are calling
 
 my @raw_args = @av;
 
-if (grep {/^--help$/ || /^--version$/ || /^-V$/ } @raw_args) {
+if (grep {/^--help$/ || /^--version$/ || /^-[vV]$/ } @raw_args) {
     exec ( ($prog, @raw_args) ) || die "Couldn't exec $prog @raw_args\n";
 }
 
