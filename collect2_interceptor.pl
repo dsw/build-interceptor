@@ -54,7 +54,11 @@ my $ar_cache = "$tmpdir/ar_cache";
 mkpath($ar_cache);
 
 # test-only extract
-my $extract = "${FindBin::RealBin}/extract_section.pl -t -q";
+my $extract_pl = "${FindBin::RealBin}/extract_section.pl";
+if (!-f $extract_pl) {
+    die "Couldn't find extract_section.pl (should be $extract_pl)\n";
+}
+my $extract = "$extract_pl -t -q";
 
 # where are we?
 my $pwd = getcwd;
@@ -265,15 +269,15 @@ for my $line (split '\n', $trace_output0) {
   if (-e $cachefile_ok) {
     $built_with_interceptor = 1;
 #      warn "\tfound cache ok $cachefile_ok";
-    outputToFile($cachefile_ok, $file); # update the cache
+    # outputToFile($cachefile_ok, $file); # update the cache
   } elsif (-e $cachefile_bad) {
     $built_with_interceptor = 0;
 #      warn "\tfound cache bad $cachefile_ok";
-    outputToFile($cachefile_bad, $file);  # update the cache
+    # outputToFile($cachefile_bad, $file);  # update the cache
   } else {
       # actually run the extractor
       #      warn "\tNOT found in cache";
-      my $built_with_interceptor = check_object_intercepted($file) || check_object_interceptless($file);
+      $built_with_interceptor = check_object_intercepted($file) || check_object_interceptless($file);
       if ($built_with_interceptor) {
           outputToFile($cachefile_ok, $file); # update the cache
       } else {
