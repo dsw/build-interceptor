@@ -3,6 +3,7 @@
 use strict;
 use FindBin;
 use lib "$FindBin::Bin/../lib";
+use Cwd 'abs_path';
 
 # When used as a replacement to the system collect2 will just pass the
 # arguments through.
@@ -19,14 +20,34 @@ my @raw_args = @av;
 my $time0 = time;
 my $unique = "$$-$time0";
 
-my $tmpdir = "/tmp/build_interceptor";
-mkdir $tmpdir unless -e $tmpdir;
-my $cachedir = "/tmp/build_interceptor/cache";
-mkdir $cachedir unless -e $cachedir;
-my $cachedir_ok = "/tmp/build_interceptor/cache/ok/";
-mkdir $cachedir_ok unless -e $cachedir_ok;
-my $cachedir_bad = "/tmp/build_interceptor/cache/bad/";
-mkdir $cachedir_bad unless -e $cachedir_bad;
+# directory for all build interceptor temporaries
+my $tmpdir_interceptor = "/tmp/build_interceptor";
+mkdirParents($tmpdir_interceptor);
+# directory for all the temporaries relevant to collect2 interceptor
+my $tmpdir = "$tmpdir_interceptor/collect2";
+mkdirParents($tmpdir);
+
+# directory where we cache the "built with cc1" test
+my $cc1_test_cache = "$tmpdir/cc1_test";
+mkdirParents($cc1_test_cache);
+my $cc1_test_cache_ok = "$cc1_test_cache/ok/";
+mkdirParents($cc1_test_cache_ok);
+my $cc1_test_cache_bad = "$cc1_test_cache/bad/";
+mkdirParents($cc1_test_cache_bad);
+
+# directory where archives are unpacked
+my $ar_cache = "$tmpdir/ar_cache";
+mkdirParents($ar_cache);
+
+# directory where elf temporaries go before being inserted as an ELF
+# section into the output file
+my $elftemp = "$tmpdir/elf_tmp";
+mkdirParents($elftemp);
+
+# directory where bad temporaries go before being inserted as an ELF
+# section into the output file
+my $badtemp = "$tmpdir/bad_tmp";
+mkdirParents($badtemp);
 
 # where are we?
 my $pwd = `pwd`;
@@ -54,25 +75,14 @@ if ($outfile_abs !~ m|^/|) {
   $outfile_abs = "$pwd/$outfile";
 }
 
-# We want to capture the output of the system call below.
-my $tmpfile = "/tmp/build_interceptor/collect2/tmp.$unique";
+# Temporary directory where we put the file that will become an ELF
+# section.
+my $tmpfile = "$elftemp/elftmp.$unique";
 die "tmpfile:$tmpfile exists !?" if -e $tmpfile;
 
 # Print out the files that are linked in.
 unshift @av, "--trace";
 my $run_args = join(':', @av);
-
-# We have to pass to the shell in order to collect from standard err
-# or else re-write this all in C.  No, does not seem to be any way to
-# use the list-argument version of system or exec and capture the
-# stderr output of a subprocess without going all the way down to
-# doing the process and pipe manipulation myself; I might then more
-# easily do this in C.
-sub quoteit {
-  my ($arg) = @_;
-  $arg =~ s|'|'\\''|;
-  return "'$arg'";
-}
 
 my @av2 = map {quoteit($_)} @av;
 my $cmd = $prog . ' ' . join(' ', @av2) . ' 2>&1';
@@ -142,15 +152,6 @@ die "bad sec_name:$sec_name:" unless
 # test-only extract
 my $extract = "${FindBin::RealBin}/extract_section.pl -t -q";
 
-# why don't utilities like touch make all the interveening
-# directories?
-sub touchFile {
-  my ($file) = @_;
-  my $dirname = `dirname $file`;
-  system ("mkdir --parents $dirname") == 0 or die $!;
-  system ("touch $file") == 0 or die $!;
-}
-
 my @not_intercepted;
 # if we are ld, then iterate through the .o files that were generated
 # warn "trace_output0 -----\n$trace_output0\n-----\n";
@@ -164,20 +165,33 @@ for my $line (split '\n', $trace_output0) {
   if ($line =~ m/^\((.*)\)(.*)$/) {
     # a .o file from an archive, like this:
     # (/opt/gcc-X.XX/lib/gcc/i686-pc-linux-gnu/3.4.0/../../../libstdc++.a)globals_io.o
-    my $archive = $1;
+    my $archive0 = $1;
     # FIX: canonicalize the pathname
     my $file2 = $2;
     # see if the archive exists
-    die "Something is wrong, no such archive $archive" unless -f $archive;
+    die "Something is wrong, no such archive $archive0" unless -f $archive0;
     # get the file out of the archive; NOTE: we want this name to be
-    # purely a function of the archive and file names so that caching
-    # below works
-    my $ar_tmpfile = "/tmp/build_interceptor/collect2/archive/$archive/$file2";
-    die "ar_tmpfile:${ar_tmpfile} exists !?" if -e $ar_tmpfile;
-    touchFile($ar_tmpfile);
-    my $cmd = "ar p $archive $file2 > $ar_tmpfile";
-    die "failed: $cmd" if system($cmd)!=0;
-    $file = $ar_tmpfile;
+    # purely a function of the archive and contained file so that
+    # caching below works; We have to use the inode and modification
+    # times as the identity of the archive rather than its name for
+    # the same reasons we have to do that for the cache; Note that I
+    # do *not* canonicalize the filename within the archive because it
+    # is relative to the archive.  Not sure exactly how names work
+    # within an archive, but I don't think I have much choice and
+    # having two entries with the same name in an archive would only
+    # mean we did the same work twice.
+    my $archive = abs_path($archive0);
+    my $ar_id = getCanonIdForFile($archive);
+    warn "getting id for archive: $archive, id:$ar_id\n";
+    my $ar_dir = "$ar_cache/$ar_id";
+    unless (-e $ar_dir) {
+      mkdirParents($ar_dir);
+      my $cmd = "cd $ar_dir; ar x $archive";
+      warn "extracting archive: $cmd\n";
+      # FIX: this isn't working; I keep going even if the ar fails (?).
+      die "failed: $cmd" if system($cmd);
+    }
+    $file = "$ar_dir/$file2";
   } elsif ($line =~ m/^-lm \((.*)\)$/) {
     # one of these strange lines:
     # -lm (/usr/lib/libm.so)
@@ -192,37 +206,43 @@ for my $line (split '\n', $trace_output0) {
     die;
   }
 
-  # see if the file exists
+  # get the file id
   die "Something is wrong, no such file :$file:" unless -f $file;
+  my $file_id = getCanonIdForFile($file);
 
   # see if the file was the result of compiling with build
   # interception turned on
   my $built_with_interceptor;
 
-  # check for cached results; from 'perldoc -f stat':
-#    my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
-#        $atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
-  my (undef,$ino,undef,undef,undef,undef,undef,undef,
-      undef,$mtime,$ctime,undef,undef) = stat($file);
-  my $file_id = "${ino}_${ctime}_${mtime}";
-  my $cachefile_ok = "$cachedir_ok/$file_id";
-  my $cachefile_bad = "$cachedir_bad/$file_id";
+  # check the cc1 test cache; NOTE: in case you are afraid of the
+  # complexity of this, for a simple C++ hello world on my system with
+  # a warm cache the link time went from 5.9 seconds to 1.4 seconds
+  my $cachefile_ok = "$cc1_test_cache_ok/$file_id";
+  my $cachefile_bad = "$cc1_test_cache_bad/$file_id";
+  warn "cachefile_ok: '$cachefile_ok', cachefile_bad: '$cachefile_bad'\n";
   if (-e $cachefile_ok) {
     $built_with_interceptor = 1;
+    warn "\tfound cache ok $cachefile_ok";
+    outputToFile($cachefile_ok, $file); # update the cache
   } elsif (-e $cachefile_bad) {
     $built_with_interceptor = 0;
+    warn "\tfound cache bad $cachefile_ok";
+    outputToFile($cachefile_bad, $file);  # update the cache
   } else {
     # actually run the extractor
+    warn "\tNOT found in cache";
     my $cmd = "$extract .note.cc1_interceptor $file";
     system($cmd);
     $built_with_interceptor = ($?==0);
+    if ($built_with_interceptor) {
+      outputToFile($cachefile_ok, $file); # update the cache
+    } else {
+      outputToFile($cachefile_bad, $file); # update the cache
+    }
   }
 
   # record if ok or not
-  if ($built_with_interceptor) {
-    touchFile($cachefile_ok);   # update the cache
-  } else {
-    touchFile($cachefile_bad);  # update the cache
+  unless ($built_with_interceptor) {
     push @not_intercepted, $line;
   }
 }
@@ -231,7 +251,7 @@ if (@not_intercepted) {
   # bad; some files we were built with were not intercepted
 
   # put a bad file into the global space
-  open (BAD, ">>$tmpdir/collect2_bad") or die $!;
+  open (BAD, ">>$tmpdir/cc1_bad") or die $!;
   print BAD "$outfile\n";
   for my $input (@not_intercepted) {
     print BAD "\t$input\n";
@@ -239,7 +259,7 @@ if (@not_intercepted) {
   close (BAD) or die $!;
 
   # put a bad section into the file
-  my $bad_tmpfile = "/tmp/build_interceptor/collect2/bad_tmp.$unique";
+  my $bad_tmpfile = "$badtemp/badtmp.$unique";
   die "bad_tmpfile:$bad_tmpfile exists !?" if -e $bad_tmpfile;
   touchFile($bad_tmpfile);
   open (BAD, ">$bad_tmpfile") or die $!;
@@ -255,7 +275,7 @@ if (@not_intercepted) {
   unlink $bad_tmpfile or die $!;
 } else {
   # good
-  open (GOOD, ">>$tmpdir/collect2_good") or die $!;
+  open (GOOD, ">>$tmpdir/cc1_good") or die $!;
   print GOOD "$outfile";
   close (GOOD) or die $!;
 }
@@ -273,3 +293,59 @@ die $! if system(@objcopy_cmd);
 unlink $tmpfile or die $!;
 
 exit $exit_value;
+
+# subroutines ****************
+
+# get a canonical id for a file; this is better than the absolute path
+# because the id will become invalid if the inode changes but also
+# even if it or the file is modified
+sub getCanonIdForFile {
+  my ($filename) = @_;
+  # check for cached results; from 'perldoc -f stat':
+#    my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+#        $atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
+  my (undef,$ino,undef,undef,undef,undef,undef,undef,
+      undef,$mtime,$ctime,undef,undef) = stat($filename);
+  die "no such file $filename"
+    unless defined $ino && defined $mtime && defined $ctime;
+  my $file_id = "${ino}_${ctime}_${mtime}";
+  return $file_id;
+}
+
+# ensure a directory exists no matter how many levels deep we have to
+# make
+sub mkdirParents {
+  my ($dirname) = @_;
+  # NOTE: unlike normal mkdir, this works even if it already exists
+  system ("mkdir --parents $dirname") == 0 or die $!;
+}
+
+# why don't utilities like touch make all the intervening directories?
+sub touchFile {
+  my ($file) = @_;
+  my $dirname = `dirname $file`;
+  mkdirParents($dirname);
+  system ("touch $file") == 0 or die $!;
+}
+
+sub outputToFile {
+  my ($file, $data) = @_;
+  die unless defined $file && defined $data;
+  my $dirname = `dirname $file`;
+  mkdirParents($dirname);
+  open (FILE, ">>$file") or die $!;
+  print FILE $data;
+  close (FILE) or die $!;
+}
+
+# We have to pass to the shell in order to collect from standard err
+# or else re-write this all in C.  No, does not seem to be any way to
+# use the list-argument version of system or exec and capture the
+# stderr output of a subprocess without going all the way down to
+# doing the process and pipe manipulation myself; I might then more
+# easily do this in C.
+sub quoteit {
+  my ($arg) = @_;
+  $arg =~ s|'|'\\''|;
+  return "'$arg'";
+}

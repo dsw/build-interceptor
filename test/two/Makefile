@@ -4,10 +4,10 @@ EXE += foo
 EXTRACT := ../../extract_section.pl
 
 .PHONY: all
-all: clean-build_interceptor $(EXE)
+all: $(EXE)
 
 .PHONY: clean
-clean: clean-build_interceptor
+clean:
 	rm -f *.o foo
 
 .PHONY: clean-build_interceptor
