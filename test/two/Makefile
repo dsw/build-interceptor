@@ -12,7 +12,8 @@ clean:
 
 .PHONY: clean-build_interceptor
 clean-build_interceptor:
-	rm -rf /tmp/build_interceptor
+	rm -rf ${HOME}/build_interceptor_tmp
+	rm -rf ${HOME}/preproc
 
 .PHONY: check
 check:

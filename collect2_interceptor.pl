@@ -24,7 +24,7 @@ my $time0 = time;
 my $unique = "$$-$time0";
 
 # directory for all build interceptor temporaries
-my $tmpdir_interceptor = "/tmp/build_interceptor";
+my $tmpdir_interceptor = "$ENV{HOME}/build_interceptor_tmp";
 mkdirParents($tmpdir_interceptor);
 # directory for all the temporaries relevant to collect2 interceptor
 my $tmpdir = "$tmpdir_interceptor/collect2";
@@ -195,9 +195,10 @@ for my $line (split '\n', $trace_output0) {
       die "failed: $cmd" if system($cmd);
     }
     $file = "$ar_dir/$file2";
-  } elsif ($line =~ m/^-lm \((.*)\)$/) {
+  } elsif ($line =~ m/^-l\S* \((.*)\)$/) {
     # one of these strange lines:
     # -lm (/usr/lib/libm.so)
+    # -lgtk (/opt/gnome/lib/libgtk.so)
     $file = $1;
     # FIX: canonicalize the pathname
   } elsif ($line =~ m/^(.*)$/) {

@@ -68,9 +68,12 @@ $(LOUD_OFF): loud-off/%:
 # timestamp the $HOME/build_interceptor.log; useful to run between
 # compilations
 .PHONY: stamp-log
-stamp-log:
+stamp-log: stamp-log/---
+.PHONY: stamp-log/%
+stamp-log/%:
 	echo >> ${HOME}/build_interceptor.log
 	date >> ${HOME}/build_interceptor.log
+	echo '$*' >> ${HOME}/build_interceptor.log
 	echo >> ${HOME}/build_interceptor.log
 
 .PHONY: clean
@@ -94,6 +97,13 @@ clean-softlinks:
 .PHONY: clean-bak
 clean-bak:
 	rm -f *.bak
+
+.PHONY: clean-build_interceptor
+clean-build_interceptor: clean-build_interceptor_tmp clean-preproc
+
+.PHONY: clean-build_interceptor_tmp
+clean-build_interceptor_tmp:
+	rm -rf ${HOME}/build_interceptor_tmp
 
 .PHONY: clean-preproc
 clean-preproc:

@@ -10,7 +10,19 @@ use strict;
 # When used as a replacement to the system as will just pass the
 # arguments through.
 
-my $prog = "${0}_orig";         # compute the new executable name we are calling
+# first, see if we need to map ${0} to a canonical name
+my %canonName =
+  ('/usr/bin/gmake' => '/usr/bin/make'
+);
+my $dollar_zero = ${0};
+#  warn "before: $dollar_zero\n";
+if (defined $canonName{$dollar_zero}) {
+  $dollar_zero = $canonName{$dollar_zero};
+}
+#  warn "after: $dollar_zero\n";
+
+# compute the new executable name we are calling
+my $prog = "${dollar_zero}_orig";
 
 # Remove the -j argument.  If we are going to replay the build
 # process, I want the order in which things are built to be as
