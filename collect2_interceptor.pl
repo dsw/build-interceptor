@@ -136,6 +136,11 @@ sub check_object_interceptless {
     return 0 == system("$extract .note.ignore_cc1_interceptor $file");
 }
 
+sub check_object_has_ld_interception {
+    my ($file) = @_;
+    return 0 == system("$extract .note.ld_interceptor $file");
+}
+
 #die "no outfile specified" unless defined $outfile;
 # Karl seems to want this feature
 $outfile = 'a.out' unless defined $outfile;
@@ -307,7 +312,9 @@ if (@not_intercepted) {
     $bad_tmpfile->close();
     my @objcopy_cmd =
       ('objcopy', $outfile_abs, '--add-section', ".note.${sec_name}_interceptor_bad=$bad_tmpfile");
-    die $! if system(@objcopy_cmd);
+    if (system(@objcopy_cmd)) {
+        die "Error executing @objcopy_cmd";
+    }
 } else {
     # good
     my $good = new FileHandle(">>$tmpdir/cc1_good") or die $!;
@@ -316,12 +323,26 @@ if (@not_intercepted) {
 
 # Stick this stuff into the object file
 #  die "no such file:$tmpfile" unless -e $tmpfile;
-#  die "no such file:$outfile_abs" unless -e $outfile_abs;
+
+if (!-e $outfile_abs) {
+    warn "$0: output file $outfile_abs not found\n";
+    exit($exit_value || 1);
+}
+
+if (check_object_has_ld_interception($outfile_abs)) {
+    die "$0: somehow $outfile_abs already has a .note.ld_interceptor!\n";
+}
 
 my @objcopy_cmd =
   ('objcopy', $outfile_abs, '--add-section', ".note.${sec_name}_interceptor=$tmpfile");
 #warn "collect2_interceptor.pl: @objcopy_cmd";
-die $! if system(@objcopy_cmd);
+if (system(@objcopy_cmd)) {
+    warn "$0: Error executing @objcopy_cmd\n";
+    # my $n = $outfile_abs;
+    # $n =~ s,.*/,,;
+    # system("cp $outfile_abs /tmp/failed.$n");
+    exit ($exit_value || 1);
+}
 
 #close (LOG) or die $!;          # LOUD
 exit $exit_value;
