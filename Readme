@@ -82,6 +82,18 @@ RedHat7.3.Readme.
 
 # One-time initial setup of build_interceptor.
 cd; cd build_interceptor
+
+# hack the interceptor.specs file so that it is right according to
+# your version of gcc.
+# --- interceptor.specs ---
+# I cannot belive the gcc people did this, but on gcc 3.4 it has to
+# look like this:
+#  %<P %(cpp_options_old0)
+# whereas on earlier versions of gcc, it has to look like this:
+%{<P} %(cpp_options_old0)
+# --- interceptor.specs END ---
+
+# Build the softlinks and the intercept.progs.
 make
 # Now check that the files you want to intercept are generated in
 # intercept.progs.  You can change this file if you need to, but only
