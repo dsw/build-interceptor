@@ -126,7 +126,7 @@ interceptor.specs-%: interceptor.specs.in
 	./make-spec-file $< $@
 
 interceptor.specs: interceptor.specs-3.3
-	cp $< $@
+	ln -s $< $@
 
 intercept.progs: clean-intercept.progs
 	for F in $(USRTOOLS); do         \
