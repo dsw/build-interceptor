@@ -18,7 +18,7 @@ USRTOOLS :=
 # build_interceptor.
 # USRTOOLS += make
 USRTOOLS_GCC = gcc $(notdir $(wildcard /usr/bin/gcc-*))
-USRTOOLS += $(USERTOOLS_GCC)
+USRTOOLS += $(USRTOOLS_GCC)
 USRTOOLS += g++ $(notdir $(wildcard /usr/bin/g++-*))
 USRTOOLS += cpp $(notdir $(wildcard /usr/bin/cpp-*))
 USRTOOLS += cc
