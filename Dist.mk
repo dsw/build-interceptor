@@ -1,7 +1,7 @@
 # Disk.mk; see License.txt for copyright and terms of use
 
 DIR := build_interceptor
-VERSION := 2004.7.14
+VERSION := 2004.11.10
 
 # for people at Berkeley who aren't me
 # CICH := :ext:cich:/home/cvs/repository
@@ -21,10 +21,11 @@ default_target:; @echo "You must give an explicit target to make -f Dist.mk"
 .PHONY: dist
 dist: distclean
 	cvs -d $(CICH) export -D $(CVS_TAG) $(DIR)
+	mv $(DIR) $(DIR)-$(VERSION)
 	tar cvzf $(DIR)-$(VERSION).tar.gz $(DIR)
 
 # **** clean the distribution
 .PHONY: distclean
 distclean:
-	rm -rf $(DIR)
+	rm -rf $(DIR) $(DIR)-$(VERSION)
 	rm -f *.tar.gz
