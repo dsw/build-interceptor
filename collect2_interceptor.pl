@@ -237,6 +237,9 @@ if (!-e $outfile_abs) {
     exit($exit_value || 1);
 }
 
+my $executable = -x $outfile_abs &&
+ $outfile_abs !~ /[.](?:so(?:[.]\d+)*|la|al|o|lo|os|oS|opic|sho)$/;
+
 if (do_not_add_interceptions_to_this_file($outfile_abs)) {
     # Don't add .note.ld_interceptor, and in addition, remove
     # .note.cc1_interceptor.
@@ -362,6 +365,14 @@ for my $line (split '\n', $trace_output0) {
 if (@not_intercepted) {
     # bad; some files we were built with were not intercepted
     my $bad = new FileHandle(">>$tmpdir/cc1_bad") or die $!;
+    print $bad "$outfile_abs\n";
+    for my $input (@not_intercepted) {
+        print $bad "\t$input\n";
+    }
+
+    # categorize into executable and non-executable
+    my $bad_ftype = $executable ? "exec" : "nonexec";
+    $bad = new FileHandle(">>$tmpdir/cc1_bad_${bad_ftype}") or die $!;
     print $bad "$outfile_abs\n";
     for my $input (@not_intercepted) {
         print $bad "\t$input\n";
