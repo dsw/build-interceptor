@@ -17,9 +17,11 @@ USRTOOLS :=
 # don't use it for now.  It isn't critical to the correct operation of
 # build_interceptor.
 # USRTOOLS += make
-USRTOOLS += gcc
-USRTOOLS += g++
-USRTOOLS += cpp
+USRTOOLS += gcc $(notdir $(wildcard /usr/bin/gcc-*))
+USRTOOLS += g++ $(notdir $(wildcard /usr/bin/g++-*))
+USRTOOLS += cpp $(notdir $(wildcard /usr/bin/cpp-*))
+USRTOOLS += cc
+USRTOOLS += c++
 USRTOOLS += as
 USRTOOLS += ld
 

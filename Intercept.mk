@@ -32,19 +32,20 @@ print: intercept.progs
 on: intercept.progs
 	@if test `whoami` != root; then echo "run this target as root"; false; fi
 	chmod a-w $<
-	@for F in `cat $<`; do                                                                       \
-          if ! test -e $${F}_orig; then                                                              \
-            C="mv $$F $${F}_orig"; echo $$C; $$C;                                                    \
-            if test -e `basename $${F}`_interceptor.pl -a -e `basename $${F}`_interceptor ; then     \
-              C="ln -s ${PWD}/`basename $${F}`_interceptor $$F"; echo $$C; $$C;                      \
-              if ! test -e $${F}_interceptor.pl ; then                                               \
-                C="ln -s ${PWD}/`basename $${F}`_interceptor.pl $${F}_interceptor.pl";echo $$C; $$C; \
-              fi                                                                                     \
-            else                                                                                     \
-              C="ln -s ${PWD}/`basename $${F}`_interceptor.pl $$F"; echo $$C; $$C;                   \
-            fi                                                                                       \
-          else echo "Interception already on for $${F}";                                             \
-          fi                                                                                         \
+	@for F in `cat $<`; do                                                            \
+          if ! test -e $${F}_orig; then                                                   \
+            C="mv $$F $${F}_orig"; echo $$C; $$C;                                         \
+            I=`basename $${F} | sed 's,-.*,,'`;                                           \
+            if test -e $${I}_interceptor.pl -a -e $${I}_interceptor ; then                \
+              C="ln -s ${PWD}/$${I}_interceptor $$F"; echo $$C; $$C;                      \
+              if ! test -e $${F}_interceptor.pl ; then                                    \
+                C="ln -s ${PWD}/$${I}_interceptor.pl $${F}_interceptor.pl";echo $$C; $$C; \
+              fi                                                                          \
+            else                                                                          \
+              C="ln -s ${PWD}/$${I}_interceptor.pl $$F"; echo $$C; $$C;                   \
+            fi                                                                            \
+          else echo "Interception already on for $${F}";                                  \
+          fi                                                                              \
         done
 
 .PHONY: off
