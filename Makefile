@@ -80,7 +80,7 @@ stamp-log/%:
 	echo >> ${HOME}/build_interceptor.log
 
 .PHONY: clean
-clean: clean-intercept.progs clean-softlinks clean-bak
+clean: clean-intercept.progs clean-softlinks clean-script-interceptor clean-bak
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
@@ -111,6 +111,10 @@ clean-build_interceptor_tmp:
 .PHONY: clean-preproc
 clean-preproc:
 	rm -rf ${HOME}/preproc/*
+
+.PHONY: clean-script-interceptor
+clean-script-interceptor:
+	rm -rf make_interceptor
 
 intercept.progs: clean-intercept.progs
 	for F in $(USRTOOLS); do         \
