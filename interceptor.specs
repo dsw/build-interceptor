@@ -6,11 +6,15 @@
 # Remove -P from the gcc command line.  This makes sure that hash-line
 # directives are going to show up in the .i files.
 %rename cpp_options cpp_options_old0
-*cpp_options:
+
 # I cannot belive the gcc people did this, but on gcc 3.4 it has to
 # look like this:
-#  %<P %(cpp_options_old0)
+# %<P %(cpp_options_old0)
 # whereas on earlier versions of gcc, it has to look like this:
+# %{<P} %(cpp_options_old0)
+# Pick one and put it below the next line.  WARNING: DO NOT put
+# comments in between!
+*cpp_options:
 %{<P} %(cpp_options_old0)
 
 # It is nice if we can find out the name of the original file to help
