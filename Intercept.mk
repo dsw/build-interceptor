@@ -30,6 +30,11 @@ print: intercept.progs
 #
 # If you don't run these two targets as root then some non-atomic
 # partial result may occur, so I check for you.
+#
+# TODO: the double readlink is a quick hack -- make it recursively check.
+#
+# Note: readlink -f won't work since we might have already changed some of the
+# links.
 .PHONY: on
 on: intercept.progs
 	@if test `whoami` != root; then echo "run this target as root"; false; fi
@@ -37,6 +42,8 @@ on: intercept.progs
 	@for F in `cat $<`; do                                                                             \
           if readlink $${F} >/dev/null && grep -x -F `dirname $${F}`/`readlink $${F}` $< >/dev/null ; then \
             echo "Ignoring $${F} -- it's a symlink to `readlink $${F}`, also intercepted.";                \
+          elif readlink $${F} >/dev/null && readlink `readlink $${F}` >/dev/null && grep -x -F `readlink \`readlink $${F}\`` $< >/dev/null ; then  \
+            echo "Ignoring $${F} -- it's a symlink to `readlink \`readlink $${F}\``, also intercepted.";   \
           elif ! test -e $${F}_orig; then                                                                  \
             C="mv $$F $${F}_orig"; echo $$C; $$C;                                                          \
             I=`basename $${F} | sed 's,-.*,,'`;                                                            \
