@@ -30,6 +30,13 @@ if (defined $canonName{$dollar_zero}) {
 }
 #  warn "after: $dollar_zero\n";
 
+# if gcc is a link to something that's not an interceptor (e.g. gcc-3.3), use
+# gcc-3.3_orig instead of gcc_orig
+my $l = readlink($dollar_zero);
+if ($l && $l !~ /interceptor/) {
+    $dollar_zero = $l;
+}
+
 if ("@ARGV" =~ /-E -P -\s*$/) {
     # Hack for glibc: don't output line markers if the program is just using
     # gcc to get preprocessor definitions.  What glibc does is:
@@ -37,7 +44,7 @@ if ("@ARGV" =~ /-E -P -\s*$/) {
     exec("${dollar_zero}_orig", @ARGV) || die;
 }
 
-my @cmd_line = 
+my @cmd_line =
   ("${dollar_zero}_orig",
    "--no-integrated-cpp",
    "-specs=${FindBin::RealBin}/interceptor.specs",
