@@ -96,7 +96,11 @@ unshift @av, "--trace";
 my $run_args = join(':', @av);
 
 my @av2 = map {quoteit($_)} @av;
-my $cmd = $prog . ' ' . join(' ', @av2) . ' 2>&1';
+my $cmd = $prog . ' ' . join(' ', @av2) ;
+#. ' 2>&1';
+
+# Don't catch stderr -- random error messages go there and can confuse us
+# [this would break for example linking any object that invokes tmpnam()].
 
 # Just delegate to the real thing.
 #warn "collect2_interceptor.pl: system $cmd\n";
