@@ -232,7 +232,7 @@ for my $line (split '\n', $trace_output0) {
       my $object = $2;
 
       $file = archive_extract_object($archive, $object);
-  } elsif ($line =~ m/^-l[^ .()]+ \(([^()]+[.]so(?:[.][0-9]+)*)\)$/) {
+  } elsif ($line =~ m/^-l[^ ()]+ \(([^()]+[.]so(?:[.][0-9]+)*)\)$/) {
       # shared libraries:
       # -lm (/usr/lib/libm.so)
       # -lgtk (/opt/gnome/lib/libgtk.so)
