@@ -244,7 +244,7 @@ for my $line (split '\n', $trace_output0) {
       # ignore for now
       next;
       # $file = $1;
-  } elsif ($line =~ m/^(.+\.(?:o|os|oS|lo|sho))$/) {
+  } elsif ($line =~ m/^(.+\.(?:o|os|oS|lo|sho|opic))$/) {
       # a .o file not from an archive, like this:
       #   /usr/lib/crt1.o
       # Can also include .lo (libtool object) files.
