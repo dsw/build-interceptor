@@ -19,6 +19,9 @@ my @av = @ARGV;                 # @ARGV has magic, so copy it
 my @raw_args = @ARGV;
 my $prog = "${0}_orig";         # compute the new executable name we are calling
 
+# POSIXLY_CORRECT breaks objcopy
+delete $ENV{POSIXLY_CORRECT};
+
 sub find_output_filename {
     my $outfile;
 
