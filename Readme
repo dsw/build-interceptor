@@ -17,12 +17,13 @@ Limitations ****
 
 The method described here requires that you be root on your box so you
 can replace the system cc1 and cc1plus programs, though if you can
-think of another way to get gcc to use your cc1 instead of its, then
-that will work too.  I have heard it is possible to achieve using
-environment variables or linker scripts passed to gcc thought I
-haven't tried this.  Another way is to build gcc from source in your
-own account and then hack that, but then you have to get the build
-process to use that gcc.
+think of another way to get gcc to use your cc1 instead of the real
+one then that will work too.  I have heard it is possible to achieve
+this effect using environment variables or linker scripts passed to
+gcc thought I haven't tried it.  Another way is to build gcc from
+source in your own account and then hack that, but then you have to
+get the build process for the package you want to intercept to use
+that gcc instead of the system one.
 
 According to Ben Liblit, newer gcc versions combine the preprocessing
 and compiling stages by default, so you may have to do more work to
@@ -36,17 +37,18 @@ When gcc/g++ compiles, it pre-processes .c or .cc files to .i or .ii
 files (respectively), compiles .i or .ii files to .s files, assembles
 .s files to .o files, and links .o files to executables.  It
 traditionally does all these stages with separate programs (new
-changes complicate this; see below), in particular the compiler-proper
-program being called cc1 or cc1plus for C or C++ (respectively).
+versions of gcc complicate this by integrating preprocessing and
+compilation), in particular the compiler-proper program being called
+cc1 or cc1plus for C or C++ (respectively).
 
 Basics of how the build interception works ****
 
 The cc1_interceptor.pl script captures the .i and .ii files generated
 by the gcc compiler tool chain by replacing and imitating cc1.  It
 
-   1) copies the pre-processed input to a new file,
+   1) copies the pre-processed input, the .i file, to a new file,
 
-   2) runs the real cc1 passing in the new copy,
+   2) runs the real cc1 passing in the copy,
 
    3) puts the fully-qualified filename of the copy into a string in
       the section ".note.cc1_im" in the assembly output.
@@ -55,16 +57,17 @@ This name flows to the .o and then to the executable (the linker will
 concatenate multiple occurrences) where it can later be retrieved
 using objdump; This is easier to do if you use Ben Liblit's
 extract-section script which he ships as part of "The Cooperative Bug
-Isolation Project"; see below.
+Isolation Project" and which I include in this project.  See below for
+details on doing this.
 
 Use this script by moving your system cc1 and cc1plus to old-cc1 and
-old-cc1plus respectively and then making a link to this script in
-its old location as cc1 (it is ok to link both to this same script
-as it figures out how it was called); A similar effect can probably
-be achieved with gcc spec files or environment variables.  According
-to Ben, newer gcc versions combine the preprocessing and compiling
-stages by default, so you may have to do more to separate them again
-so that this script will work.
+old-cc1plus respectively and then making a link to this script in its
+old location as cc1 (it is ok to link both to this same script as it
+figures out how it was called); A similar effect can probably be
+achieved with gcc spec files or environment variables.  According to
+Ben, newer gcc versions combine the preprocessing and compiling stages
+by default, so you may have to do more to separate those stages again
+for this process to work.
 
 Licensing ****************
 
@@ -80,20 +83,18 @@ as a test for the Elsa/Oink C/C++ front end and analysis tools.  Both
 of the resulting data and Oink can be downloaded from my homepage
 given above; I also provide a link to Elsa there.
 
-As an example of how to use these scripts, I describe how to reproduce
-those .i files.  That is, we detail the process of building Red hat
-7.3 from source and capturing the .i files almost as it was done, but
-with the simplifying benefit of hindsight.
+As an example of how to use these scripts, I detail the process of
+building Red hat 7.3 from source and capturing the .i files almost as
+it was done, but with the simplifying benefit of hindsight.  However
+this process and the scripts provided are quite generic and can be
+used for any project.  Many artifacts of the original usage remain in
+some of the scripts, such as lists of Red Hat 7.3 package names; You
+will have to fix the scripts here and there for use on your project.
+Feel free to send me the improvements.
 
-Please note that this is my recollection of what I did and that I did
-not repeat the whole thing just to check that every script is exactly
-right, as the whole thing takes quite a while.
-
-This process and the scripts provided are quite generic and can be
-used for any project; however, many artifacts of the original usage
-remain in some of the scripts, such as lists of package names.  You
-will have to fix them here and there for your project.  Feel free to
-send me the improvements.
+Please note that the steps quoted below are an abstraction of my
+recollection of what I did; I did not repeat it all just to check that
+every script is exactly right, as it takes quite a while.
 
 * Install Red Hat 7.3
 
@@ -113,18 +114,19 @@ Put the source RPMs from the source disks into /usr/src/redhat/SRPMS.
 Rename your two cc1's to old-cc1; Note: I describe everything for cc1,
 but do it for the parallel cc1plus programs as well.
 
-Something like this will find them.  I used locate but you have to
-build the database first.
+Something like this will find the cc1 and cc1plus programs.  I used
+locate but you have to build the database first; I don't think it will
+be built if you have just installed from CD.
   find /usr -follow -regex '.*cc1' 2>/dev/null
 
-On Red Hat 7.3, there are four.  Thee two are just links to the other
-two, so leave them (and their sibling cc1plus) alone.
+On Red Hat 7.3, there are four occurrences.  Thee two are just links to
+the other two, so leave them (and their sibling cc1plus) alone.
   /usr/i386-glibc21-linux/lib/gcc-lib/i386-redhat-linux/2.96/cc1
     -> ../../../../../lib/gcc-lib/i386-glibc21-linux/egcs-2.91.66/cc1
   /usr/lib/gcc-lib/i386-redhat-linux/egcs-2.91.66/cc1
     -> ../../i386-glibc21-linux/egcs-2.91.66/cc1
 
-So just rename these two (and the parallel cc1plus files):
+Just rename these two (and the parallel cc1plus files):
   /usr/lib/gcc-lib/i386-redhat-linux/2.96/cc1
   /usr/lib/gcc-lib/i386-glibc21-linux/egcs-2.91.66/cc1
 
@@ -133,7 +135,7 @@ provided.
 
 Make a directory to keep the .i files generated during the build.
   mkdir ball_preproc
-Make a softlink to it from $HOME/preproc, the directory named in
+Make a softlink to it from $HOME/preproc, the directory hard-coded into
 cc1_interceptor.pl.
   ln -s ball_preproc preproc
 
@@ -143,13 +145,12 @@ Make a directory where Red Hat will be built.
   mkdir ball_build
 
 IMMEDIATELY Build everything; do not use gcc for anything else first
-as the .i files will end up in the preproc directory.  This takes
-about 19 hours on my 1.7 GHz AMD with 3.5 Gig RAM.
+as the .i files generated will also end up in the preproc directory.
+This takes about 19 hours on my 1.7 GHz AMD with 3.5 Gig RAM.
   ./just_build.pl
 
 IMMEDIATELY before compiling anything else with gcc:
   chmod -R a-w ball_preproc ball_build
-
 Also remove the softlinks above and rename old-cc1 to cc1.
   mkdir preproc_junk
   ln -s preproc_junk preproc
@@ -158,17 +159,17 @@ Rename the system old-cc1 and old-cc1plus files to their original
 names and remove (or just move to another directory) the softlinks to
 them.
 
-Only 92.5% of the packages say that they build successfully according
-to the return value of rpmbuld.  I don't yet understand how the simple
-build process interception that I do can cause so many packages to
-fail; if you find out, let me know.  These packages that fail to build
-have not been included in this release.
+According to the return value of rpmbuld only 92.5% of the packages
+say that they build successfully.  I don't yet understand how the
+simple build process interception that I do can cause so many packages
+to fail; I did not build them without interception as a control.  The
+packages that fail to build have not been included in this release.
 
 * Count source lines
 
 The files pkgs_by_c_size.dat and pkgs_by_cpp_size.dat list each
-package sorted by the number of .c and .cc (or other spellings) files
-in a package, respectively.
+package sorted by the number of .c and .cc (or other spellings: .C,
+.cpp, .cxx, .c++) files in a package, respectively.
   ./count_src.pl
 
 Note that the script prints the C and C++ sizes on one line, whereas
@@ -184,12 +185,12 @@ Yes, I did check that the section added to the assembly (called
 ".note.cc1_im") does survive in the .o, .so, or executable even if it
 is stripped.
 
-Make a link to Ben Liblit's extract_section.pl script.  This script is
-used to the extraction of the section from the executable and library
-files.  I find it strange that neither objdump, objcopy nor readelf
-have this as a command-line option, but that fact necessitates the
-existence of this script.
-  ln -s <this directory>/extract_section.pl extract_section.pl
+Make a link to Ben Liblit's extract_section.pl script (which I
+provide).  This script is used to do the extraction of the section
+from the executable and library files.  I find it strange that neither
+objdump, objcopy nor readelf have this as a command-line option, but
+that fact necessitates the existence of this script.
+  ln -s <this directory>/extract_section.pl $HOME/extract_section.pl
 
 Make a directory for the reorg databall output.
   mkdir ball
@@ -199,21 +200,27 @@ Run
 
 Now you have a file $HOME/ball that is partitioned by package.  In
 each package directory there are .i files for pre-processed C files,
-.ii files for pre-processed C++ files, and .ld files which list all the
-filenames that are linked together to make a .o, .so or executable
-file; You need these so you know which files to analyzed together
-when doing a whole-program analysis.
+.ii files for pre-processed C++ files, and .ld files which list all
+the filenames that are linked together to make a .o, .so or executable
+file.  You need the .ld files so you know which .i files to analyze
+together when doing a whole-program analysis.
+
+Please note that all .i (or .ii) files that end up in the reorg-ed
+ball directory are listed in some .ld file: .i files not pointed to by
+some executable (or .o, etc.) are likely to be configuration files or
+other junk you don't want.
 
 * Check for configure files
 
 Some files generated as part of the configure stage of the build
-process of some packages can be deliberately perverse; you don't want to
-analyze them.  Run the script to check what is a configure or
-configtemp file:
+process of some packages can be deliberately perverse: you don't want
+to analyze them.  Run the script to check what is a 'configure' or
+'configtemp' file:
   ./find_config.pl
 
 When I ran it I found 3 files that were very simple and I just left
-them in the .i files as they were legal.
+them in the .i files as they were legal.  It seems that the rest don't
+generate an executable and therefore don't end up in a .i file.
 
 * Check that gcc builds them again
 
@@ -222,7 +229,7 @@ build.  Be sure you no longer have your system cc1 or cc1plus pointing
 at cc1_interceptor before doing this.
   ./gcc_all.pl
 
-Of those, two packages have files that fail when you run gcc on them
+Of those, two packages have files that fail when I run gcc on them
 again(!):
   htdig-3.2.0-2.011302
   glibc-2.2.5-34
@@ -230,33 +237,33 @@ again(!):
 How this can be I don't know; If I had written rpmbuild and a
 reasonable build process for a package then if any of the files failed
 to build I would have had the whole process halt.  Evidently, some
-packages fail to build some files but the build keeps going anyway
-(!?).  If you find out what this is, let me know.
-
-I have included these packages in the release anyway, as only a few
-files in the packages fail and rpmbuild said their builds succeeded;
-you are free to delete them from the list of packages you run
-experiments on.
+packages fail to build some of their files but the build keeps going
+anyway and rpmbuild returns success on them (!?).  I have included
+these two packages above in the release anyway, as only a few files in
+the packages fail and rpmbuild said their builds succeeded.  You are
+free to delete them from the list of packages you run experiments on.
 
 * If you re-release
 
-I am not a lawyer; however it seems to me that if you are going to
-release the .i files you generate that, since they are derived works
-from the original source, you have to provide with them the license
-file with which the package came.  I have done this by simply
-including all the .src.rpm-s and referring the reader to to them.
+I am not a lawyer; however it seems to me that the captured .i files
+count as "derived works" from the original source.  Therefore it seems
+that you have to provide with them the license file with which the
+original package came.  When building RH7.3.i, the tarball of the
+resulting .i files, I have done this by simply including all the
+.src.rpm-s and referring the reader to to them in the Readme.
 
 Files ****
 
 To simplify things, the scripts make some assumptions about what files
-and directories are where.  All are assumed to be under $HOME.
+and directories are where.  I list them here; all are assumed to be
+under $HOME.
 
 ball_preproc: Where the captured preprocessing output of
 cc1_interceptor.pl goes.
 
 preproc: Link to ball_preproc.
 
-ball_build: The root of the tree where the source rpms get built.
+ball_build: The root of the tree where the source RPMs get built.
 
 ball: The directory that results from reorganizing the captured .i
 files according to the .note.cc1_im sections left behind in the
@@ -269,7 +276,7 @@ captured by the build process.
 Acknowledgments ****************
 
 I used code and ideas for build-process interception from two
-different previous projects dealing with this problem:
+different previous projects that dealt with this same problem.
 
     The "The Cooperative Bug Isolation Project"
     (http://www.cs.berkeley.edu/~liblit/sampler/) by Ben Liblit
@@ -280,7 +287,7 @@ different previous projects dealing with this problem:
 
 The idea of inserting metadata into an unused section in ELF .o files
 was borrowed from Ben and Hao.  I extended it back to the assembly
-files.
+stage.
 
 Ben Liblit, Hao Chen, John Kodumal, and Simon Goldsmith contributed to
 the discussions leading to these scripts.  Thanks especially to Simon
