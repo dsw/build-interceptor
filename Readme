@@ -348,3 +348,6 @@ Ben Liblit, Hao Chen, John Kodumal, and Simon Goldsmith contributed to
 the discussions leading to these scripts.  Thanks especially to Simon
 Goldsmith for proof-reading this Readme [I of course take
 responsibility for any remaining mistakes].
+
+Thanks to Andy Begel for his in-depth explanation of dynamic linking
+under various circumstances and operating systems.
