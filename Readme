@@ -9,8 +9,26 @@ Readme; see oink/License.txt for copyright and terms of use
 Introduction ****************
 
 Welcome!  Build Interceptor is a collection of scripts for recording
-the .i files generated during a build.  No modification to the original
-build process is necessary.
+the .i files generated during a build of C or C++ programs with the
+gcc toolchain.  No modification to the original build process is
+necessary.
+
+Limitations ****
+
+The method described here requires that you be root on your box so you
+can replace the system cc1 and cc1plus programs, though if you can
+think of another way to get gcc to use your cc1 instead of its, then
+that will work too.  I have heard it is possible to achieve using
+environment variables or linker scripts passed to gcc thought I
+haven't tried this.  Another way is to build gcc from source in your
+own account and then hack that, but then you have to get the build
+process to use that gcc.
+
+According to Ben Liblit, newer gcc versions combine the preprocessing
+and compiling stages by default, so you may have to do more work to
+separate them again somehow.  I haven't tried that.
+
+Compilers other than gcc are also not supported.
 
 Background ****
 
