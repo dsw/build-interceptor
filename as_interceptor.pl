@@ -6,6 +6,10 @@ use strict;
 use FindBin;
 use File::Spec;
 
+if (!$ENV{HOME}) {
+    $ENV{HOME} = "${FindBin::RealBin}/..";
+}
+
 my $extract_pl = "${FindBin::RealBin}/extract_section.pl";
 if (!-f $extract_pl) {
     die "$0: Couldn't find extract_section.pl (should be $extract_pl)\n";

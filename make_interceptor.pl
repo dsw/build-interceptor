@@ -1,6 +1,11 @@
 #!/usr/bin/perl -w
 # See License.txt for copyright and terms of use
 use strict;
+use FindBin;
+
+if (!$ENV{HOME}) {
+    $ENV{HOME} = "${FindBin::RealBin}/..";
+}
 
 #my $splash = "make_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
 #warn $splash;                   # LOUD

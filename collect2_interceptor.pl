@@ -15,6 +15,10 @@ use Memoize;
 # When used as a replacement to the system collect2 will just pass the
 # arguments through.
 
+if (!$ENV{HOME}) {
+    $ENV{HOME} = "${FindBin::RealBin}/..";
+}
+
 #my $splash = "collect2_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
 #warn $splash;                   # LOUD
 #open (LOG, ">>$ENV{HOME}/build_interceptor.log") or die $!; # LOUD

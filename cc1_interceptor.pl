@@ -8,10 +8,15 @@ use File::Spec;
 use File::Copy;
 use Digest::MD5;
 use FileHandle;
+use FindBin;
 
 # When used as a replacement to the system cc1 or cc1plus this script
 # will intercept the build process and keep a copy of the .i files
 # generated.
+
+if (!$ENV{HOME}) {
+    $ENV{HOME} = "${FindBin::RealBin}/..";
+}
 
 #my $splash = "cc1_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
 #warn $splash;                   # LOUD
