@@ -193,6 +193,9 @@ for my $line (split '\n', $trace_output0) {
     my $ardir0 = $1;
     my $arfile0 = $2;
     die unless defined $ardir0 && defined $arfile0;
+    # Map the empty string to "."; why do people put such
+    # non-orthogonalities into their APIs?
+    $ardir = "." unless length $ardir;
     my $ardir = abs_path($ardir0);
     my $archive = "$ardir/$arfile0";
     die "no such file $archive" unless -f $archive;
