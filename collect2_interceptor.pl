@@ -68,26 +68,29 @@ if (!-f $extract_pl) {
 }
 my $extract = "$extract_pl -t -q";
 
-# where are we?
-my $pwd = getcwd;
+sub find_output_filename {
+    my $outfile;
 
-# Find the output file.
-my $outfile;
-for (my $i=0; $i<@av; ++$i) {
-  if ($av[$i] =~ /^-o/) {
-    die "multiple -o options" if defined $outfile;
-    if ($av[$i] eq '-o') {
-      $outfile = $av[$i+1];
-      ++$i;
-    } elsif ($av[$i] =~ /^-o(.+)$/) {
-      $outfile = $1;
-    } else {
-      die "should have matched: $av[$i]"; # something is very wrong
+    for (my $i=0; $i<@raw_args; ++$i) {
+        if ($raw_args[$i] =~ /^-o/) {
+            die "multiple -o options" if defined $outfile;
+            if ($raw_args[$i] eq '-o') {
+                $outfile = $raw_args[$i+1];
+                ++$i;
+            } elsif ($raw_args[$i] =~ /^-o(.+)$/) {
+                $outfile = $1;
+            } else {
+                die "should have matched: $raw_args[$i]"; # something is very wrong
+            }
+            die "-o without file" unless defined $outfile;
+        }
     }
-    die "-o without file" unless defined $outfile;
-  }
-}
 
+    if (!defined $outfile) {
+        $outfile = 'a.out';
+    }
+    return $outfile;
+}
 
 sub md5_file {
     my ($filename) = @_;
@@ -190,10 +193,16 @@ sub add_or_append_section {
     add_section($file, $section, $existing_note . $content);
 }
 
-#die "no outfile specified" unless defined $outfile;
-# Karl seems to want this feature
-$outfile = 'a.out' unless defined $outfile;
+sub do_not_add_interceptions_to_this_file {
+    my ($outfile_abs) = @_;
+    my $r = $ENV{BUILD_INTERCEPTOR_DO_NOT_ADD_INTERCEPTIONS_TO_FILES};
+    return ($r and $outfile_abs =~ /^$r$/);
+}
 
+# where are we?
+my $pwd = getcwd;
+
+my $outfile = find_output_filename();
 my $outfile_abs = File::Spec->rel2abs($outfile);
 
 # Print out the files that are linked in.
@@ -223,6 +232,16 @@ if ($ret) {
 if (!-e $outfile_abs) {
     warn "$0: output file $outfile_abs not found\n";
     exit($exit_value || 1);
+}
+
+if (do_not_add_interceptions_to_this_file($outfile_abs)) {
+    # Don't add .note.ld_interceptor, and in addition, remove
+    # .note.cc1_interceptor.
+    #
+    # Some build processes break when we insert these; and we aren't going to
+    # analyze them so it's OK to remove notes.
+    remove_section($outfile_abs, 'cc1_interceptor');
+    exit(0);
 }
 
 # Double-indent this to quote it.
