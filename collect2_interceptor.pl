@@ -293,7 +293,7 @@ for my $line (split '\n', $trace_output0) {
   next if $line =~ m/: mode elf_i386$/;
 
   my $file;
-  if ($line =~ m/^\((.*[.]a)\)([^()]+[.](?:o|os|oS))$/) {
+  if ($line =~ m/^\(([^()]+[.]al?)\)([^()]+[.](?:o|os|oS))$/) {
       # .o from .a:
       # (/path/archive.a)object.o
       my $archive = canonicalize($1);
@@ -307,12 +307,12 @@ for my $line (split '\n', $trace_output0) {
       # ignore for now
       next;
       # $file = $1;
-  } elsif ($line =~ m/^(.+\.(?:o|os|oS|lo|sho|opic))$/) {
+  } elsif ($line =~ m/^([^()]+\.(?:o|os|oS|lo|sho|opic))$/) {
       # a .o file not from an archive, like this:
       #   /usr/lib/crt1.o
       # Can also include .lo (libtool object) files.
       $file = canonicalize($1);
-  } elsif ($line =~ m/^(.+\.so(?:[.][0-9]+)*)$/) {
+  } elsif ($line =~ m/^([^()]+\.so(?:[.][0-9]+)*)$/) {
       # $file = canonicalize($1);
       next;
   } else {
