@@ -2,23 +2,31 @@
 # See License.txt for copyright and terms of use
 use strict;
 
-# Reorganize the ball_build and ball_preproc directories.
+# Reorganize the build and preproc directories into the ball
+# directory.
+my $home = "$ENV{HOME}";
+my $ball = "$home/ball";
+die unless -d $ball;
+my $build = "$home/build";
+die unless -d $build;
+my $preproc = "$home/preproc";
+die unless -d $preproc;
+
+# http://gcc.gnu.org/onlinedocs/gcc-3.4.0/gcc/Invoking-G--.html#Invoking%20G++
+# "C++ source files conventionally use one of the suffixes .C, .cc,
+# .cpp, .CPP, .c++, .cp, or .cxx; C++ header files often use .hh or
+# .H; and preprocessed C++ files use the suffix .ii."
+my %is_cpp_suffix;
+for my $suff(qw(C cc cpp CPP c++ cp cxx)) {
+  $is_cpp_suffix{$suff}++;
+}
 
 use IO::File;
 
 autoflush STDOUT 1;
 autoflush STDERR 1;
 
-my $home = "$ENV{HOME}";
-
-my $ball = "$home/ball";
-die unless -d $ball;
-my $ball_build = "$home/ball_build";
-die unless -d $ball_build;
-my $ball_preproc = "$home/ball_preproc";
-die unless -d $ball_preproc;
-
-my $extract = "$home/extract_section.pl";
+my $extract = "$home/build_interceptor/extract_section.pl";
 die "Can't find $extract" unless -f $extract;
 
 # tmpfiles that we have seen and that we already have a hardlink to
@@ -52,27 +60,32 @@ sub do_one_file {
     open (LD_FILE, ">$ldFile") or die $!;
 
     # for each .i file mentioned:
-    my @components = ($exOut =~ m/(\([^\)]*\))/g);
+    my @components = ($exOut =~ m/\s* ( ^ \( $ .*? ^ \) $ ) \s*/gmsx);
     for my $comp (@components) {
-      #        print "---- comp\n";
-      #        print $comp;
-      #        print "\n----\n";
-      my ($dollar_zero, $raw_args, $run_args, $pwd, $infile, $dumpbase, $tmpfile) =
+      warn "---- comp\n";
+      warn $comp;
+      warn "\n----\n";
+      my ($pwd, $dollar_zero, $raw_args, $run_args, $infile, $dumpbase, $tmpfile) =
         $comp =~
-          m|dollar_zero:(.*)\s*
-            raw_args:(.*)\s*
-            run_args:(.*)\s*
-            pwd:(.*)\s*
-            infile:(.*)\s*
-            dumpbase:(.*)\s*
-            tmpfile:(.*)\s*
-           |x;
+      m|   ^\t pwd:        (.*?) $
+        \n ^\t dollar_zero:(.*?) $
+        \n ^\t raw_args: \s \(   $
+          (.*?)
+        \n ^\t \)                $
+        \n ^\t run_args:   (.*?) $
+        \n ^\t infile:     (.*?) $
+        \n ^\t dumpbase:   (.*?) $
+        \n ^\t tmpfile:    (.*?) $
+        |xsm;
+#        warn "pwd:$pwd\n";
+#        warn "dollar_zero:$dollar_zero\n";
+#        warn "raw_args:$raw_args\n";
       # we can get garbage sometimes; just skip it
       die "bad ld file: $extractCmd" unless
-        defined $dollar_zero && 
-          defined $raw_args && 
-            defined $run_args && 
-              defined $pwd && 
+        defined $pwd && 
+          defined $dollar_zero && 
+            defined $raw_args && 
+              defined $run_args && 
                 defined $infile && 
                   defined $dumpbase && 
                     defined $tmpfile;
@@ -80,13 +93,15 @@ sub do_one_file {
       #          unless defined $tmpfile;
       #        print "extracted tmpfile: $tmpfile\n";
       die "bad ld file: $extractCmd"
-        unless $tmpfile =~ s|^$home/preproc|$home/ball_preproc|;
+        unless $tmpfile =~ s|^$home/preproc|$home/preproc|;
 
+      # FIX: remove, but leave a note about modifying the filename if
+      # it was built with a different system root.
       # NOTE: it is not necessary for /disk2/ to exist on your system,
       # but it did on mine when these .i files where built.  If you
       # build them yourself, you will have to edit the next line.
-      die "bad ld file: $extractCmd"
-        unless $tmpfile = "/disk2/$tmpfile";
+#        die "bad ld file: $extractCmd"
+#          unless $tmpfile = "/disk2/$tmpfile";
 
       die "no such file tmpfile:$tmpfile"
         unless -f $tmpfile;
@@ -125,8 +140,7 @@ sub do_one_file {
             if ($firstline =~ m|^# \d+ "\S+\.(\S+)"$|) {
               my $suffix = $1;
               #            print "suffix: $suffix\n";
-              if ($suffix eq 'cc' || $suffix eq 'C' || $suffix eq 'cxx'
-                  || $suffix eq 'cpp' || $suffix eq 'c++') {
+              if ($is_cpp_suffix{$suffix}) {
                 $isC = 0;
               }
             }
@@ -177,12 +191,12 @@ sub do_one_file {
 
 my %packages;
 
-# for each package in ball_build
-my @packages = split(/\n/, `ls $ball_build`);
+# for each package in build
+my @packages = split(/\n/, `ls $build`);
 #my @packages = qw(Glide3-20010520-13);
 for my $pkg(@packages) {
   chomp $pkg;
-  die unless -d "$ball_build/$pkg";
+  die unless -d "$build/$pkg";
 
   print "**** $pkg: ";
   die if system("date");
@@ -206,13 +220,13 @@ for my $pkg(@packages) {
   die "$!:$mkdirCmd" if system($mkdirCmd);
 #  next;                         # REMOVE
 
-  # run a find script on that subtree of ball_build
-  my $findCmd = "find $ball_build/$pkg -type f";
+  # run a find script on that subtree of build
+  my $findCmd = "find $build/$pkg -type f";
   my @files = split(/\n/, `$findCmd`);
   # skip some files we know aren't built by linking; NOTE: do not skip
   # .a files
   @files = grep
-    {!/\.(txt|xml|dtd|html|gif|jpg|c|h|cc|cpp|cxx|c\+\+|C|py|pl|tgz|tar|gz)$/}
+    {!/\.(txt|xml|dtd|html|gif|jpg|c|h|C|cc|cpp|CPP|c\+\+|cp|cxx|py|pl|tgz|tar|gz)$/}
       @files;
 
   # for each file, extract section '.note.cc1_interceptor'
