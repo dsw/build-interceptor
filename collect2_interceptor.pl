@@ -359,7 +359,7 @@ for my $line (split '\n', $trace_output0) {
 if (@not_intercepted) {
     # bad; some files we were built with were not intercepted
     my $bad = new FileHandle(">>$tmpdir/cc1_bad") or die $!;
-    print $bad "$outfile\n";
+    print $bad "$outfile_abs\n";
     for my $input (@not_intercepted) {
         print $bad "\t$input\n";
     }
@@ -371,7 +371,7 @@ if (@not_intercepted) {
 } else {
     # good
     my $good = new FileHandle(">>$tmpdir/cc1_good") or die $!;
-    print $good "$outfile\n";
+    print $good "$outfile_abs\n";
 }
 
 # Stick this stuff into the object file
