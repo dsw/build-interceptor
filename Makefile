@@ -33,6 +33,7 @@ GCCTOOLS += cc1
 GCCTOOLS += cc1plus
 # at least under gcc 3.4 this just runs ld
 # GCCTOOLS += collect2
+GCCTOOLS += f771
 
 # Script sharing: These tools are intercepted by a script that is also
 # intercepting another tool.

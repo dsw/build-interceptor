@@ -61,6 +61,12 @@ my $outfile = find_output_filename();
 
 my $cc1_note = `$extract_pl .note.cc1_interceptor $outfile 2>/dev/null`;
 if ($? || !$cc1_note) {
+    my $f771_note = `$extract_pl .note.f771_interceptor $outfile 2>/dev/null`;
+    if ($f771_note && !$?) {
+        # Ignore fortran files for now
+        exit 0;
+    }
+
     die "$0: assembled file with no .note.cc1_interceptor: $outfile\n";
 }
 
