@@ -27,7 +27,9 @@ as the preprocessor and compiler had been integrated; however since
 then by looking through the source code I discovered the seemingly
 undocumented flag "--no-integrated-cpp" which solves this problem.
 
-Compilers other than gcc are not supported.
+Compilers other than gcc are not supported.  Gcc 3.4.0 works but
+versions earlier than this seem to have different spec file
+conventions; gcc 3.2.3 seems to not work.
 
 Background ****
 
