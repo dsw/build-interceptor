@@ -182,12 +182,12 @@ for my $line (split '\n', $trace_output0) {
     # mean we did the same work twice.
     my $archive = abs_path($archive0);
     my $ar_id = getCanonIdForFile($archive);
-    warn "getting id for archive: $archive, id:$ar_id\n";
+#      warn "getting id for archive: $archive, id:$ar_id\n";
     my $ar_dir = "$ar_cache/$ar_id";
     unless (-e $ar_dir) {
       mkdirParents($ar_dir);
       my $cmd = "cd $ar_dir; ar x $archive";
-      warn "extracting archive: $cmd\n";
+#        warn "extracting archive: $cmd\n";
       # FIX: this isn't working; I keep going even if the ar fails (?).
       die "failed: $cmd" if system($cmd);
     }
@@ -219,18 +219,18 @@ for my $line (split '\n', $trace_output0) {
   # a warm cache the link time went from 5.9 seconds to 1.4 seconds
   my $cachefile_ok = "$cc1_test_cache_ok/$file_id";
   my $cachefile_bad = "$cc1_test_cache_bad/$file_id";
-  warn "cachefile_ok: '$cachefile_ok', cachefile_bad: '$cachefile_bad'\n";
+#    warn "cachefile_ok: '$cachefile_ok', cachefile_bad: '$cachefile_bad'\n";
   if (-e $cachefile_ok) {
     $built_with_interceptor = 1;
-    warn "\tfound cache ok $cachefile_ok";
+#      warn "\tfound cache ok $cachefile_ok";
     outputToFile($cachefile_ok, $file); # update the cache
   } elsif (-e $cachefile_bad) {
     $built_with_interceptor = 0;
-    warn "\tfound cache bad $cachefile_ok";
+#      warn "\tfound cache bad $cachefile_ok";
     outputToFile($cachefile_bad, $file);  # update the cache
   } else {
     # actually run the extractor
-    warn "\tNOT found in cache";
+#      warn "\tNOT found in cache";
     my $cmd = "$extract .note.cc1_interceptor $file";
     system($cmd);
     $built_with_interceptor = ($?==0);
