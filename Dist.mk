@@ -7,7 +7,7 @@ VERSION := 2004.11.19
 # CICH := :ext:cich:/home/cvs/repository
 CICH := /home/cvs/repository
 
-CVS_TAG := now
+CVS_TAG := build_interceptor_2004_11_19
 
 HERE := $(shell pwd)
 
@@ -20,7 +20,7 @@ default_target:; @echo "You must give an explicit target to make -f Dist.mk"
 # **** make a distribution
 .PHONY: dist
 dist: distclean
-	cvs -d $(CICH) export -D $(CVS_TAG) $(DIR)
+	cvs -d $(CICH) export -r $(CVS_TAG) $(DIR)
 	mv $(DIR) $(DIR)-$(VERSION)
 	tar cvzf $(DIR)-$(VERSION).tar.gz $(DIR)-$(VERSION)
 	chmod 444 $(DIR)-$(VERSION).tar.gz
