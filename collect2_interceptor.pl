@@ -154,6 +154,13 @@ sub check_object_interceptless {
     return 0 == system("$extract .note.ignore_cc1_interceptor $file");
 }
 
+sub check_object_fortran_only {
+    # check that an executable was Fortran, and not C/C++
+    my ($file) = @_;
+    return ((0==system("$extract .note.f771_interceptor $file")) &&
+            (!check_object_intercepted($file)));
+}
+
 sub check_object_has_ld_interception {
     my ($file) = @_;
     return 0 == system("$extract .note.ld_interceptor $file");
@@ -352,7 +359,7 @@ for my $line (split '\n', $trace_output0) {
   } else {
       # actually run the extractor
       #      warn "\tNOT found in cache";
-      $built_with_interceptor = check_object_intercepted($file) || check_object_interceptless($file);
+      $built_with_interceptor = check_object_intercepted($file) || check_object_interceptless($file) || check_object_fortran_only($file);
       if ($built_with_interceptor) {
           outputToFile($cachefile_good, $file); # update the cache
       } else {
