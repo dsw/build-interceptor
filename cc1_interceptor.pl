@@ -6,6 +6,8 @@ use File::Basename;
 use File::Path;
 use File::Spec;
 use File::Copy;
+use Digest::MD5;
+use FileHandle;
 
 # When used as a replacement to the system cc1 or cc1plus this script
 # will intercept the build process and keep a copy of the .i files
@@ -73,6 +75,11 @@ delete $ENV{POSIXLY_CORRECT};
 sub ensure_dir_of_file_exists($) {
     my ($f) = (@_);
     mkpath(dirname($f));
+}
+
+sub md5_file {
+    my ($filename) = @_;
+    return Digest::MD5->new->addfile(new FileHandle($filename))->hexdigest;
 }
 
 my @infiles = grep {/\.ii?$/} @av; # get any input files
@@ -184,6 +191,12 @@ if ($ret) {
   }
 }
 
+if (!-f $outfile) {
+    die "$0: $prog didn't produce $outfile\n";
+}
+
+my $md5 = md5_file($outfile);
+
 # append metadata to output
 my $metadata = <<'END1'         # do not interpolate
         .section        .note.cc1_interceptor,"",@progbits
@@ -220,6 +233,7 @@ $metadata .= <<END3             # do interpolate!
         .ascii "\\n\\ttmpfile:${tmpfile}"
         .ascii "\\n\\tifile:${rel_tmpfile}"
         .ascii "\\n\\tpackage:${pkg} ${timestamp} ${chroot_id}"
+        .ascii "\\n\\tmd5:${md5}"
         .ascii "\\n)\\n"
 END3
   ;
