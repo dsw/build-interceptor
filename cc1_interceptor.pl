@@ -57,13 +57,12 @@ my $pwd = getcwd;
 # output file!  I don't reproduce this behavior.
 
 # If we have been told the original name of the file, use that.
-my $tmpfile;
-my $rel_tmpfile;
+my $orig_filename;
 my @orig_filenames = grep {/^---build_interceptor-orig_filename=.*$/} @av;
 if (@orig_filenames) {
   die "more than one orig_filenames" if ($#orig_filenames > 0);
   $orig_filenames[0] =~ /^---build_interceptor-orig_filename=(.*)$/;
-  $tmpfile = $1;
+  $orig_filename = $1;
 #    warn "tmpfile:${tmpfile}: from --build_interceptor-orig_filenames\n";
   @av = grep {!/^---build_interceptor-orig_filename=.*$/} @av;
 }
@@ -75,6 +74,8 @@ sub ensure_dir_of_file_exists($) {
 
 my @infiles = grep {/\.ii?$/} @av; # get any input files
 my $infile;
+my $tmpfile;
+my $rel_tmpfile;
 if (@infiles) {
   $infile = $infiles[$#infiles]; # the last infile
   die "no such file $infile" unless -f $infile;
@@ -83,8 +84,8 @@ if (@infiles) {
   my $infile_abs = File::Spec->rel2abs($infile);
   die unless -f $infile_abs;
   # make the temp file name
-  if (defined $tmpfile) {
-      $tmpfile = File::Spec->rel2abs($tmpfile);
+  if (defined $orig_filename) {
+      $tmpfile = File::Spec->rel2abs($orig_filename);
   } else {
       $tmpfile = $infile_abs;
   }
@@ -95,13 +96,13 @@ if (@infiles) {
   ensure_dir_of_file_exists($tmpfile);
   # put the contents there
   die "already a file $tmpfile" if -e $tmpfile;
-  die $! if system("cp $infile_abs $tmpfile");
+  copy($infile_abs, $tmpfile) || die $!;
 } else {
   # make the temp file name
   die unless $pwd =~ m|^/|;
   my $tmpdir = $pwd;
-  if ($tmpfile) {
-      $tmpfile = File::Spec->rel2abs($tmpfile);
+  if (defined $orig_filename) {
+      $tmpfile = File::Spec->rel2abs($orig_filename);
       $tmpfile =~ s|\.(.*)$|-$unique.$1|;
   } else {
       $tmpfile = "/STDIN-$unique";
@@ -137,7 +138,7 @@ for (my $i=0; $i<@av; ++$i) {
   } elsif ($av[$i] eq '-dumpbase') {
     if (defined $dumpbase) {
       # I suspect this will never happen; NOTE: it has been tested by
-      # inserting artifical stuff into @av.
+      # inserting artificial stuff into @av.
       $dumpbase .= ":";
       $dumpbase .= $av[$i+1];
     } else {
