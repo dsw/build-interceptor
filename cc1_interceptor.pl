@@ -194,7 +194,7 @@ if ($ret) {
   }
 }
 
-if (!-f $outfile) {
+if ($outfile ne '-' && !-f $outfile) {
     die "$0: $prog didn't produce $outfile\n";
 }
 
