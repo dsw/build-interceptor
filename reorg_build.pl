@@ -18,8 +18,7 @@ die unless -d $ball_build;
 my $ball_preproc = "$home/ball_preproc";
 die unless -d $ball_preproc;
 
-#  my $extract = "$home/build_interceptor/extract_section.pl";
-my $extract = "extract_section.pl";
+my $extract = "$home/extract_section.pl";
 die "Can't find $extract" unless -f $extract;
 
 # tmpfiles that we have seen and that we already have a hardlink to
