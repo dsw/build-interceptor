@@ -96,16 +96,19 @@ sub do_one_file {
       #        die "tmpfile undefined; extractCmd:$extractCmd; comp---\n$comp\n---\n"
       #          unless defined $tmpfile;
       #        print "extracted tmpfile: $tmpfile\n";
+
+      die "What is this line doing?";
       die "bad ld file: $extractCmd"
         unless $tmpfile =~ s|^$home/preproc|$home/preproc|;
 
       # FIX: remove, but leave a note about modifying the filename if
-      # it was built with a different system root.
-      # NOTE: it is not necessary for /disk2/ to exist on your system,
-      # but it did on mine when these .i files where built.  If you
-      # build them yourself, you will have to edit the next line.
-#        die "bad ld file: $extractCmd"
-#          unless $tmpfile = "/disk2/$tmpfile";
+      # it was built with a different system root.  NOTE: it is not
+      # necessary for /disk2/ to exist on your system, but it did on
+      # mine when these .i files where built (it was booted onto the
+      # other disk, which is mounted as /disk2/ on the primary
+      # system).  If you build yours in some strange setup like that,
+      # you may have to edit the next line.
+#        $tmpfile = "/disk2/$tmpfile";
 
       die "no such file tmpfile:$tmpfile"
         unless -f $tmpfile;
