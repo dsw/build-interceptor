@@ -5,12 +5,16 @@ use strict;
 # Reorganize the build and preproc directories into the ball
 # directory.
 my $home = "$ENV{HOME}";
-my $ball = "$home/ball";
-die unless -d $ball;
+# Directory containing one sub-directory where each project was built.
 my $build = "$home/build";
 die unless -d $build;
+# Directory that was used by cc1_interceptor.pl to store the
+# intercepted preprocessed output in .i files.
 my $preproc = "$home/preproc";
 die unless -d $preproc;
+# Directory to put the reorganized output into.
+my $ball = "$home/ball";
+die unless -d $ball;
 
 # http://gcc.gnu.org/onlinedocs/gcc-3.4.0/gcc/Invoking-G--.html#Invoking%20G++
 # "C++ source files conventionally use one of the suffixes .C, .cc,

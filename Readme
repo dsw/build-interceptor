@@ -128,8 +128,12 @@ su
 make -f Intercept.mk off
 exit # the root shell
 
-# Run reorg on the output.
-# FIX: finish this.
+# Run reorg on the output.  The script expects to find 1) a directory
+# for each project buit in $HOME/build, and 2) the .i files generated
+# by interception in $HOME/preproc.  It will store the reoriganized .i
+# and .ld files in $HOME/ball.
+cd; cd build_interceptor
+./reorg_build.pl
 
 Files ****
 
