@@ -1,6 +1,10 @@
 #!/usr/bin/perl -w
 # See License.txt for copyright and terms of use
 use strict;
+use File::Cwd;
+use File::Basename;
+use File::Path;
+use File::Spec;
 
 # When used as a replacement to the system cc1 or cc1plus this script
 # will intercept the build process and keep a copy of the .i files
@@ -18,8 +22,9 @@ my $prog = "${0}_orig";         # compute the new executable name we are calling
 # thing.
 if (grep {/^-E$/} @av) {
 #    warn "non-compile call to $prog, @av\n";
-  system($prog, @av);
-  exit $? >> 8;
+    # system($prog, @av);
+    # exit $? >> 8;
+    exec(@av) || die "$0: failed to exec @av";
 }
 
 # make a unique id for breaking symmetry with any other occurances of
@@ -38,8 +43,7 @@ my @raw_args = @av;
 my $prefix = "$ENV{HOME}/preproc";
 
 # where are we?
-my $pwd = `pwd`;
-chomp $pwd;
+my $pwd = getcwd;
 
 # Input behavior:
 # If you specify multiple input files, it just uses the last one.
@@ -65,8 +69,7 @@ if (@orig_filenames) {
 
 sub ensure_dir_of_file_exists($) {
     my ($f) = (@_);
-    $f =~ s|/[^/]*$|/|;
-    die if system("mkdir --parents $f");
+    mkpath(dirname($f));
 }
 
 my @infiles = grep {/\.ii?$/} @av; # get any input files
@@ -76,18 +79,13 @@ if (@infiles) {
   die "no such file $infile" unless -f $infile;
   @av = grep {!/\.ii?$/} @av;   # remove from @av
   # we need an absolute name for $infile
-  my $infile_abs = $infile;
-  if ($infile !~ m|^/|) {
-    $infile_abs = "$pwd/$infile_abs";
-  }
+  my $infile_abs = File::Spec::rel2abs($infile);
   die unless -f $infile_abs;
   # make the temp file name
   if (defined $tmpfile) {
-    if ($tmpfile !~ m|^/|) {
-      $tmpfile = "$pwd/$tmpfile";
-    }
+      $tmpfile = File::Spec::rel2abs($tmpfile);
   } else {
-    $tmpfile = $infile_abs;
+      $tmpfile = $infile_abs;
   }
   $tmpfile =~ s|\.(.*)$|-$unique.$1|;
   die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
@@ -102,12 +100,10 @@ if (@infiles) {
   die unless $pwd =~ m|^/|;
   my $tmpdir = "$pwd";
   if ($tmpfile) {
-    if ($tmpfile !~ m|^/|) {
-      $tmpfile = "$pwd/$tmpfile";
-    }
-    $tmpfile =~ s|\.(.*)$|-$unique.$1|;
+      $tmpfile = File::Spec::rel2abs($tmpfile);
+      $tmpfile =~ s|\.(.*)$|-$unique.$1|;
   } else {
-    $tmpfile = "/STDIN-$unique";
+      $tmpfile = "/STDIN-$unique";
   }
   die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
   $tmpfile = "$tmpdir$tmpfile";
