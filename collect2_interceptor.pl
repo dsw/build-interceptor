@@ -44,8 +44,8 @@ mkpath($tmpdir);
 # directory where we cache the "built with cc1" test
 my $cc1_test_cache = "$tmpdir/cc1_test";
 mkpath($cc1_test_cache);
-my $cc1_test_cache_ok = "$cc1_test_cache/ok/";
-mkpath($cc1_test_cache_ok);
+my $cc1_test_cache_good = "$cc1_test_cache/good/";
+mkpath($cc1_test_cache_good);
 my $cc1_test_cache_bad = "$cc1_test_cache/bad/";
 mkpath($cc1_test_cache_bad);
 
@@ -263,10 +263,10 @@ for my $line (split '\n', $trace_output0) {
   # check the cc1 test cache; NOTE: in case you are afraid of the
   # complexity of this, for a simple C++ hello world on my system with
   # a warm cache the link time went from 5.9 seconds to 1.4 seconds
-  my $cachefile_ok = "$cc1_test_cache_ok/$file_id";
+  my $cachefile_good = "$cc1_test_cache_good/$file_id";
   my $cachefile_bad = "$cc1_test_cache_bad/$file_id";
 #    warn "cachefile_ok: '$cachefile_ok', cachefile_bad: '$cachefile_bad'\n";
-  if (-e $cachefile_ok) {
+  if (-e $cachefile_good) {
     $built_with_interceptor = 1;
 #      warn "\tfound cache ok $cachefile_ok";
     # outputToFile($cachefile_ok, $file); # update the cache
@@ -279,7 +279,7 @@ for my $line (split '\n', $trace_output0) {
       #      warn "\tNOT found in cache";
       $built_with_interceptor = check_object_intercepted($file) || check_object_interceptless($file);
       if ($built_with_interceptor) {
-          outputToFile($cachefile_ok, $file); # update the cache
+          outputToFile($cachefile_good, $file); # update the cache
       } else {
           outputToFile($cachefile_bad, $file); # update the cache
       }
