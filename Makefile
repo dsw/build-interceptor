@@ -50,10 +50,11 @@ clean: clean-intercept.progs clean-softlinks
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
-	@if test -w intercept.progs; then      \
-          rm -f intercept.progs;               \
-        else                                   \
+	@if test -w intercept.progs; then  \
+          C="rm -f intercept.progs"; echo $$C; $$C; \
+        elif test -e intercept.progs; then \
           echo "Do not attempt to change intercept.progs while interception is on."; \
+        else echo "No intercept.progs to remove."; \
         fi
 
 .PHONY: clean-softlinks
