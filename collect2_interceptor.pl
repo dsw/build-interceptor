@@ -248,7 +248,7 @@ if (!-e $outfile_abs) {
     exit($exit_value || 1);
 }
 
-my $executable = -x $outfile_abs &&
+my $executable_p = -x $outfile_abs &&
  $outfile_abs !~ /[.](?:so(?:[.]\d+)*(?:-UTF8)?|la|al|o|lo|os|oS|po|opic|pic_o|sho)$/;
 
 if (do_not_add_interceptions_to_this_file($outfile_abs)) {
@@ -381,8 +381,10 @@ if (@not_intercepted) {
         print $bad "\t$input\n";
     }
 
-    # categorize into executable and non-executable
-    my $bad_ftype = $executable ? "exec" : "nonexec";
+    # categorize into executable and non-executable (call it non-executable to
+    # be conservative, since non-executables are more dangerous and we're
+    # checking for dangerous situations)
+    my $bad_ftype = $executable_p ? "exec" : "nonexec";
     $bad = new FileHandle(">>$tmpdir/cc1_bad_${bad_ftype}") or die $!;
     print $bad "$outfile_abs\n";
     for my $input (@not_intercepted) {
