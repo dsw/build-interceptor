@@ -220,6 +220,65 @@ been inlined.  I suppose it would work to remove it from all stages,
 probably using the gcc spec file mechanism, but I don't consider it
 worth the complexity and possibility of failure.
 
+Goals and amount of interception ****************
+
+What tools must be intercepted during the build process depends on
+what your goal is.  You can turn off the interception of tools by
+removing them from intercept.files after it is built.
+
+For a file-by-file analysis of source code, you simply need the source
+files after pre-processing.  It is sufficient to just intercept
+cc1/cc1plus and (after running reorg_build.pl) look at the resulting
+.i files.
+
+Note that even if you do not intercept cpp/cpp0/tradcpp0/gcc -E, the
+gcc spec file will tell gcc to not pass -P which means there should
+always be line directives in the .i file.  So if your analysis finds
+an error, it can always map it back to the original source line.
+
+For a whole-program analysis of all the source in the package, you
+need to know for each executable which .i files went into it.  Each
+such executable (and any other files produced by the linker) will
+result in a .ld file which lists all the .i files that went into it
+that were compiled during the build.
+
+For a really whole-program analysis that also looks at libraries, or
+if you wanted to modify the .i files, recompile, and re-link, you need
+to know *all* the .o files that went into an executable.  For this you
+will need to also intercept collect2, which is implemented; however
+the script reorg.pl would also have to be extended to extract the
+linker --trace output, but this is straightforward.
+
+You would want to intercept 'as' to make a mapping between .s files
+output by cc1/cc1plus and .o files linked together by the linker as
+well as the command-line.  It would probably be best to insert the
+metadata after assembly using objcopy, just as with collect2.
+
+If you wanted to modify the original source you would need the
+preprocessing command line as well, and so would have to intercept
+cpp/cpp0/tradcpp0/gcc -E; probably you would insert the metadata into
+the file as the initializer of a global string variable with an
+unusual name.
+
+"Replaying" a build process from the interception record is probably
+trickier than one might at first imagine: build processes sometimes do
+strange things such as move files around.  You would have to intercept
+mv and perhaps rm etc.  I have not done this but it is not hard given
+the infrastructure.  One thing you will likely want is for the build
+process to be deterministic, so the make interceptor removes -j from
+the command line; try out the TestMake.mk makefile with and without
+it.
+
+You might have to experiment to figure out exactly what which layer to
+intercept.  I am using gcc 3.4.0 and it seems that neither cpp nor gcc
+-E call each other nor a program called cpp0, which seems to not exist
+anymore; however perhaps gcc 2.95.3 does.  Similarly, ld does not call
+collect2, though the gcc source code suggests in a comment that they
+are interchangeable; why do the both exist?  To assist in this
+experimentation, each interceptor script prints at the start its 1)
+name, 2) parent process id, 3) own process id and 4) arguments all to
+standard error (this may have been commented out, just uncomment).
+
 Acknowledgments ****************
 
 I used code and ideas for build-process interception from two
