@@ -43,9 +43,9 @@ sub find_output_filename {
     return $outfile;
 }
 
-# Just delegate to the real thing.
+# delegate to the real thing.
 #close (LOG) or die $!;          # LOUD
-system $prog (@av);
+system $prog ($0, @av);
 
 my $ret = $?;
 my $exit_value = $ret >> 8;
