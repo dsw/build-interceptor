@@ -23,8 +23,8 @@ check:
 check-interception:
 	@echo "----------------------------------------"
 	-$(EXTRACT) .note.cc1_interceptor a.out
-	@echo "----------------------------------------"
-	-$(EXTRACT) .note.collect2_interceptor a.out
+# 	@echo "----------------------------------------"
+# 	-$(EXTRACT) .note.collect2_interceptor a.out
 	@echo "----------------------------------------"
 	-$(EXTRACT) .note.ld_interceptor a.out
 
