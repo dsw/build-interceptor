@@ -1,3 +1,5 @@
+#!/usr/bin/make -f
+
 # This makefile will move your system gcc toolchain away and point
 # softlinks at the intereceptor scripts.  Generally, run targets in
 # this makefile as root.  Use Makefile to build intercept.progs as a
