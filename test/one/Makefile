@@ -20,10 +20,16 @@ clean:
 	rm -f $(TOCLEAN)
 	rm -rf /home/dsw/preproc/*
 
-check:
+check-hello:
 	./hello
 	/home/dsw/build_interceptor/extract_section.pl .note.cc1_interceptor hello
 	/home/dsw/build_interceptor/extract_section.pl .note.collect2_interceptor hello
+	/home/dsw/build_interceptor/extract_section.pl .note.ld_interceptor hello
+
+check-hello2:
+	/home/dsw/build_interceptor/extract_section.pl .note.cc1_interceptor hello2
+	/home/dsw/build_interceptor/extract_section.pl .note.collect2_interceptor hello2
+	/home/dsw/build_interceptor/extract_section.pl .note.ld_interceptor hello2
 
 GCC := gcc
 GPP := g++

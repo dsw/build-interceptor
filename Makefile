@@ -18,7 +18,6 @@ USRTOOLS += gcc
 USRTOOLS += g++
 USRTOOLS += cpp
 USRTOOLS += as
-# I don't know if this one is necessary.
 USRTOOLS += ld
 
 # Internal gcc tools usually not called by the user.
@@ -27,7 +26,8 @@ GCCTOOLS += cpp0
 GCCTOOLS += tradcpp0
 GCCTOOLS += cc1
 GCCTOOLS += cc1plus
-GCCTOOLS += collect2
+# at least under gcc 3.4 this just runs ld
+# GCCTOOLS += collect2
 
 # Script sharing: These tools are intercepted by a script that is also
 # intercepting another tool.

@@ -19,8 +19,13 @@ if (grep {/^-E$/} @av) {
   exit $? >> 8;
 }
 
+# make a unique id for breaking symmetry with any other occurances of
+# this process
+my $time0 = time;
+my $unique = "$$-$time0";
+
 #  # print out our raw args
-#  open OUT, ">>build.$$.cc1_out" or die $!;
+#  open OUT, ">>build.$unique.cc1_out" or die $!;
 #  print OUT "---raw args---\n";
 #  print OUT (join("\n", @av), "\n---end-args---\n");
 my @raw_args = @av;
@@ -74,7 +79,7 @@ if (@infiles) {
   } else {
     $tmpfile = $infile_abs;
   }
-  $tmpfile =~ s|\.(.*)$|-$$.$1|;
+  $tmpfile =~ s|\.(.*)$|-$unique.$1|;
   die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
   $tmpfile = "$prefix$tmpfile";
   my $tmpdir = $tmpfile;
@@ -92,9 +97,9 @@ if (@infiles) {
     if ($tmpfile !~ m|^/|) {
       $tmpfile = "$pwd/$tmpfile";
     }
-    $tmpfile =~ s|\.(.*)$|-$$.$1|;
+    $tmpfile =~ s|\.(.*)$|-$unique.$1|;
   } else {
-    $tmpfile = "/STDIN-$$";
+    $tmpfile = "/STDIN-$unique";
   }
   die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
   $tmpfile = "$tmpdir$tmpfile";
