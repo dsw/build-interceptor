@@ -11,7 +11,30 @@ use strict;
 #print LOG $splash;              # LOUD
 
 my @av = @ARGV;                 # @ARGV has magic, so copy it
-my $prog = "${0}_orig";         # compute the new executable name we are calling
+
+my $dollar_zero = ${0};
+
+my $l;
+# if gcc is a link to something that's not an interceptor (e.g. gcc-3.3), use
+# gcc-3.3_orig instead of gcc_orig
+$l = readlink($dollar_zero);
+if ($l && $l !~ /interceptor/) {
+    $dollar_zero = $l;
+}
+# quick hack to support triple links (/usr/bin/cc -> /etc/alternatives/cc ->
+# /usr/bin/gcc -> /usr/bin/gcc-3.3).  Do a nice recursive solution in the
+# future.
+$l = readlink($dollar_zero);
+if ($l && $l !~ /interceptor/) {
+    $dollar_zero = $l;
+}
+$l = readlink($dollar_zero);
+if ($l && $l !~ /interceptor/) {
+    $dollar_zero = $l;
+}
+
+
+my $prog = "${dollar_zero}_orig"; # compute the new executable name we are calling
 
 # Get rid of any -P arguments.
 @av = grep {!/^-P$/} @av;
