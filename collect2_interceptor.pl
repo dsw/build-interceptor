@@ -235,15 +235,16 @@ for my $line (split '\n', $trace_output0) {
       # ignore for now
       next;
       # $file = $1;
-  } elsif ($line =~ m/^(.+\.oS?)$/) {
+  } elsif ($line =~ m/^(.+\.(?:o|oS|lo))$/) {
       # a .o file not from an archive, like this:
-      # /usr/lib/crt1.o
+      #   /usr/lib/crt1.o
+      # Can also include .lo (libtool object) files.
       $file = canonicalize($1);
   } elsif ($line =~ m/^(.+\.so(?:[.][0-9]+)*)$/) {
       # $file = canonicalize($1);
       next;
   } else {
-      die "unknown trace_output line: $line";
+      die "unknown trace_output line: $line\n\nTrace output:\n$trace_output0";
   }
 
   # get the file id
