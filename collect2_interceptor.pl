@@ -72,7 +72,11 @@ for (my $i=0; $i<@av; ++$i) {
     die "-o without file" unless defined $outfile;
   }
 }
-die "no outfile specified" unless defined $outfile;
+
+#die "no outfile specified" unless defined $outfile;
+# Karl seems to want this feature
+$outfile = 'a.out' unless defined $outfile;
+
 my $outfile_abs = $outfile;
 if ($outfile_abs !~ m|^/|) {
   $outfile_abs = "$pwd/$outfile";

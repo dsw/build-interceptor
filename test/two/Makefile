@@ -1,5 +1,5 @@
 EXE :=
-EXE += foo
+EXE += a.out
 
 EXTRACT := ../../extract_section.pl
 
@@ -8,7 +8,7 @@ all: $(EXE)
 
 .PHONY: clean
 clean:
-	rm -f *.o foo
+	rm -f *.o a.out
 
 .PHONY: clean-build_interceptor
 clean-build_interceptor:
@@ -17,19 +17,21 @@ clean-build_interceptor:
 
 .PHONY: check
 check:
-	./foo
+	./a.out
 
 .PHONY: check-interception
 check-interception:
 	@echo "----------------------------------------"
-	-$(EXTRACT) .note.cc1_interceptor foo
+	-$(EXTRACT) .note.cc1_interceptor a.out
 	@echo "----------------------------------------"
-	-$(EXTRACT) .note.collect2_interceptor foo
+	-$(EXTRACT) .note.collect2_interceptor a.out
 	@echo "----------------------------------------"
-	-$(EXTRACT) .note.ld_interceptor foo
+	-$(EXTRACT) .note.ld_interceptor a.out
 
-foo: gronk.o blort.o
-	/usr/bin/c++ -o $@ $^
+a.out: gronk.o blort.o
+	/usr/bin/c++ $^
+# 	/usr/bin/c++ -o $@ $^
 
 %.o: %.cc
-	/usr/bin/c++ -c -o $@ $<
+	/usr/bin/c++ -c $<
+# 	/usr/bin/c++ -c -o $@ $<
