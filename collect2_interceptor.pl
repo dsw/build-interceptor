@@ -2,8 +2,15 @@
 # See License.txt for copyright and terms of use
 use strict;
 use FindBin;
-use lib "$FindBin::Bin/../lib";
+use Cwd;
 use Cwd 'abs_path';
+use File::Spec;
+use File::Path;                 # provides mkpath
+use File::Basename;
+use File::Temp;
+use FileHandle;
+use Digest::MD5;
+use Memoize;
 
 # When used as a replacement to the system collect2 will just pass the
 # arguments through.
@@ -29,36 +36,25 @@ my $unique = "$$-$time0";
 
 # directory for all build interceptor temporaries
 my $tmpdir_interceptor = "$ENV{HOME}/build_interceptor_tmp";
-mkdirParents($tmpdir_interceptor);
+mkpath($tmpdir_interceptor);
 # directory for all the temporaries relevant to collect2 interceptor
 my $tmpdir = "$tmpdir_interceptor/collect2";
-mkdirParents($tmpdir);
+mkpath($tmpdir);
 
 # directory where we cache the "built with cc1" test
 my $cc1_test_cache = "$tmpdir/cc1_test";
-mkdirParents($cc1_test_cache);
+mkpath($cc1_test_cache);
 my $cc1_test_cache_ok = "$cc1_test_cache/ok/";
-mkdirParents($cc1_test_cache_ok);
+mkpath($cc1_test_cache_ok);
 my $cc1_test_cache_bad = "$cc1_test_cache/bad/";
-mkdirParents($cc1_test_cache_bad);
+mkpath($cc1_test_cache_bad);
 
 # directory where archives are unpacked
 my $ar_cache = "$tmpdir/ar_cache";
-mkdirParents($ar_cache);
-
-# directory where elf temporaries go before being inserted as an ELF
-# section into the output file
-my $elftemp = "$tmpdir/elf_tmp";
-mkdirParents($elftemp);
-
-# directory where bad temporaries go before being inserted as an ELF
-# section into the output file
-my $badtemp = "$tmpdir/bad_tmp";
-mkdirParents($badtemp);
+mkpath($ar_cache);
 
 # where are we?
-my $pwd = `pwd`;
-chomp $pwd;
+my $pwd = getcwd;
 
 # Find the output file.
 my $outfile;
@@ -68,7 +64,7 @@ for (my $i=0; $i<@av; ++$i) {
     if ($av[$i] eq '-o') {
       $outfile = $av[$i+1];
       ++$i;
-    } elsif ($av[$i] =~ /^-o(.*)$/) {
+    } elsif ($av[$i] =~ /^-o(.+)$/) {
       $outfile = $1;
     } else {
       die "should have matched: $av[$i]"; # something is very wrong
@@ -77,19 +73,61 @@ for (my $i=0; $i<@av; ++$i) {
   }
 }
 
+
+sub md5_file {
+    my ($filename) = @_;
+    return Digest::MD5->new->addfile(new FileHandle($filename))->hexdigest;
+}
+memoize('md5_file');
+
+sub canonicalize {
+    my ($filename) = @_;
+    if (!-f $filename) {
+        die "$0: can't find $filename";
+    }
+    my $canon = Cwd::realpath(File::Spec->rel2abs($filename));
+    if (!$canon) {
+        die "$0: can't find $filename";
+    }
+    if (!-f $canon) {
+        die "$0: can't find $filename [$canon]";
+    }
+    return $canon;
+}
+
+sub archive_extract_object {
+    my ($archive, $object) = @_;
+    if (!-f $archive) {
+        die "$0: archive not found: $archive";
+    }
+
+    my $md5sum = md5_file($archive);
+    my $dname = "$ar_cache/$md5sum";
+
+    if (!-d $dname) {
+        mkdir $dname || die;
+        if (system("cd $dname && ar x $archive")) {
+            die;
+        }
+    }
+
+    my $file = "$dname/$object";
+    if (! -f $file) {
+        die "Couldn't find archive $archive object $object";
+    }
+
+    return $file;
+}
+
 #die "no outfile specified" unless defined $outfile;
 # Karl seems to want this feature
 $outfile = 'a.out' unless defined $outfile;
 
-my $outfile_abs = $outfile;
-if ($outfile_abs !~ m|^/|) {
-  $outfile_abs = "$pwd/$outfile";
-}
+my $outfile_abs = File::Spec->rel2abs($outfile);
 
 # Temporary directory where we put the file that will become an ELF
 # section.
-my $tmpfile = "$elftemp/elftmp.$unique";
-die "tmpfile:$tmpfile exists !?" if -e $tmpfile;
+my $tmpfile = new File::Temp(TEMPLATE=>"/tmp/elf.XXXXXXXXX");
 
 # Print out the files that are linked in.
 unshift @av, "--trace";
@@ -123,25 +161,22 @@ $trace_output =~ s|^(.*)$|\t\t$1|gm;
 # Make sure ends in a newline, since we count on that below for tab quoting.
 die unless $trace_output =~ m|\n$|;
 
-touchFile($tmpfile);
-open (TMP, ">$tmpfile") or die $!;
-#  print TMP $trace_output;
-print TMP <<END1                # do interpolate!
+print $tmpfile <<END           # do interpolate!
 (
 \tpwd:${pwd}
 \tdollar_zero:$0
 \traw_args: (
-END1
+END
   ;
 
 for my $a (@raw_args) {
-print TMP <<END2b          # do interpolate!
+print $tmpfile <<END           # do interpolate!
 \t\t${a}
-END2b
+END
   ;
 }
 
-print TMP <<END3                # do interpolate!
+print $tmpfile <<END           # do interpolate!
 \t)
 \trun_args:${run_args}
 \tcmd:${cmd}
@@ -151,15 +186,14 @@ print TMP <<END3                # do interpolate!
 \ttrace_output: (
 ${trace_output}\t)
 )
-END3
+END
   ;
-close (TMP) or die $!;
+$tmpfile->close();
 
 # You can't re-use a section name, and it seems that sometimes both
 # collect2 and ld are called on the same file.  Update: It seems that
 # collect2 calls ld.
-my $sec_name = `basename $0`;
-chomp $sec_name;
+my $sec_name = basename($0);
 die "bad sec_name:$sec_name:" unless
   $sec_name eq 'ld' ||
   $sec_name eq 'collect2';
@@ -177,65 +211,35 @@ for my $line (split '\n', $trace_output0) {
   next if $line =~ m/: mode elf_i386$/;
 
   my $file;
-  if ($line =~ m/^\((.*)\)(.*)$/) {
-    # a .o file from an archive, like this:
-    # (/opt/gcc-X.XX/lib/gcc/i686-pc-linux-gnu/3.4.0/../../../libstdc++.a)globals_io.o
-    my $archive0 = $1;
-    # FIX: canonicalize the pathname
-    my $file2 = $2;
-    # see if the archive exists
-    die "Something is wrong, no such archive $archive0" unless -f $archive0;
-    # get the file out of the archive; NOTE: we want this name to be
-    # purely a function of the archive and contained file so that
-    # caching below works; We have to use the inode and modification
-    # times as the identity of the archive rather than its name for
-    # the same reasons we have to do that for the cache; Note that I
-    # do *not* canonicalize the filename within the archive because it
-    # is relative to the archive.  Not sure exactly how names work
-    # within an archive, but I don't think I have much choice and
-    # having two entries with the same name in an archive would only
-    # mean we did the same work twice.
-#    warn "archive0 '$archive0'";
-    die "bad filename ? $archive0"
-      unless $archive0 =~ m|^(.*?)([^/]*)$|;
-    my $ardir0 = $1;
-    my $arfile0 = $2;
-    die unless defined $ardir0 && defined $arfile0;
-    # Map the empty string to "."; why do people put such
-    # non-orthogonalities into their APIs?
-    $ardir0 = "." unless length $ardir0;
-    my $ardir = abs_path($ardir0);
-    my $archive = "$ardir/$arfile0";
-    die "no such file $archive" unless -f $archive;
-    my $ar_id = getCanonIdForFile($archive);
-#      warn "getting id for archive: $archive, id:$ar_id\n";
-    my $ar_dir = "$ar_cache/$ar_id";
-    unless (-e $ar_dir) {
-      mkdirParents($ar_dir);
-      my $cmd = "cd $ar_dir; ar x $archive";
-#        warn "extracting archive: $cmd\n";
-      # FIX: this isn't working; I keep going even if the ar fails (?).
-      die "failed: $cmd" if system($cmd);
-    }
-    $file = "$ar_dir/$file2";
-  } elsif ($line =~ m/^-l\S* \((.*)\)$/) {
-    # one of these strange lines:
-    # -lm (/usr/lib/libm.so)
-    # -lgtk (/opt/gnome/lib/libgtk.so)
-    $file = $1;
-    # FIX: canonicalize the pathname
-  } elsif ($line =~ m/^(.*)$/) {
-    # a .o file not from an archive, like this:
-    # /usr/lib/crt1.o
-    $file = $1;
-    # FIX: canonicalize the pathname
+  if ($line =~ m/^\((.*[.]a)\)([^()]+[.]oS?)$/) {
+      # .o from .a:
+      # (/path/archive.a)object.o
+      my $archive = canonicalize($1);
+      my $object = $2;
+
+      $file = archive_extract_object($archive, $object);
+  } elsif ($line =~ m/^-l[^ .()]+ \(([^()]+[.]so(?:[.][0-9]+)*)\)$/) {
+      # shared libraries:
+      # -lm (/usr/lib/libm.so)
+      # -lgtk (/opt/gnome/lib/libgtk.so)
+      # ignore for now
+      next;
+      # $file = $1;
+  } elsif ($line =~ m/^(.+\.oS?)$/) {
+      # a .o file not from an archive, like this:
+      # /usr/lib/crt1.o
+      $file = canonicalize($1);
+  } elsif ($line =~ m/^(.+\.so(?:[.][0-9]+)*)$/) {
+      # $file = canonicalize($1);
+      next;
   } else {
-    die;
+      die "unknown trace_output line: $line";
   }
 
   # get the file id
   die "Something is wrong, no such file :$file:" unless -f $file;
-  my $file_id = getCanonIdForFile($file);
+  # my $file_id = getCanonIdForFile($file);
+  my $file_id = md5_file($file);
 
   # see if the file was the result of compiling with build
   # interception turned on
@@ -275,36 +279,26 @@ for my $line (split '\n', $trace_output0) {
 }
 
 if (@not_intercepted) {
-  # bad; some files we were built with were not intercepted
+    # bad; some files we were built with were not intercepted
+    my $bad = new FileHandle(">>$tmpdir/cc1_bad") or die $!;
+    print $bad "$outfile\n";
+    for my $input (@not_intercepted) {
+        print $bad "\t$input\n";
+    }
 
-  # put a bad file into the global space
-  open (BAD, ">>$tmpdir/cc1_bad") or die $!;
-  print BAD "$outfile\n";
-  for my $input (@not_intercepted) {
-    print BAD "\t$input\n";
-  }
-  close (BAD) or die $!;
-
-  # put a bad section into the file
-  my $bad_tmpfile = "$badtemp/badtmp.$unique";
-  die "bad_tmpfile:$bad_tmpfile exists !?" if -e $bad_tmpfile;
-  touchFile($bad_tmpfile);
-  open (BAD, ">$bad_tmpfile") or die $!;
-  for my $input (@not_intercepted) {
-    print BAD "$input\n";
-  }
-  close (BAD) or die $!;
-  my @objcopy_cmd =
-    ('objcopy', $outfile_abs, '--add-section', ".note.${sec_name}_interceptor_bad=$bad_tmpfile");
-  #warn "collect2_interceptor.pl: @objcopy_cmd";
-  die $! if system(@objcopy_cmd);
-  # Delete the temporary file.
-  unlink $bad_tmpfile or die $!;
+    # put a bad section into the file
+    my $bad_tmpfile = new File::Temp(TEMPLATE=>"/tmp/bad-XXXXXXXXX");
+    for my $input (@not_intercepted) {
+        print $bad_tmpfile "$input\n";
+    }
+    $bad_tmpfile->close();
+    my @objcopy_cmd =
+      ('objcopy', $outfile_abs, '--add-section', ".note.${sec_name}_interceptor_bad=$bad_tmpfile");
+    die $! if system(@objcopy_cmd);
 } else {
-  # good
-  open (GOOD, ">>$tmpdir/cc1_good") or die $!;
-  print GOOD "$outfile";
-  close (GOOD) or die $!;
+    # good
+    my $good = new FileHandle(">>$tmpdir/cc1_good") or die $!;
+    print $good "$outfile\n";
 }
 
 # Stick this stuff into the object file
@@ -315,9 +309,6 @@ my @objcopy_cmd =
   ('objcopy', $outfile_abs, '--add-section', ".note.${sec_name}_interceptor=$tmpfile");
 #warn "collect2_interceptor.pl: @objcopy_cmd";
 die $! if system(@objcopy_cmd);
-
-# Delete the temporary file.
-unlink $tmpfile or die $!;
 
 #close (LOG) or die $!;          # LOUD
 exit $exit_value;
@@ -340,30 +331,18 @@ sub getCanonIdForFile {
   return $file_id;
 }
 
-# ensure a directory exists no matter how many levels deep we have to
-# make
-sub mkdirParents {
-  my ($dirname) = @_;
-  # NOTE: unlike normal mkdir, this works even if it already exists
-  system ("mkdir --parents $dirname") == 0 or die $!;
-}
-
-# why don't utilities like touch make all the intervening directories?
 sub touchFile {
-  my ($file) = @_;
-  my $dirname = `dirname $file`;
-  mkdirParents($dirname);
-  system ("touch $file") == 0 or die $!;
+    my ($file) = @_;
+    mkpath(dirname($file));
+    new FileHandle(">$file") || die $!;
 }
 
 sub outputToFile {
-  my ($file, $data) = @_;
-  die unless defined $file && defined $data;
-  my $dirname = `dirname $file`;
-  mkdirParents($dirname);
-  open (FILE, ">>$file") or die $!;
-  print FILE $data;
-  close (FILE) or die $!;
+    my ($file, $data) = @_;
+    die unless defined $file && defined $data;
+    mkpath(dirname($file));
+    my $f = new FileHandle(">>$file") || die $!;
+    print $f $data;
 }
 
 # We have to pass to the shell in order to collect from standard err
