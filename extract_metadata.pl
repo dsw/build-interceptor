@@ -4,12 +4,8 @@
 use strict;
 use FindBin;
 
-# Given an input ELF file infile and a non-existant directory name
-# outdir:
-# 1) read the notes and extract the names of the .i files embedded and
-#   the sections where embedded
-# 2) extract those sections and put them all into a new directory of
-#   the given name
+# Given an input ELF file infile read the notes and extract the names
+# of the .i files embedded and the sections where embedded
 
 # NOTE: I don't know why, but emacs CPerl mode does not work for this
 # file.
