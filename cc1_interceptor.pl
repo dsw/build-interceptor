@@ -67,6 +67,9 @@ if (@orig_filenames) {
   @av = grep {!/^---build_interceptor-orig_filename=.*$/} @av;
 }
 
+# POSIXLY_CORRECT breaks objcopy
+delete $ENV{POSIXLY_CORRECT};
+
 sub ensure_dir_of_file_exists($) {
     my ($f) = (@_);
     mkpath(dirname($f));

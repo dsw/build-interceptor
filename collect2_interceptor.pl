@@ -68,6 +68,9 @@ if (!-f $extract_pl) {
 }
 my $extract = "$extract_pl -t -q";
 
+# POSIXLY_CORRECT breaks objcopy
+delete $ENV{POSIXLY_CORRECT};
+
 sub find_output_filename {
     my $outfile;
 
