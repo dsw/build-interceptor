@@ -39,10 +39,12 @@ if ($l && $l !~ /interceptor/) {
     $dollar_zero = $l;
 }
 
-if ("@ARGV" =~ /-E -P -\s*$/) {
-    # Hack for glibc: don't output line markers if the program is just using
-    # gcc to get preprocessor definitions.  What glibc does is:
+if ("@ARGV" =~ /-E -P -\s*$/ || grep {$_ eq '-V'} @ARGV) {
+    # -E -P kludge: don't output line markers if the program is just using gcc
+    # to get preprocessor definitions.  What glibc does is:
     #     echo '#include <linux/version.h>\nUTS_RELEASE' | gcc -E -P -
+    # -V kludge: with -V argument (which must be first): just call gcc-VERSION
+    # (which is also intercepted)
     exec("${dollar_zero}_orig", @ARGV) || die;
 }
 
