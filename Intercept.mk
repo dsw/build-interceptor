@@ -1,6 +1,6 @@
 # This makefile will move your system gcc toolchain away and point
 # softlinks at the intereceptor scripts.  Generally, run targets in
-# this makefile as root.  Use Makefile to build intercept.files as a
+# this makefile as root.  Use Makefile to build intercept.progs as a
 # normal user.
 
 ifneq ($(notdir ${PWD}),build_interceptor)
@@ -9,7 +9,7 @@ endif
 
 # Print the current interception state.
 .PHONY: print
-print: intercept.files
+print: intercept.progs
 	@echo "Interception is:"
 	@for F in `cat $<`; do        \
           if test -e $${F}_orig; then \
@@ -27,7 +27,7 @@ print: intercept.files
 # If you don't run these two targets as root then some non-atomic
 # partial result may occur, so I check for you.
 .PHONY: on
-on: intercept.files
+on: intercept.progs
 	@if test `whoami` != root; then echo "run this target as root"; false; fi
 	chmod a-w $<
 	@for F in `cat $<`; do                                \
@@ -39,7 +39,7 @@ on: intercept.files
         done
 
 .PHONY: off
-off: intercept.files
+off: intercept.progs
 	@if test `whoami` != root; then echo "run this target as root"; false; fi
 	@for F in `cat $<`; do                            \
           if test -e $${F}_orig; then                     \

@@ -82,7 +82,7 @@ RedHat7.3.Readme.
 cd; cd build_interceptor
 make
 # Now check that the files you want to intercept are generated in
-# intercept.files.  You can change this file if you need to, but only
+# intercept.progs.  You can change this file if you need to, but only
 # do it while build interception is off!  Otherwise you can get into
 # an inconsistent state.
 
@@ -224,7 +224,7 @@ Goals and amount of interception ****************
 
 What tools must be intercepted during the build process depends on
 what your goal is.  You can turn off the interception of tools by
-removing them from intercept.files after it is built.
+removing them from intercept.progs after it is built.
 
 For a file-by-file analysis of source code, you simply need the source
 files after pre-processing.  It is sufficient to just intercept

@@ -40,20 +40,20 @@ SOFTLINKS += ld_interceptor.pl
 
 .PHONY: all
 # NOTE: for a subtle reason, softlinks should come before
-# intercept.files: if you run this target after interception is
+# intercept.progs: if you run this target after interception is
 # already happening, the tools that point to softlinks here that are
 # not built yet will not be included.
-all: softlinks intercept.files
+all: softlinks intercept.progs
 
 .PHONY: clean
-clean: clean-intercept.files clean-softlinks
+clean: clean-intercept.progs clean-softlinks
 
-.PHONY: clean-intercept.files
-clean-intercept.files:
-	@if test -w intercept.files; then      \
-          rm -f intercept.files;               \
+.PHONY: clean-intercept.progs
+clean-intercept.progs:
+	@if test -w intercept.progs; then      \
+          rm -f intercept.progs;               \
         else                                   \
-          echo "Do not attempt to change intercept.files while interception is on."; \
+          echo "Do not attempt to change intercept.progs while interception is on."; \
         fi
 
 .PHONY: clean-softlinks
@@ -64,16 +64,16 @@ clean-softlinks:
 clean-preproc:
 	rm -rf ${HOME}/preproc/*
 
-intercept.files: clean-intercept.files
+intercept.progs: clean-intercept.progs
 	for F in $(USRTOOLS); do         \
           if which $$F &>/dev/null; then \
-            echo "to intercept.files $$F"; \
+            echo "to intercept.progs $$F"; \
             which $$F >> $@;             \
           fi                             \
         done
 	for F in $(GCCTOOLS); do                      \
           if test -e `gcc -print-prog-name=$$F`; then \
-            echo "to intercept.files $$F";            \
+            echo "to intercept.progs $$F";            \
             gcc -print-prog-name=$$F >> $@;           \
           fi                                          \
         done
