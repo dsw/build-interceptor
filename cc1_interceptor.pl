@@ -53,6 +53,7 @@ chomp $pwd;
 
 # If we have been told the original name of the file, use that.
 my $tmpfile;
+my $rel_tmpfile;
 my @orig_filenames = grep {/^---build_interceptor-orig_filename=.*$/} @av;
 if (@orig_filenames) {
   die "more than one orig_filenames" if ($#orig_filenames > 0);
@@ -60,6 +61,12 @@ if (@orig_filenames) {
   $tmpfile = $1;
 #    warn "tmpfile:${tmpfile}: from --build_interceptor-orig_filenames\n";
   @av = grep {!/^---build_interceptor-orig_filename=.*$/} @av;
+}
+
+sub ensure_dir_of_file_exists($) {
+    my ($f) = (@_);
+    $f =~ s|/[^/]*$|/|;
+    die if system("mkdir --parents $f");
 }
 
 my @infiles = grep {/\.ii?$/} @av; # get any input files
@@ -84,18 +91,16 @@ if (@infiles) {
   }
   $tmpfile =~ s|\.(.*)$|-$unique.$1|;
   die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
+  $rel_tmpfile = ".$tmpfile";
   $tmpfile = "$prefix$tmpfile";
-  my $tmpdir = $tmpfile;
-  $tmpdir =~ s|/[^/]*$|/|; #/
-  die if system("mkdir --parents $tmpdir");
+  ensure_dir_of_file_exists($tmpfile);
   # put the contents there
   die "already a file $tmpfile" if -e $tmpfile;
   die $! if system("cp $infile_abs $tmpfile");
 } else {
   # make the temp file name
   die unless $pwd =~ m|^/|;
-  my $tmpdir = "$prefix$pwd";
-  die if system("mkdir --parents $tmpdir");
+  my $tmpdir = "$pwd";
   if ($tmpfile) {
     if ($tmpfile !~ m|^/|) {
       $tmpfile = "$pwd/$tmpfile";
@@ -106,6 +111,9 @@ if (@infiles) {
   }
   die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
   $tmpfile = "$tmpdir$tmpfile";
+  $rel_tmpfile = ".$tmpfile";
+  $tmpfile = "$prefix$tmpfile";
+  ensure_dir_of_file_exists($tmpfile);
   # put the contents there
   die "already a file $tmpfile" if -e $tmpfile;
   open (TEMP, ">$tmpfile") or die $!;
@@ -207,6 +215,7 @@ $metadata .= <<END3             # do interpolate!
         .ascii "\\n\\tinfile:${infile}"
         .ascii "\\n\\tdumpbase:${dumpbase}"
         .ascii "\\n\\ttmpfile:${tmpfile}"
+        .ascii "\\n\\tifile:${rel_tmpfile}"
         .ascii "\\n)\\n"
 END3
   ;
