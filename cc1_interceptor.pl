@@ -59,12 +59,12 @@ my $pwd = getcwd;
 # output file!  I don't reproduce this behavior.
 
 # If we have been told the original name of the file, use that.
-my $orig_filename;
+my $orig_filename = '';
 my @orig_filenames = grep {/^---build_interceptor-orig_filename=.*$/} @av;
 if (@orig_filenames) {
   die "more than one orig_filenames" if ($#orig_filenames > 0);
   $orig_filenames[0] =~ /^---build_interceptor-orig_filename=(.*)$/;
-  $orig_filename = $1;
+  $orig_filename = File::Spec->rel2abs($1);
 #    warn "tmpfile:${tmpfile}: from --build_interceptor-orig_filenames\n";
   @av = grep {!/^---build_interceptor-orig_filename=.*$/} @av;
 }
@@ -95,7 +95,7 @@ if (@infiles) {
   die unless -f $infile_abs;
   # make the temp file name
   if (defined $orig_filename) {
-      $tmpfile = File::Spec->rel2abs($orig_filename);
+      $tmpfile = $orig_filename;
   } else {
       $tmpfile = $infile_abs;
   }
@@ -112,7 +112,7 @@ if (@infiles) {
   die unless $pwd =~ m|^/|;
   my $tmpdir = $pwd;
   if (defined $orig_filename) {
-      $tmpfile = File::Spec->rel2abs($orig_filename);
+      $tmpfile = $orig_filename;
       $tmpfile =~ s|\.(.*)$|-$unique.$1|;
   } else {
       $tmpfile = "/STDIN-$unique";
@@ -229,6 +229,7 @@ my $chroot_id = $ENV{BUILD_INTERCEPTOR_CHROOT_ID} || '';
 $metadata .= <<END3             # do interpolate!
         .ascii "\\n\\t)"
         .ascii "\\n\\trun_args:${run_args}"
+        .ascii "\\n\\torig_filename:${orig_filename}"
         .ascii "\\n\\tinfile:${infile}"
         .ascii "\\n\\tdumpbase:${dumpbase}"
         .ascii "\\n\\ttmpfile:${tmpfile}"
