@@ -7,6 +7,8 @@ use FindBin;
 # Given an input ELF file infile read the notes and extract the names
 # of the .i files embedded and the sections where embedded
 
+# NOTE: This file is very redundant with extract_preproc.pl
+
 # NOTE: I don't know why, but emacs CPerl mode does not work for this
 # file.
 
