@@ -127,6 +127,9 @@ if (@infiles) {
   copy(\*STDIN, $tmpfile) || die $!;
 }
 die "no such file $tmpfile" unless -f $tmpfile;
+
+my $md5 = md5_file($outfile);
+
 unshift @av, $tmpfile;        # add input file to @av
 
 # Output behavior:
@@ -194,8 +197,6 @@ if ($ret) {
 if (!-f $outfile) {
     die "$0: $prog didn't produce $outfile\n";
 }
-
-my $md5 = md5_file($outfile);
 
 # append metadata to output
 my $metadata = <<'END1'         # do not interpolate
