@@ -296,7 +296,7 @@ for my $line (split '\n', $trace_output0) {
   next if $line =~ m/: mode elf_i386$/;
 
   my $file;
-  if ($line =~ m/^\(([^()]+[.]al?)\)([^()]+[.](?:o|os|oS|lo))$/) {
+  if ($line =~ m/^\(([^()]+[.]al?)\)([^()]+[.](?:o|os|oS|lo|ao))$/) {
       # .o from .a:
       # (/path/archive.a)object.o
       my $archive = canonicalize($1);
