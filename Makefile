@@ -120,10 +120,13 @@ clean-preproc:
 clean-script-interceptor:
 	rm -rf make_interceptor
 
-interceptor.specs.ALL: interceptor.specs-3.4 interceptor.specs-3.3 interceptor.specs-3.2 interceptor.specs-3.0
+interceptor.specs.ALL: interceptor.specs interceptor.specs-3.4 interceptor.specs-3.3 interceptor.specs-3.2 interceptor.specs-3.0
 
 interceptor.specs-%: interceptor.specs.in
 	./make-spec-file $< $@
+
+interceptor.specs: interceptor.specs-3.3
+	cp $< $@
 
 intercept.progs: clean-intercept.progs
 	for F in $(USRTOOLS); do         \
