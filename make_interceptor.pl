@@ -36,6 +36,8 @@ for my $a (@ARGV) {
     next;
   }
   if ($a =~ /^-j/) {
+    die "FIX: this is wrong; you can give a -j without an argument " .
+      "and I would eat the next argument in that case";
     if ($a eq '-j') {
       # of the form '-j 2'
       $skip_next = 1;

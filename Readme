@@ -297,6 +297,37 @@ experimentation, each interceptor script prints at the start its 1)
 name, 2) parent process id, 3) own process id and 4) arguments all to
 standard error (this may have been commented out, just uncomment).
 
+FAQ ****************
+
+Date: Fri, 28 Jan 2005 15:17:30 -0800
+Scott McPeak wrote:
+
+> Do you know there is a form of -j that takes no arguments?
+
+Thanks for pointing this out.  For now I will just turn it off.
+
+> I bet it's just whether the next argument is entirely numeric, which
+> would at least be a fairly simple rule, but still stupid.
+
+These are the kind of situations that you have to be very careful to
+not get yourself into with the primary tools, such as gcc.  Hao was
+attempting to parse gcc's arguments, and these sorts of things killed
+his design.
+
+> Also, why do you transform /usr/bin/gmake into /usr/bin/make?
+
+I do this for gcc_interceptor.pl as well.  Think about what happens
+when you call make as /usr/bin/gmake.  This follows a softlink (which
+is always there) to /usr/bin/make, which has been replaced (by build
+interception) with a softlink to my script
+/home/dsw/build_interceptor/make_interceptor.pl (say), which is what
+runs.  Now, that script has to find the real make, which it does as
+${0}_orig.  In this case, that is /usr/bin/gmake_orig, which doesn't
+exist.  However /usr/bin/make_orig does exist, and my going through
+the mapping first, you find it.  If you can come up with another
+scheme that works, let me know, but I tried a few others and none of
+them worked.
+
 Acknowledgments ****************
 
 I used code and ideas for build-process interception from two

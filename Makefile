@@ -13,7 +13,10 @@ endif
 # The list of user tools that we are intercepting.  The user could
 # build this file by hand if this automated way doesn't work.
 USRTOOLS :=
-USRTOOLS += make
+# NOTE: make interceptor doesn't look for the -j flag correctly, so
+# don't use it for now.  It isn't critical to the correct operation of
+# build_interceptor.
+# USRTOOLS += make
 USRTOOLS += gcc
 USRTOOLS += g++
 USRTOOLS += cpp
