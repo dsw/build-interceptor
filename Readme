@@ -76,7 +76,7 @@ as a test for the Elsa/Oink C/C++ front end and analysis tools.  The
 first release of build_interceptor used as an example of how to use
 these scripts the process of building Red hat 7.3 from source and
 capturing the .i files.  Those instructions are still available in
-Readme_RedHat7.3.
+RedHat7.3.Readme.
 
 # One-time initial setup of build_interceptor.
 cd; cd build_interceptor
