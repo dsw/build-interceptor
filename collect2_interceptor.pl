@@ -297,6 +297,9 @@ ${trace_output}\t)
 END
   ;
 
+my $EXTRA_OBJ_EXT = $ENV{EXTRA_OBJECT_EXTENSIONS} ?
+  "|".$ENV{EXTRA_OBJECT_EXTENSIONS} : '';
+
 my @not_intercepted;
 # if we are ld, then iterate through the .o files that were generated
 # warn "trace_output0 -----\n$trace_output0\n-----\n";
@@ -307,7 +310,9 @@ for my $line (split '\n', $trace_output0) {
   next if $line =~ m/: mode elf_i386$/;
 
   my $file;
-  if ($line =~ m/^\(([^()]+[.]al?)\)([^()]+[.](?:o|os|oS|lo|ao))$/) {
+  if ($line =~ m/^\(([^()]+[.]al?)\)([^()]+[.](?:o|os|oS|lo|ao$EXTRA_OBJ_EXT))$/) {
+      # TODO: remove .ao after figuring out which package needed it
+
       # .o from .a:
       # (/path/archive.a)object.o
       my $archive = canonicalize($1);
@@ -321,7 +326,10 @@ for my $line (split '\n', $trace_output0) {
       # ignore for now
       next;
       # $file = $1;
-  } elsif ($line =~ m/^([^()]+\.(?:o|os|oS|lo|sho|po|opic|pic_o|ro))$/) {
+  } elsif ($line =~ m/^([^()]+\.(?:o|os|oS|lo|sho|po|opic|pic_o|ro$EXTRA_OBJ_EXT))$/) {
+      # TODO: remove .sho,po,opic,pic_o,ro after figuring out which packages
+      # needed them
+
       # a .o file not from an archive, like this:
       #   /usr/lib/crt1.o
       # Can also include .lo (libtool object) files.
