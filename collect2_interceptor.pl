@@ -238,7 +238,7 @@ if (!-e $outfile_abs) {
 }
 
 my $executable = -x $outfile_abs &&
- $outfile_abs !~ /[.](?:so(?:[.]\d+)*(?:-UTF8)?|la|al|o|lo|os|oS|po|opic|sho)$/;
+ $outfile_abs !~ /[.](?:so(?:[.]\d+)*(?:-UTF8)?|la|al|o|lo|os|oS|po|opic|pic_o|sho)$/;
 
 if (do_not_add_interceptions_to_this_file($outfile_abs)) {
     # Don't add .note.ld_interceptor, and in addition, remove
@@ -310,7 +310,7 @@ for my $line (split '\n', $trace_output0) {
       # ignore for now
       next;
       # $file = $1;
-  } elsif ($line =~ m/^([^()]+\.(?:o|os|oS|lo|sho|po|opic))$/) {
+  } elsif ($line =~ m/^([^()]+\.(?:o|os|oS|lo|sho|po|opic|pic_o))$/) {
       # a .o file not from an archive, like this:
       #   /usr/lib/crt1.o
       # Can also include .lo (libtool object) files.
