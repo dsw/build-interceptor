@@ -53,6 +53,14 @@ mkpath($cc1_test_cache_bad);
 my $ar_cache = "$tmpdir/ar_cache";
 mkpath($ar_cache);
 
+# You can't re-use a section name, and it seems that sometimes both
+# collect2 and ld are called on the same file.  Update: It seems that
+# collect2 calls ld.
+my $sec_name = basename($0);
+die "bad sec_name:$sec_name:" unless
+  $sec_name eq 'ld' ||
+  $sec_name eq 'collect2';
+
 # test-only extract
 my $extract_pl = "${FindBin::RealBin}/extract_section.pl";
 if (!-f $extract_pl) {
@@ -141,15 +149,52 @@ sub check_object_has_ld_interception {
     return 0 == system("$extract .note.ld_interceptor $file");
 }
 
+sub add_section {
+    my ($file, $section, $content) = @_;
+
+    my $tmpfile = new File::Temp(TEMPLATE=>"/tmp/elf.XXXXXXXXX");
+    print $tmpfile $content;
+    $tmpfile->close();
+
+    my @objcopy_cmd =
+      ('objcopy', $file, '--add-section', ".note.${section}=$tmpfile");
+    if (system(@objcopy_cmd)) {
+        die "$0: Error executing @objcopy_cmd\n";
+    }
+}
+
+sub remove_section {
+    my ($file, $section) = @_;
+    my @cmd = ('objcopy', $file, '--remove-section', ".note.${section}");
+    if (system(@cmd)) {
+        die "$0: Error executing @cmd\n";
+    }
+}
+
+sub add_or_append_section {
+    my ($file, $section, $content) = @_;
+
+    my $existing_note = `$extract_pl .note.$section $file 2>/dev/null`;
+    my $err = $? >> 8;
+    if ($err == 1) {
+        # no existing note
+        if ($existing_note) { die; }
+    } elsif ($err == 0) {
+        # existing note
+        if (!$existing_note) { die; }
+        remove_section($file, $section);
+    } else {
+        die "$0: unknown exit code extracting .note.$section from '$file': $err\n";
+    }
+
+    add_section($file, $section, $existing_note . $content);
+}
+
 #die "no outfile specified" unless defined $outfile;
 # Karl seems to want this feature
 $outfile = 'a.out' unless defined $outfile;
 
 my $outfile_abs = File::Spec->rel2abs($outfile);
-
-# Temporary directory where we put the file that will become an ELF
-# section.
-my $tmpfile = new File::Temp(TEMPLATE=>"/tmp/elf.XXXXXXXXX");
 
 # Print out the files that are linked in.
 unshift @av, "--trace";
@@ -175,7 +220,10 @@ if ($ret) {
   }
 }
 
-die "no such file: $outfile_abs" unless -f $outfile_abs;
+if (!-e $outfile_abs) {
+    warn "$0: output file $outfile_abs not found\n";
+    exit($exit_value || 1);
+}
 
 # Double-indent this to quote it.
 my $trace_output = $trace_output0;
@@ -183,7 +231,10 @@ $trace_output =~ s|^(.*)$|\t\t$1|gm;
 # Make sure ends in a newline, since we count on that below for tab quoting.
 die unless $trace_output =~ m|\n$|;
 
-print $tmpfile <<END           # do interpolate!
+my $intercept_data = '';
+
+
+$intercept_data .= <<END        # do interpolate!
 (
 \tpwd:${pwd}
 \tdollar_zero:$0
@@ -192,17 +243,16 @@ END
   ;
 
 for my $a (@raw_args) {
-print $tmpfile <<END           # do interpolate!
+$intercept_data .= <<END        # do interpolate!
 \t\t${a}
 END
   ;
 }
 
-print $tmpfile <<END           # do interpolate!
+$intercept_data .= <<END        # do interpolate!
 \t)
 \trun_args:${run_args}
 \tcmd:${cmd}
-\ttmpfile:${tmpfile}
 \toutfile:${outfile}
 \toutfile_abs:${outfile_abs}
 \ttrace_output: (
@@ -210,15 +260,6 @@ ${trace_output}\t)
 )
 END
   ;
-$tmpfile->close();
-
-# You can't re-use a section name, and it seems that sometimes both
-# collect2 and ld are called on the same file.  Update: It seems that
-# collect2 calls ld.
-my $sec_name = basename($0);
-die "bad sec_name:$sec_name:" unless
-  $sec_name eq 'ld' ||
-  $sec_name eq 'collect2';
 
 my @not_intercepted;
 # if we are ld, then iterate through the .o files that were generated
@@ -305,16 +346,9 @@ if (@not_intercepted) {
     }
 
     # put a bad section into the file
-    my $bad_tmpfile = new File::Temp(TEMPLATE=>"/tmp/bad-XXXXXXXXX");
-    for my $input (@not_intercepted) {
-        print $bad_tmpfile "$input\n";
-    }
-    $bad_tmpfile->close();
-    my @objcopy_cmd =
-      ('objcopy', $outfile_abs, '--add-section', ".note.${sec_name}_interceptor_bad=$bad_tmpfile");
-    if (system(@objcopy_cmd)) {
-        die "Error executing @objcopy_cmd";
-    }
+    my $bad_section_data = join("", map{"$_\n"} @not_intercepted);
+    add_or_append_section($outfile_abs, "${sec_name}_interceptor_bad",
+                          $bad_section_data);
 } else {
     # good
     my $good = new FileHandle(">>$tmpdir/cc1_good") or die $!;
@@ -322,27 +356,7 @@ if (@not_intercepted) {
 }
 
 # Stick this stuff into the object file
-#  die "no such file:$tmpfile" unless -e $tmpfile;
-
-if (!-e $outfile_abs) {
-    warn "$0: output file $outfile_abs not found\n";
-    exit($exit_value || 1);
-}
-
-if (check_object_has_ld_interception($outfile_abs)) {
-    die "$0: somehow $outfile_abs already has a .note.ld_interceptor!\n";
-}
-
-my @objcopy_cmd =
-  ('objcopy', $outfile_abs, '--add-section', ".note.${sec_name}_interceptor=$tmpfile");
-#warn "collect2_interceptor.pl: @objcopy_cmd";
-if (system(@objcopy_cmd)) {
-    warn "$0: Error executing @objcopy_cmd\n";
-    # my $n = $outfile_abs;
-    # $n =~ s,.*/,,;
-    # system("cp $outfile_abs /tmp/failed.$n");
-    exit ($exit_value || 1);
-}
+add_or_append_section($outfile_abs, "${sec_name}_interceptor", $intercept_data);
 
 #close (LOG) or die $!;          # LOUD
 exit $exit_value;
