@@ -77,7 +77,7 @@ sub start_timing {
 
 sub stop_timing {
   die unless system ("date") == 0;
-  my $all_stop_time = `date +'%s'`;
+  $all_stop_time = `date +'%s'`;
   chomp $all_stop_time;
 }
 
