@@ -119,6 +119,16 @@ sub archive_extract_object {
     return $file;
 }
 
+sub check_object_intercepted {
+    my ($file) = @_;
+    return 0 == system("$extract .note.cc1_interceptor $file");
+}
+
+sub check_object_interceptless {
+    my ($file) = @_;
+    return 0 == system("$extract .note.ignore_cc1_interceptor $file");
+}
+
 #die "no outfile specified" unless defined $outfile;
 # Karl seems to want this feature
 $outfile = 'a.out' unless defined $outfile;
@@ -260,16 +270,14 @@ for my $line (split '\n', $trace_output0) {
 #      warn "\tfound cache bad $cachefile_ok";
     outputToFile($cachefile_bad, $file);  # update the cache
   } else {
-    # actually run the extractor
-#      warn "\tNOT found in cache";
-    my $cmd = "$extract .note.cc1_interceptor $file";
-    system($cmd);
-    $built_with_interceptor = ($?==0);
-    if ($built_with_interceptor) {
-      outputToFile($cachefile_ok, $file); # update the cache
-    } else {
-      outputToFile($cachefile_bad, $file); # update the cache
-    }
+      # actually run the extractor
+      #      warn "\tNOT found in cache";
+      my $built_with_interceptor = check_object_intercepted($file) || check_object_interceptless($file);
+      if ($built_with_interceptor) {
+          outputToFile($cachefile_ok, $file); # update the cache
+      } else {
+          outputToFile($cachefile_bad, $file); # update the cache
+      }
   }
 
   # record if ok or not
