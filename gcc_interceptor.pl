@@ -30,6 +30,13 @@ if (defined $canonName{$dollar_zero}) {
 }
 #  warn "after: $dollar_zero\n";
 
+if ("@ARGV" eq "-E -P -") {
+    # Hack for glibc: don't output line markers if the program is just using
+    # gcc to get preprocessor definitions.  What glibc does is:
+    #     echo '#include <linux/version.h>\nUTS_RELEASE' | gcc -E -P -
+    execvp("${dollar_zero}_orig", @ARGV) || die;
+}
+
 my @cmd_line = 
   ("${dollar_zero}_orig",
    "--no-integrated-cpp",
