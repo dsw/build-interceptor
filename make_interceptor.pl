@@ -2,7 +2,7 @@
 # See License.txt for copyright and terms of use
 use strict;
 
-warn "make_interceptor.pl:".getppid()."/$$: $0 @ARGV\n";
+#warn "make_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
 
 # When used as a replacement to the system as will just pass the
 # arguments through.

@@ -8,7 +8,7 @@ use Cwd 'abs_path';
 # When used as a replacement to the system collect2 will just pass the
 # arguments through.
 
-warn "collect2_interceptor.pl:".getppid()."/$$: $0 @ARGV\n";
+#warn "collect2_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
 
 my @av = @ARGV;                 # @ARGV has magic, so copy it
 my $prog = "${0}_orig";         # compute the new executable name we are calling

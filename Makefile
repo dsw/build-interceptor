@@ -45,6 +45,26 @@ SOFTLINKS += ld_interceptor.pl
 # not built yet will not be included.
 all: softlinks intercept.progs
 
+INTER_SCRIPS :=
+INTER_SCRIPS += as_interceptor.pl
+INTER_SCRIPS += cc1_interceptor.pl
+INTER_SCRIPS += collect2_interceptor.pl
+INTER_SCRIPS += cpp0_interceptor.pl
+INTER_SCRIPS += gcc_interceptor.pl
+INTER_SCRIPS += make_interceptor.pl
+
+LOUD_ON := $(addprefix loud-on/,$(INTER_SCRIPS))
+.PHONY: loud-on $(LOUD_ON)
+loud-on: $(LOUD_ON)
+$(LOUD_ON): loud-on/%:
+	perl -i.bak -pe 's/^(\s*)\#+/$1/ if /LOUD/' $*
+
+LOUD_OFF := $(addprefix loud-off/,$(INTER_SCRIPS))
+.PHONY: loud-off $(LOUD_OFF)
+loud-off: $(LOUD_OFF)
+$(LOUD_OFF): loud-off/%:
+	perl -i.bak -pe 's/^(\s*)\#*/$1\#/ if /LOUD/' $*
+
 .PHONY: clean
 clean: clean-intercept.progs clean-softlinks
 

@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 
-warn "gcc_interceptor.pl:".getppid()."/$$: $0 @ARGV\n";
+#warn "gcc_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
 
 # Move the system gcc executable to gcc_orig and make a softlink from
 # the name gcc to this script.

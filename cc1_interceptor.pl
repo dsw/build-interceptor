@@ -6,7 +6,7 @@ use strict;
 # will intercept the build process and keep a copy of the .i files
 # generated.
 
-warn "cc1_interceptor.pl:".getppid()."/$$: $0 @ARGV\n";
+#warn "cc1_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
 
 my @av = @ARGV;                 # @ARGV has magic, so copy it
 my $prog = "${0}_orig";         # compute the new executable name we are calling
