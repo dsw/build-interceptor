@@ -104,7 +104,7 @@ if (!-f $tmpfile) {
     die "$0: couldn't find tmpfile $tmpfile from $outfile\n";
 }
 
-if ($ENV{EMBED_PREPROC}) {
+if (! $ENV{DONT_EMBED_PREPROC}) {
     system('objcopy', $outfile, '--add-section', ".file.$md5=$tmpfile") &&
       die "$0: couldn't objcopy .file.$md5=$tmpfile";
 }
