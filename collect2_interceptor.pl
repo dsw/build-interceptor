@@ -18,6 +18,10 @@ my $prog = "${0}_orig";         # compute the new executable name we are calling
 
 my @raw_args = @av;
 
+if (grep {/^--help$/ || /^--version$/ || /^-V$/ } @raw_args) {
+    exec ( ($prog, @raw_args) ) || die "Couldn't exec $prog @raw_args\n";
+}
+
 # make a unique id for breaking symmetry with any other occurances of
 # this process
 my $time0 = time;
