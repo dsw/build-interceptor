@@ -5,6 +5,8 @@ use strict;
 # When used as a replacement to the system collect2 will just pass the
 # arguments through.
 
+warn "collect2_interceptor.pl:".getppid()."/$$: $0 @ARGV\n";
+
 my @av = @ARGV;                 # @ARGV has magic, so copy it
 my $prog = "${0}_orig";         # compute the new executable name we are calling
 
@@ -64,7 +66,7 @@ my @av2 = map {quoteit($_)} @av;
 my $cmd = $prog . ' ' . join(' ', @av2) . ' 2>&1';
 
 # Just delegate to the real thing.
-warn "collect2_interceptor.pl: system $cmd\n";
+#warn "collect2_interceptor.pl: system $cmd\n";
 my $trace_output = `$cmd`;      # hidden system call here to run real linker
 my $exit_value = $? >> 8;
 die "no such file: $outfile_abs" unless -f $outfile_abs;
@@ -118,7 +120,7 @@ die "bad sec_name:$sec_name:" unless
   $sec_name eq 'collect2';
 my @objcopy_cmd =
   ('objcopy', $outfile_abs, '--add-section', ".note.${sec_name}_interceptor=$tmpfile");
-warn "collect2_interceptor.pl: @objcopy_cmd";
+#warn "collect2_interceptor.pl: @objcopy_cmd";
 die $! if system(@objcopy_cmd);
 
 # Delete the temporary file.

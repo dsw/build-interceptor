@@ -1,6 +1,8 @@
 #!/usr/bin/perl -w
 use strict;
 
+warn "gcc_interceptor.pl:".getppid()."/$$: $0 @ARGV\n";
+
 # Move the system gcc executable to gcc_orig and make a softlink from
 # the name gcc to this script.
 
@@ -27,6 +29,4 @@ my @cmd_line =
 
 # run the command
 #warn "gcc_interceptor.pl: @cmd_line\n";
-system @cmd_line;
-my $exit_value  = $? >> 8;
-exit $exit_value;
+exec(@cmd_line);

@@ -2,6 +2,8 @@
 # See License.txt for copyright and terms of use
 use strict;
 
+warn "make_interceptor.pl:".getppid()."/$$: $0 @ARGV\n";
+
 # When used as a replacement to the system as will just pass the
 # arguments through.
 
@@ -35,5 +37,4 @@ for my $a (@ARGV) {
 
 # Just delegate to the real thing.
 #warn "make_interceptor.pl: $prog @av";
-system($prog, @av);
-exit $? >> 8;
+exec($prog, @av);
