@@ -14,13 +14,13 @@ my $build = "$home/build";
 
 # Directory that was used by cc1_interceptor.pl to store the
 # intercepted preprocessed output in .i files.
-my $preproc = "$home/preproc";
+my $oldpreproc = "$home/preproc";
 
 # If you moved the preproc directory after building, you need to say
 # where you moved it to here; this is because the preproc directory
 # names are embedded into the ELF files and we need to know how to
 # translate them into the real locations
-my $newpreproc = $preproc;
+my $newpreproc = $oldpreproc;
 
 # Directory to put the reorganized output into.
 my $ball = "$home/ball";
@@ -51,8 +51,8 @@ sub read_command_line {
     my $arg = shift @ARGV;
     if ($arg =~ /-build/) {
       $build = shift @ARGV;
-    } elsif ($arg =~ /-preproc/) {
-      $preproc = shift @ARGV;
+    } elsif ($arg =~ /-oldpreproc/) {
+      $oldpreproc = shift @ARGV;
     } elsif ($arg =~ /-newpreproc/) {
       $newpreproc = shift @ARGV;
     } elsif ($arg =~ /-ball/) {
@@ -65,7 +65,6 @@ sub read_command_line {
 
 sub validate_state {
   die unless -d $build;
-  die unless -d $preproc;
   die unless -d $ball;
   die unless -d $newpreproc;
 }
@@ -144,7 +143,7 @@ sub do_one_file {
 #        print "extracted tmpfile: $tmpfile\n";
 
       die "bad ld file: $extractCmd"
-        unless $tmpfile =~ s|^$preproc|$newpreproc|;
+        unless $tmpfile =~ s|^$oldpreproc|$newpreproc|;
 
       die "no such file tmpfile:$tmpfile"
         unless -f $tmpfile;
