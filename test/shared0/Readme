@@ -1,0 +1,14 @@
+This directory demonstrates the differences when building with static
+and dynamic linking.
+
+Run:
+        make clean all check check-interception
+and notice that under this header:
+        check-interception/main_static cc1 ----------------------------------------
+both main.c and shared.c are mentioned, whereas under this header
+        check-interception/main_dynamic cc1 ----------------------------------------
+only main.c is mentioned.
+
+This means that when ld encounters unused ELF sections during static
+linking, it concatenates them, whereas under dynamic linking it does
+not.
