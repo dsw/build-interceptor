@@ -1,4 +1,7 @@
-// $Id: script_interceptor.c,v 1.1 2005/02/03 02:48:45 quarl Exp $
+// $Id: script_interceptor.c,v 1.2 2005/03/03 06:19:50 quarl Exp $
+
+// This dummy wrapper just exists because bash can't use a script to execute
+// another shebang script (not all shells have this limitation)
 
 #include <unistd.h>
 #include <stdio.h>
