@@ -13,6 +13,7 @@ endif
 # The list of user tools that we are intercepting.  The user could
 # build this file by hand if this automated way doesn't work.
 USRTOOLS :=
+USRTOOLS += make
 USRTOOLS += gcc
 USRTOOLS += g++
 USRTOOLS += cpp
