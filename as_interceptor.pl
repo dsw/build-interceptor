@@ -5,6 +5,7 @@ use warnings;
 use strict;
 use FindBin;
 use File::Spec;
+use FileHandle;
 
 if (!$ENV{HOME}) {
     $ENV{HOME} = "${FindBin::RealBin}/..";
@@ -51,6 +52,25 @@ sub find_output_filename {
     return $outfile;
 }
 
+sub find_input_filename {
+    my @infiles = grep { /[.][sS]$/ } @av;
+    return $infiles[0];
+}
+
+sub file_is_empty_p {
+    # returns 1 iff file is composed entirely of empty/comment lines
+    
+    my ($filename) = @_;
+    my $fh = new FileHandle($filename) or die;
+    local $_;
+    for (<$fh>) {
+        if (/^\s*#/) { next; }
+        if (/^\s*$/) { next; }
+        return 0;
+    }
+    return 1;
+}
+
 sub do_not_add_interceptions_to_this_file {
     my ($outfile_abs) = @_;
     my $r = $ENV{BUILD_INTERCEPTOR_DO_NOT_ADD_INTERCEPTIONS_TO_FILES};
@@ -79,6 +99,15 @@ my $outfile_abs = File::Spec->rel2abs($outfile);
 
 if (!-f $outfile) {
     die "$0: @av didn't produce $outfile\n";
+}
+
+my $infile = find_input_filename();
+if ($infile && -f $infile && file_is_empty_p($infile)) {
+    # We don't need interceptions if the .S was empty.  Some packages have
+    # some #ifdefs that end up creating empty .S files -- it's OK to link
+    # them.
+
+    exit(0);
 }
 
 if (do_not_add_interceptions_to_this_file($outfile_abs)) {
