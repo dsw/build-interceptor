@@ -20,9 +20,21 @@ use lib "$FindBin::Bin/../lib";
 
 my $dollar_zero = ${0};
 
+my $l;
 # if gcc is a link to something that's not an interceptor (e.g. gcc-3.3), use
 # gcc-3.3_orig instead of gcc_orig
-my $l = readlink($dollar_zero);
+$l = readlink($dollar_zero);
+if ($l && $l !~ /interceptor/) {
+    $dollar_zero = $l;
+}
+# quick hack to support triple links (/usr/bin/cc -> /etc/alternatives/cc ->
+# /usr/bin/gcc -> /usr/bin/gcc-3.3).  Do a nice recursive solution in the
+# future.
+$l = readlink($dollar_zero);
+if ($l && $l !~ /interceptor/) {
+    $dollar_zero = $l;
+}
+$l = readlink($dollar_zero);
 if ($l && $l !~ /interceptor/) {
     $dollar_zero = $l;
 }
