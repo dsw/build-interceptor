@@ -1,7 +1,7 @@
 # Disk.mk; see License.txt for copyright and terms of use
 
 DIR := build_interceptor
-VERSION := 2004.11.10
+VERSION := 2004.11.19
 
 # for people at Berkeley who aren't me
 # CICH := :ext:cich:/home/cvs/repository
@@ -30,5 +30,5 @@ dist: distclean
 # **** clean the distribution
 .PHONY: distclean
 distclean:
-	rm -rf $(DIR) $(DIR)-$(VERSION)
-	rm -f *.tar.gz Readme_$(DIR)-$(VERSION).txt
+	rm -rf $(DIR) $(DIR)-*
+	rm -f *.tar.gz Readme_$(DIR)-*.txt
