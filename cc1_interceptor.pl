@@ -159,7 +159,15 @@ unshift @av, $prog;
 my $run_args = join(':', @av);
 #warn "cc1_interceptor.pl: @av\n";
 system(@av);
-my $exit_value = $? >> 8;
+my $ret = $?;
+my $exit_value = $ret >> 8;
+if ($ret) {
+  if ($exit_value) {
+    exit $exit_value;
+  } else {
+    die "Failure return not reflected in the exit value: ret:$ret";
+  }
+}
 
 # append metadata to output
 my $metadata = <<'END1'         # do not interpolate

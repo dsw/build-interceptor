@@ -68,7 +68,16 @@ my $cmd = $prog . ' ' . join(' ', @av2) . ' 2>&1';
 # Just delegate to the real thing.
 #warn "collect2_interceptor.pl: system $cmd\n";
 my $trace_output = `$cmd`;      # hidden system call here to run real linker
-my $exit_value = $? >> 8;
+my $ret = $?;
+my $exit_value = $ret >> 8;
+if ($ret) {
+  if ($exit_value) {
+    exit $exit_value;
+  } else {
+    die "Failure return not reflected in the exit value: ret:$ret";
+  }
+}
+
 die "no such file: $outfile_abs" unless -f $outfile_abs;
 
 # Double-indent this to quote it.
