@@ -7,7 +7,7 @@
 # directives are going to show up in the .i files.
 %rename cpp_options cpp_options_old0
 *cpp_options:
-%<P %(cpp_options_old0)
+%{<P} %(cpp_options_old0)
 
 # It is nice if we can find out the name of the original file to help
 # in creating a name for the temporary file.
