@@ -22,7 +22,7 @@ default_target:; @echo "You must give an explicit target to make -f Dist.mk"
 dist: distclean
 	cvs -d $(CICH) export -D $(CVS_TAG) $(DIR)
 	mv $(DIR) $(DIR)-$(VERSION)
-	tar cvzf $(DIR)-$(VERSION).tar.gz $(DIR)
+	tar cvzf $(DIR)-$(VERSION).tar.gz $(DIR)-$(VERSION)
 
 # **** clean the distribution
 .PHONY: distclean
