@@ -233,14 +233,6 @@ Files ****
 To simplify things, the scripts make some assumptions about what files
 and directories are where.  All are assumed to be under $HOME.
 
-RH7.3.i: The metadata directory that the Red Hat 7.3 tarball unpacks
-to; it should contain these files.
-
-        packages.dat: the package names
-
-        pkgs_by_c_size.dat and pkgs_by_cpp_size.dat: the sizes of each
-        package in number of lines of .c and .cc files, respectively
-
 ball_preproc: Where the captured preprocessing output of
 cc1_interceptor.pl goes.
 
