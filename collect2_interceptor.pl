@@ -187,7 +187,15 @@ for my $line (split '\n', $trace_output0) {
     # within an archive, but I don't think I have much choice and
     # having two entries with the same name in an archive would only
     # mean we did the same work twice.
-    my $archive = abs_path($archive0);
+#    warn "archive0 '$archive0'";
+    die "bad filename ? $archive0"
+      unless $archive0 =~ m|^(.*?)([^/]*)$|;
+    my $ardir0 = $1;
+    my $arfile0 = $2;
+    die unless defined $ardir0 && defined $arfile0;
+    my $ardir = abs_path($ardir0);
+    my $archive = "$ardir/$arfile0";
+    die "no such file $archive" unless -f $archive;
     my $ar_id = getCanonIdForFile($archive);
 #      warn "getting id for archive: $archive, id:$ar_id\n";
     my $ar_dir = "$ar_cache/$ar_id";
