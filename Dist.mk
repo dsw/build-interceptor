@@ -23,7 +23,9 @@ dist: distclean
 	cvs -d $(CICH) export -D $(CVS_TAG) $(DIR)
 	mv $(DIR) $(DIR)-$(VERSION)
 	tar cvzf $(DIR)-$(VERSION).tar.gz $(DIR)-$(VERSION)
+	chmod 444 $(DIR)-$(VERSION).tar.gz
 	cp Readme Readme_$(DIR)-$(VERSION).txt
+	chmod 444 Readme_$(DIR)-$(VERSION).txt
 
 # **** clean the distribution
 .PHONY: distclean
