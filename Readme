@@ -293,3 +293,66 @@ Ben Liblit, Hao Chen, John Kodumal, and Simon Goldsmith contributed to
 the discussions leading to these scripts.  Thanks especially to Simon
 Goldsmith for proof-reading this Readme [I of course take
 responsibility for any remaining mistakes].
+
+****************************************************************
+
+This is how to use the new build interception process.
+
+**** Using build_interceptor
+
+# Do this once.
+cd; cd build_interceptor
+# Check that the files you want to intercept are generated in
+# intercept.files.
+make intercept.files
+# Make the softlinks for sharing interception scripts.
+make soflinks
+# Actually, just 'make' will make both of them.
+
+# Make a place to put the .i files.
+cd
+mkdir ball_preproc
+ln -s ball_preproc preproc
+
+# Move your system gcc to gcc_orig and link gcc to gcc_interceptor.pl.
+# NOTE: it is important to be in $HOME/build_interceptor so that `pwd`
+# works below; $HOME will become '/root' once you su.
+cd; cd build_interceptor
+su
+make -f Intercept.mk on
+# You could exit the root shell now, but I find it easier to instead
+# just leave one shell open as root for turning interception on and
+# off and do user things in another shell.
+exit # the root shell
+
+# At any time you can check the interception state.
+make -f Intercept.mk
+
+# Build your project.
+
+# If you mess up and need to start over again, just do this.
+rm -rf preproc/*
+# If you want to build two different projects and capture both, just
+# move the link.
+mkdir ball_preproc2
+ln -s ball_preproc2 preproc
+
+# Before compiling anything else with gcc:
+# 1 - Make the data read-only.
+cd
+chmod -R a-w ball_preproc
+# 2 - Point the preprocessor capture at another file
+mkdir preproc_junk
+ln -s preproc_junk preproc
+
+# When you are done, put gcc back where it was.
+cd; cd build_interceptor
+su
+make -f Intercept.mk off
+exit # the root shell
+
+# Run reorg on the output.
+# FIX: finish this.
+
+# Replay the build process.
+# FIX: finish this.

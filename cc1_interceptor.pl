@@ -2,22 +2,30 @@
 # See License.txt for copyright and terms of use
 use strict;
 
-# When used as a replacement to the system cc1 this script will
-# intercept the build process and keep a copy of the .i files
+# When used as a replacement to the system cc1 or cc1plus this script
+# will intercept the build process and keep a copy of the .i files
 # generated.
 
-# mapping from build filesystem to isomorphic copy.  Make this
-# directory.
-my $prefix = "$ENV{HOME}/preproc";
-
 my @av = @ARGV;                 # @ARGV has magic, so copy it
-my $prog = $0;                  # perhaps $0 does as well
+my $prog = "${0}_orig";         # compute the new executable name we are calling
+
+# If we being invoked as a preprocessor, just delegate to the real
+# thing.
+if (grep {/^-E$/} @av) {
+#    warn "non-compile call to $prog, @av\n";
+  system($prog, @av);
+  exit $? >> 8;
+}
 
 #  # print out our raw args
 #  open OUT, ">>build.$$.cc1_out" or die $!;
 #  print OUT "---raw args---\n";
 #  print OUT (join("\n", @av), "\n---end-args---\n");
-my $raw_args = join(':', @av);
+my @raw_args = @av;
+
+# mapping from build filesystem to isomorphic copy.  Make this
+# directory.
+my $prefix = "$ENV{HOME}/preproc";
 
 # where are we?
 my $pwd = `pwd`;
@@ -32,7 +40,18 @@ chomp $pwd;
 # are input files.
 # If you give as an input file '-' then it will make a file -.s as the
 # output file!  I don't reproduce this behavior.
+
+# If we have been told the original name of the file, use that.
 my $tmpfile;
+my @orig_filenames = grep {/^---build_interceptor-orig_filename=.*$/} @av;
+if (@orig_filenames) {
+  die "more than one orig_filenames" if ($#orig_filenames > 0);
+  $orig_filenames[0] =~ /^---build_interceptor-orig_filename=(.*)$/;
+  $tmpfile = $1;
+#    warn "tmpfile:${tmpfile}: from --build_interceptor-orig_filenames\n";
+  @av = grep {!/^---build_interceptor-orig_filename=.*$/} @av;
+}
+
 my @infiles = grep {/\.ii?$/} @av; # get any input files
 my $infile;
 if (@infiles) {
@@ -46,9 +65,16 @@ if (@infiles) {
   }
   die unless -f $infile_abs;
   # make the temp file name
-  die unless $infile_abs =~ m|^/|;
-  $tmpfile = "$prefix$infile_abs";
-  $tmpfile =~ s|\.(ii?)$|-$$.$1|;
+  if (defined $tmpfile) {
+    if ($tmpfile !~ m|^/|) {
+      $tmpfile = "$pwd/$tmpfile";
+    }
+  } else {
+    $tmpfile = $infile_abs;
+  }
+  $tmpfile =~ s|\.(.*)$|-$$.$1|;
+  die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
+  $tmpfile = "$prefix$tmpfile";
   my $tmpdir = $tmpfile;
   $tmpdir =~ s|/[^/]*$|/|; #/
   die if system("mkdir --parents $tmpdir");
@@ -60,7 +86,16 @@ if (@infiles) {
   die unless $pwd =~ m|^/|;
   my $tmpdir = "$prefix$pwd";
   die if system("mkdir --parents $tmpdir");
-  $tmpfile = "$tmpdir/STDIN-$$";
+  if ($tmpfile) {
+    if ($tmpfile !~ m|^/|) {
+      $tmpfile = "$pwd/$tmpfile";
+    }
+    $tmpfile =~ s|\.(.*)$|-$$.$1|;
+  } else {
+    $tmpfile = "/STDIN-$$";
+  }
+  die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
+  $tmpfile = "$tmpdir$tmpfile";
   # put the contents there
   die "already a file $tmpfile" if -e $tmpfile;
   open (TEMP, ">$tmpfile") or die $!;
@@ -75,9 +110,16 @@ unshift @av, $tmpfile;        # add input file to @av
 my $outfile;                    # the output file
 my $dumpbase;                   # this seems to be the original source file
 for (my $i=0; $i<@av; ++$i) {
-  if ($av[$i] eq '-o') {
+  if ($av[$i] =~ /^-o/) {
     die "multiple -o options" if defined $outfile;
-    $outfile = $av[$i+1];
+    if ($av[$i] eq '-o') {
+      $outfile = $av[$i+1];
+      ++$i;
+    } elsif ($av[$i] =~ /^-o(.*)$/) {
+      $outfile = $1;
+    } else {
+      die "should have matched: $av[$i]"; # something is very wrong
+    }
     die "-o without file" unless defined $outfile;
   } elsif ($av[$i] eq '-dumpbase') {
     if (defined $dumpbase) {
@@ -106,31 +148,20 @@ if (!defined $outfile) {
 }
 die unless defined $outfile;
 
-# turn off optimizations
-#
-# UPDATE; Don't do this: Ben says not to do this as the preprocessor
-# is aware of the -O flags and you can mess things up for example with
-# inlined math functions, which I have observed does indeed happen.  I
-# leave it here uncommented so you don't think of it yourself and try
-# it.
-#
-#  @av = grep {!/^-O\d?$/} @av;
-#  unshift @av, '-O0';
-
-# compute the new executable name we are calling
-$prog =~ s|([^/]+)$|old-$1|;
+# prefix with the name of the program we are calling
 unshift @av, $prog;
 
 # run
 #  print OUT "---modified---\n";
 #  print OUT (join("\n", @av), "\n---end-args---\n");
 my $run_args = join(':', @av);
+#warn "cc1_interceptor.pl: @av\n";
 system(@av);
 my $exit_value = $? >> 8;
 
 # append metadata to output
 my $metadata = <<'END1'         # do not interpolate
-        .section        .note.cc1_im,"",@progbits
+        .section        .note.cc1_interceptor,"",@progbits
 END1
   ;
 
@@ -139,15 +170,27 @@ $infile = '-' unless defined $infile;
 $dumpbase = '' unless defined $dumpbase;
 $metadata .= <<END2             # do interpolate!
         .ascii "("
-        .ascii "\\n\\tdollar_zero:$0"
-        .ascii "\\n\\traw_args:${raw_args}"
-        .ascii "\\n\\trun_args:${run_args}"
         .ascii "\\n\\tpwd:${pwd}"
+        .ascii "\\n\\tdollar_zero:$0"
+        .ascii "\\n\\traw_args: ("
+END2
+  ;
+
+for my $a (@raw_args) {
+  $metadata .= <<END2b          # do interpolate!
+        .ascii "\\n\\t\\t${a}"
+END2b
+  ;
+}
+
+$metadata .= <<END3             # do interpolate!
+        .ascii "\\n\\t)"
+        .ascii "\\n\\trun_args:${run_args}"
         .ascii "\\n\\tinfile:${infile}"
         .ascii "\\n\\tdumpbase:${dumpbase}"
         .ascii "\\n\\ttmpfile:${tmpfile}"
         .ascii "\\n)\\n"
-END2
+END3
   ;
 
 if ($outfile eq "-") {

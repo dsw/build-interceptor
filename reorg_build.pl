@@ -32,7 +32,7 @@ chomp $all_start_time;
 sub do_one_file {
   my ($f, $f_friendlyname, $pkgdir) = @_;
   die unless -f $f;
-  my $extractCmd = "$extract .note.cc1_im $f 2>/dev/null";
+  my $extractCmd = "$extract .note.cc1_interceptor $f 2>/dev/null";
 #    print "$extractCmd\n";
   my $exOut = `$extractCmd`;
   return if $exOut eq '';
@@ -215,7 +215,7 @@ for my $pkg(@packages) {
     {!/\.(txt|xml|dtd|html|gif|jpg|c|h|cc|cpp|cxx|c\+\+|C|py|pl|tgz|tar|gz)$/}
       @files;
 
-  # for each file, extract section '.note.cc1_im'
+  # for each file, extract section '.note.cc1_interceptor'
   for my $f (@files) {
     if ($f=~/\.a$/) {
       # archive
