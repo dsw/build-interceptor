@@ -34,8 +34,13 @@ Put the source RPMs from the source disks into /usr/src/redhat/SRPMS.
 
 * Intercept build process
 
-Rename your two cc1's to old-cc1; Note: I describe everything for cc1,
-but do it for the parallel cc1plus programs as well.
+Here I describe how to manually intercept the Red Hat 7.3 compilers.
+See the main Readme for a generic way using Intercept.mk; I was very
+sure to find all the copies of gcc so here I describe how to do it
+manually.
+
+Rename your two cc1's to cc1_orig; Note: I describe everything for
+cc1, but do it for the parallel cc1plus programs as well.
 
 Something like this will find the cc1 and cc1plus programs.  I used
 locate but you have to build the database first; I don't think it will
@@ -74,11 +79,11 @@ This takes about 19 hours on my 1.7 GHz AMD with 3.5 Gig RAM.
 
 IMMEDIATELY before compiling anything else with gcc:
   chmod -R a-w ball_preproc ball_build
-Also remove the softlinks above and rename old-cc1 to cc1.
+Also remove the softlinks above and rename cc1_orig to cc1.
   mkdir preproc_junk
   ln -s preproc_junk preproc
 
-Rename the system old-cc1 and old-cc1plus files to their original
+Rename the system cc1_orig and cc1plus_orig files to their original
 names and remove (or just move to another directory) the softlinks to
 them.
 
@@ -105,8 +110,8 @@ Now it helps greatly to reorganize the files left in ball_preproc
 according to the information left in the executables and library files
 (.o, .so, or those inside .a) left by the build process in ball_build.
 Yes, I did check that the section added to the assembly (called
-".note.cc1_im") does survive in the .o, .so, or executable even if it
-is stripped.
+".note.cc1_interceptor") does survive in the .o, .so, or executable
+even if it is stripped.
 
 Make a link to Ben Liblit's extract_section.pl script (which I
 provide).  This script is used to do the extraction of the section
