@@ -128,7 +128,7 @@ if (@infiles) {
 }
 die "no such file $tmpfile" unless -f $tmpfile;
 
-my $md5 = md5_file($outfile);
+my $md5 = md5_file($tmpfile);
 
 unshift @av, $tmpfile;        # add input file to @av
 
