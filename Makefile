@@ -44,12 +44,12 @@ SOFTLINKS += tradcpp0_interceptor.pl
 SOFTLINKS += cc1plus_interceptor.pl
 SOFTLINKS += ld_interceptor.pl
 
-.PHONY: all
+.PHONY: all interceptor.specs.ALL
 # NOTE: for a subtle reason, softlinks should come before
 # intercept.progs: if you run this target after interception is
 # already happening, the tools that point to softlinks here that are
 # not built yet will not be included.
-all: softlinks intercept.progs make_interceptor
+all: softlinks intercept.progs make_interceptor interceptor.specs.ALL
 
 INTER_SCRIPS :=
 INTER_SCRIPS += as_interceptor.pl
@@ -91,6 +91,7 @@ clean-intercept.progs:
           C="rm -f intercept.progs"; echo $$C; $$C; \
         elif test -e intercept.progs; then \
           echo "Do not attempt to change intercept.progs while interception is on."; \
+          false; \
         else echo "No intercept.progs to remove."; \
         fi
 
@@ -118,6 +119,11 @@ clean-preproc:
 .PHONY: clean-script-interceptor
 clean-script-interceptor:
 	rm -rf make_interceptor
+
+interceptor.specs.ALL: interceptor.specs-3.4 interceptor.specs-3.3 interceptor.specs-3.2 interceptor.specs-3.0
+
+interceptor.specs-%: interceptor.specs.in
+	./make-spec-file $< $@
 
 intercept.progs: clean-intercept.progs
 	for F in $(USRTOOLS); do         \

@@ -1,4 +1,3 @@
-hide
-intercept.progs
-*.bak
+interceptor.specs-*
 make_interceptor
+intercept.progs
