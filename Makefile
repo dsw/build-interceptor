@@ -17,7 +17,8 @@ USRTOOLS :=
 # don't use it for now.  It isn't critical to the correct operation of
 # build_interceptor.
 # USRTOOLS += make
-USRTOOLS += gcc $(notdir $(wildcard /usr/bin/gcc-*))
+USRTOOLS_GCC = gcc $(notdir $(wildcard /usr/bin/gcc-*))
+USRTOOLS += $(USERTOOLS_GCC)
 USRTOOLS += g++ $(notdir $(wildcard /usr/bin/g++-*))
 USRTOOLS += cpp $(notdir $(wildcard /usr/bin/cpp-*))
 USRTOOLS += cc
@@ -34,6 +35,18 @@ GCCTOOLS += cc1plus
 # at least under gcc 3.4 this just runs ld
 # GCCTOOLS += collect2
 GCCTOOLS += f771
+
+get_paths = $(shell for F in $(1); do which $$F 2>/dev/null; done | sort -u)
+
+USRTOOLS_FULL = $(call get_paths,$(USRTOOLS))
+
+# the wildcard function filters out non-existing files
+USRTOOLS_GCC_FULL = $(wildcard $(shell          \
+	for F in $(GCCTOOLS); do                \
+	    for gcc in $(USRTOOLS_GCC); do      \
+	        $$gcc -print-prog-name=$$F;     \
+	    done                                \
+	done | sort -u) )
 
 # Script sharing: These tools are intercepted by a script that is also
 # intercepting another tool.
@@ -120,27 +133,22 @@ clean-preproc:
 clean-script-interceptor:
 	rm -rf make_interceptor
 
-interceptor.specs.ALL: interceptor.specs interceptor.specs-3.4 interceptor.specs-3.3 interceptor.specs-3.2 interceptor.specs-3.0
+# make interceptor specs for all gcc versions we need
+interceptor.specs.ALL: $(subst gcc,interceptor.specs,$(USRTOOLS_GCC))
+#interceptor.specs interceptor.specs-3.4 interceptor.specs-3.3 interceptor.specs-3.2 interceptor.specs-3.0
 
+# interceptor specs for a particular version
 interceptor.specs-%: interceptor.specs.in
 	./make-spec-file $< $@
 
+# default interceptor specs for gcc 3.3
 interceptor.specs: interceptor.specs-3.3
-	ln -s $< $@
+	ln -fs $< $@
 
 intercept.progs: clean-intercept.progs
-	for F in $(USRTOOLS); do         \
-          if which $$F &>/dev/null; then \
-            echo "to intercept.progs $$F"; \
-            which $$F >> $@;             \
-          fi                             \
-        done
-	for F in $(GCCTOOLS); do                      \
-          if test -e `gcc -print-prog-name=$$F`; then \
-            echo "to intercept.progs $$F";            \
-            gcc -print-prog-name=$$F >> $@;           \
-          fi                                          \
-        done
+	echo $(USRTOOLS_FULL) $(USRTOOLS_GCC_FULL) | xargs -n 1 > $@
+	@echo
+	@echo "$@: " && cat $@
 
 .PHONY: softlinks
 softlinks: $(SOFTLINKS)
