@@ -18,17 +18,7 @@ use lib "$FindBin::Bin/../lib";
 # that contains the link to this script, and should be the directory
 # where the gcc executable got moved to gcc_orig.
 
-# first, see if we need to map ${0} to a canonical name
-my %canonName =
-  ('/usr/bin/cc' => '/usr/bin/gcc',
-   '/usr/bin/c++' => '/usr/bin/g++'
-);
 my $dollar_zero = ${0};
-#  warn "before: $dollar_zero\n";
-if (defined $canonName{$dollar_zero}) {
-  $dollar_zero = $canonName{$dollar_zero};
-}
-#  warn "after: $dollar_zero\n";
 
 # if gcc is a link to something that's not an interceptor (e.g. gcc-3.3), use
 # gcc-3.3_orig instead of gcc_orig

@@ -10,17 +10,9 @@ use strict;
 # When used as a replacement to the system as will just pass the
 # arguments through.
 
-# first, see if we need to map ${0} to a canonical name
-my %canonName =
-  ('/usr/bin/gmake' => '/usr/bin/make'
-);
 my $dollar_zero = ${0};
 #  warn "before: $dollar_zero\n";
 $dollar_zero =~ s/_interceptor[.]pl$//;
-if (defined $canonName{$dollar_zero}) {
-  $dollar_zero = $canonName{$dollar_zero};
-}
-#  warn "after: $dollar_zero\n";
 
 # compute the new executable name we are calling
 my $prog = "${dollar_zero}_orig";
