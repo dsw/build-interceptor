@@ -4,6 +4,7 @@
 use warnings;
 use strict;
 use FindBin;
+use File::Spec;
 
 my $extract_pl = "${FindBin::RealBin}/extract_section.pl";
 if (!-f $extract_pl) {
@@ -46,9 +47,17 @@ sub find_output_filename {
     return $outfile;
 }
 
+sub do_not_add_interceptions_to_this_file {
+    my ($outfile_abs) = @_;
+    my $r = $ENV{BUILD_INTERCEPTOR_DO_NOT_ADD_INTERCEPTIONS_TO_FILES};
+    return ($r and $outfile_abs =~ /^$r$/);
+}
+
+unshift @av, $prog;
+
 # delegate to the real thing.
 #close (LOG) or die $!;          # LOUD
-system $prog ($0, @av);
+system (@av);
 
 my $ret = $?;
 my $exit_value = $ret >> 8;
@@ -61,6 +70,18 @@ if ($ret) {
 }
 
 my $outfile = find_output_filename();
+
+my $outfile_abs = File::Spec->rel2abs($outfile);
+
+if (!-f $outfile) {
+    die "$0: @av didn't produce $outfile\n";
+}
+
+if (do_not_add_interceptions_to_this_file($outfile_abs)) {
+    # there shouldn't be an .notes at this point, but don't add or check for
+    # more.
+    exit(0);
+}
 
 my $cc1_note = `$extract_pl .note.cc1_interceptor $outfile 2>/dev/null`;
 if ($? || !$cc1_note) {
