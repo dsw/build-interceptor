@@ -1,0 +1,176 @@
+Using the scripts ****************
+
+These scripts were originally written to capture the .i files
+generated when building the Red Hat Linux 7.3 distribution from source
+as a test for the Elsa/Oink C/C++ front end and analysis tools.  Both
+of the resulting data and Oink can be downloaded from my homepage
+given above; I also provide a link to Elsa there.
+
+As an example of how to use these scripts, I detail the process of
+building Red hat 7.3 from source and capturing the .i files almost as
+it was done, but with the simplifying benefit of hindsight.  However
+this process and the scripts provided are quite generic and can be
+used for any project.  Many artifacts of the original usage remain in
+some of the scripts, such as lists of Red Hat 7.3 package names; You
+will have to fix the scripts here and there for use on your project.
+Feel free to send me the improvements.
+
+Please note that the steps quoted below are an abstraction of my
+recollection of what I did; I did not repeat it all just to check that
+every script is exactly right, as it takes quite a while.
+
+* Install Red Hat 7.3
+
+Buy a new disk.
+
+Obtain the Red Hat 7.3 ISOs (I have a link to them posted; they can be
+hard to find).
+
+Burn them on CDs.
+
+Install Red Hat 7.3 from CD onto the new disk.
+
+Put the source RPMs from the source disks into /usr/src/redhat/SRPMS.
+
+* Intercept build process
+
+Rename your two cc1's to old-cc1; Note: I describe everything for cc1,
+but do it for the parallel cc1plus programs as well.
+
+Something like this will find the cc1 and cc1plus programs.  I used
+locate but you have to build the database first; I don't think it will
+be built if you have just installed from CD.
+  find /usr -follow -regex '.*cc1' 2>/dev/null
+
+On Red Hat 7.3, there are four occurrences.  Thee two are just links to
+the other two, so leave them (and their sibling cc1plus) alone.
+  /usr/i386-glibc21-linux/lib/gcc-lib/i386-redhat-linux/2.96/cc1
+    -> ../../../../../lib/gcc-lib/i386-glibc21-linux/egcs-2.91.66/cc1
+  /usr/lib/gcc-lib/i386-redhat-linux/egcs-2.91.66/cc1
+    -> ../../i386-glibc21-linux/egcs-2.91.66/cc1
+
+Just rename these two (and the parallel cc1plus files):
+  /usr/lib/gcc-lib/i386-redhat-linux/2.96/cc1
+  /usr/lib/gcc-lib/i386-glibc21-linux/egcs-2.91.66/cc1
+
+Now make a softlink the old names to the cc1_interceptor.pl script
+provided.
+
+Make a directory to keep the .i files generated during the build.
+  mkdir ball_preproc
+Make a softlink to it from $HOME/preproc, the directory hard-coded into
+cc1_interceptor.pl.
+  ln -s ball_preproc preproc
+
+* Build
+
+Make a directory where Red Hat will be built.
+  mkdir ball_build
+
+IMMEDIATELY Build everything; do not use gcc for anything else first
+as the .i files generated will also end up in the preproc directory.
+This takes about 19 hours on my 1.7 GHz AMD with 3.5 Gig RAM.
+  ./just_build.pl
+
+IMMEDIATELY before compiling anything else with gcc:
+  chmod -R a-w ball_preproc ball_build
+Also remove the softlinks above and rename old-cc1 to cc1.
+  mkdir preproc_junk
+  ln -s preproc_junk preproc
+
+Rename the system old-cc1 and old-cc1plus files to their original
+names and remove (or just move to another directory) the softlinks to
+them.
+
+According to the return value of rpmbuld only 92.5% of the packages
+say that they build successfully.  I don't yet understand how the
+simple build process interception that I do can cause so many packages
+to fail; I did not build them without interception as a control.  The
+packages that fail to build have not been included in this release.
+
+* Count source lines
+
+The files pkgs_by_c_size.dat and pkgs_by_cpp_size.dat list each
+package sorted by the number of .c and .cc (or other spellings: .C,
+.cpp, .cxx, .c++) files in a package, respectively.
+  ./count_src.pl
+
+Note that the script prints the C and C++ sizes on one line, whereas
+the pkgs_by_c[pp]_size.dat files I provide are the same data split
+into two files.
+
+* Reorganize
+
+Now it helps greatly to reorganize the files left in ball_preproc
+according to the information left in the executables and library files
+(.o, .so, or those inside .a) left by the build process in ball_build.
+Yes, I did check that the section added to the assembly (called
+".note.cc1_im") does survive in the .o, .so, or executable even if it
+is stripped.
+
+Make a link to Ben Liblit's extract_section.pl script (which I
+provide).  This script is used to do the extraction of the section
+from the executable and library files.  I find it strange that neither
+objdump, objcopy nor readelf have this as a command-line option, but
+that fact necessitates the existence of this script.
+  ln -s <this directory>/extract_section.pl $HOME/extract_section.pl
+
+Make a directory for the reorg databall output.
+  mkdir ball
+
+Run
+  ./reorg_build.pl
+
+Now you have a file $HOME/ball that is partitioned by package.  In
+each package directory there are .i files for pre-processed C files,
+.ii files for pre-processed C++ files, and .ld files which list all
+the filenames that are linked together to make a .o, .so or executable
+file.  You need the .ld files so you know which .i files to analyze
+together when doing a whole-program analysis.
+
+Please note that all .i (or .ii) files that end up in the reorg-ed
+ball directory are listed in some .ld file: .i files not pointed to by
+some executable (or .o, etc.) are likely to be configuration files or
+other junk you don't want.
+
+* Check for configure files
+
+Some files generated as part of the configure stage of the build
+process of some packages can be deliberately perverse: you don't want
+to analyze them.  Run the script to check what is a 'configure' or
+'configtemp' file:
+  ./find_config.pl
+
+When I ran it I found 3 files that were very simple and I just left
+them in the .i files as they were legal.  It seems that the rest don't
+generate an executable and therefore don't end up in a .i file.
+
+* Check that gcc builds them again
+
+Run the installed gcc 2.96 over all the .i files to verify that they
+build.  Be sure you no longer have your system cc1 or cc1plus pointing
+at cc1_interceptor before doing this.
+  ./gcc_all.pl
+
+Of those, two packages have files that fail when I run gcc on them
+again(!):
+  htdig-3.2.0-2.011302
+  glibc-2.2.5-34
+
+How this can be I don't know; If I had written rpmbuild and a
+reasonable build process for a package then if any of the files failed
+to build I would have had the whole process halt.  Evidently, some
+packages fail to build some of their files but the build keeps going
+anyway and rpmbuild returns success on them (!?).  I have included
+these two packages above in the release anyway, as only a few files in
+the packages fail and rpmbuild said their builds succeeded.  You are
+free to delete them from the list of packages you run experiments on.
+
+* If you re-release
+
+I am not a lawyer; however it seems to me that the captured .i files
+count as "derived works" from the original source.  Therefore it seems
+that you have to provide with them the license file with which the
+original package came.  When building RH7.3.i, the tarball of the
+resulting .i files, I have done this by simply including all the
+.src.rpm-s and referring the reader to to them in the Readme.

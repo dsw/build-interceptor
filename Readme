@@ -16,20 +16,18 @@ necessary.
 Limitations ****
 
 The method described here requires that you be root on your box so you
-can replace the system cc1 and cc1plus programs, though if you can
-think of another way to get gcc to use your cc1 instead of the real
-one then that will work too.  I have heard it is possible to achieve
-this effect using environment variables or linker scripts passed to
-gcc thought I haven't tried it.  Another way is to build gcc from
-source in your own account and then hack that, but then you have to
-get the build process for the package you want to intercept to use
-that gcc instead of the system one.
+can replace the system cc1 and cc1plus programs, among others; this is
+done so that the build process you are intercepting does not have to
+be changed at all.  You can probably also get it to work by setting
+environment variables such as GCC_EXEC_PREFIX.  I could not figure out
+how to change the compiler proper (cc1) from gcc spec files.
 
-According to Ben Liblit, newer gcc versions combine the preprocessing
-and compiling stages by default, so you may have to do more work to
-separate them again somehow.  I haven't tried that.
+The previous version of this tool would not work with the gcc 3 series
+as the preprocessor and compiler had been integrated; however since
+then by looking through the source code I discovered the seemingly
+undocumented flag "--no-integrated-cpp" which solves this problem.
 
-Compilers other than gcc are also not supported.
+Compilers other than gcc are not supported.
 
 Background ****
 
@@ -51,23 +49,18 @@ by the gcc compiler tool chain by replacing and imitating cc1.  It
    2) runs the real cc1 passing in the copy,
 
    3) puts the fully-qualified filename of the copy into a string in
-      the section ".note.cc1_im" in the assembly output.
+      the section ".note.cc1_interceptor" in the assembly output.
 
 This name flows to the .o and then to the executable (the linker will
-concatenate multiple occurrences) where it can later be retrieved
-using objdump; This is easier to do if you use Ben Liblit's
-extract-section script which he ships as part of "The Cooperative Bug
-Isolation Project" and which I include in this project.  See below for
-details on doing this.
+concatenate multiple occurrences of this section) where it can later
+be retrieved using objdump; This is easier to do if you use Ben
+Liblit's extract-section script which he ships as part of "The
+Cooperative Bug Isolation Project" and which I include in this
+project; see below for details.
 
-Use this script by moving your system cc1 and cc1plus to old-cc1 and
-old-cc1plus respectively and then making a link to this script in its
-old location as cc1 (it is ok to link both to this same script as it
-figures out how it was called); A similar effect can probably be
-achieved with gcc spec files or environment variables.  According to
-Ben, newer gcc versions combine the preprocessing and compiling stages
-by default, so you may have to do more to separate those stages again
-for this process to work.
+The build interceptor process works by first moving away the system
+executables (using the Intercept.mk makefile, as root) and replacing
+them with softlinks to the interception scripts provided.
 
 Licensing ****************
 
@@ -79,235 +72,18 @@ Using the scripts ****************
 
 These scripts were originally written to capture the .i files
 generated when building the Red Hat Linux 7.3 distribution from source
-as a test for the Elsa/Oink C/C++ front end and analysis tools.  Both
-of the resulting data and Oink can be downloaded from my homepage
-given above; I also provide a link to Elsa there.
+as a test for the Elsa/Oink C/C++ front end and analysis tools.  The
+first release of build_interceptor used as an example of how to use
+these scripts the process of building Red hat 7.3 from source and
+capturing the .i files.  Those instructions are still available in
+Readme_RedHat7.3.
 
-As an example of how to use these scripts, I detail the process of
-building Red hat 7.3 from source and capturing the .i files almost as
-it was done, but with the simplifying benefit of hindsight.  However
-this process and the scripts provided are quite generic and can be
-used for any project.  Many artifacts of the original usage remain in
-some of the scripts, such as lists of Red Hat 7.3 package names; You
-will have to fix the scripts here and there for use on your project.
-Feel free to send me the improvements.
-
-Please note that the steps quoted below are an abstraction of my
-recollection of what I did; I did not repeat it all just to check that
-every script is exactly right, as it takes quite a while.
-
-* Install Red Hat 7.3
-
-Buy a new disk.
-
-Obtain the Red Hat 7.3 ISOs (I have a link to them posted; they can be
-hard to find).
-
-Burn them on CDs.
-
-Install Red Hat 7.3 from CD onto the new disk.
-
-Put the source RPMs from the source disks into /usr/src/redhat/SRPMS.
-
-* Intercept build process
-
-Rename your two cc1's to old-cc1; Note: I describe everything for cc1,
-but do it for the parallel cc1plus programs as well.
-
-Something like this will find the cc1 and cc1plus programs.  I used
-locate but you have to build the database first; I don't think it will
-be built if you have just installed from CD.
-  find /usr -follow -regex '.*cc1' 2>/dev/null
-
-On Red Hat 7.3, there are four occurrences.  Thee two are just links to
-the other two, so leave them (and their sibling cc1plus) alone.
-  /usr/i386-glibc21-linux/lib/gcc-lib/i386-redhat-linux/2.96/cc1
-    -> ../../../../../lib/gcc-lib/i386-glibc21-linux/egcs-2.91.66/cc1
-  /usr/lib/gcc-lib/i386-redhat-linux/egcs-2.91.66/cc1
-    -> ../../i386-glibc21-linux/egcs-2.91.66/cc1
-
-Just rename these two (and the parallel cc1plus files):
-  /usr/lib/gcc-lib/i386-redhat-linux/2.96/cc1
-  /usr/lib/gcc-lib/i386-glibc21-linux/egcs-2.91.66/cc1
-
-Now make a softlink the old names to the cc1_interceptor.pl script
-provided.
-
-Make a directory to keep the .i files generated during the build.
-  mkdir ball_preproc
-Make a softlink to it from $HOME/preproc, the directory hard-coded into
-cc1_interceptor.pl.
-  ln -s ball_preproc preproc
-
-* Build
-
-Make a directory where Red Hat will be built.
-  mkdir ball_build
-
-IMMEDIATELY Build everything; do not use gcc for anything else first
-as the .i files generated will also end up in the preproc directory.
-This takes about 19 hours on my 1.7 GHz AMD with 3.5 Gig RAM.
-  ./just_build.pl
-
-IMMEDIATELY before compiling anything else with gcc:
-  chmod -R a-w ball_preproc ball_build
-Also remove the softlinks above and rename old-cc1 to cc1.
-  mkdir preproc_junk
-  ln -s preproc_junk preproc
-
-Rename the system old-cc1 and old-cc1plus files to their original
-names and remove (or just move to another directory) the softlinks to
-them.
-
-According to the return value of rpmbuld only 92.5% of the packages
-say that they build successfully.  I don't yet understand how the
-simple build process interception that I do can cause so many packages
-to fail; I did not build them without interception as a control.  The
-packages that fail to build have not been included in this release.
-
-* Count source lines
-
-The files pkgs_by_c_size.dat and pkgs_by_cpp_size.dat list each
-package sorted by the number of .c and .cc (or other spellings: .C,
-.cpp, .cxx, .c++) files in a package, respectively.
-  ./count_src.pl
-
-Note that the script prints the C and C++ sizes on one line, whereas
-the pkgs_by_c[pp]_size.dat files I provide are the same data split
-into two files.
-
-* Reorganize
-
-Now it helps greatly to reorganize the files left in ball_preproc
-according to the information left in the executables and library files
-(.o, .so, or those inside .a) left by the build process in ball_build.
-Yes, I did check that the section added to the assembly (called
-".note.cc1_im") does survive in the .o, .so, or executable even if it
-is stripped.
-
-Make a link to Ben Liblit's extract_section.pl script (which I
-provide).  This script is used to do the extraction of the section
-from the executable and library files.  I find it strange that neither
-objdump, objcopy nor readelf have this as a command-line option, but
-that fact necessitates the existence of this script.
-  ln -s <this directory>/extract_section.pl $HOME/extract_section.pl
-
-Make a directory for the reorg databall output.
-  mkdir ball
-
-Run
-  ./reorg_build.pl
-
-Now you have a file $HOME/ball that is partitioned by package.  In
-each package directory there are .i files for pre-processed C files,
-.ii files for pre-processed C++ files, and .ld files which list all
-the filenames that are linked together to make a .o, .so or executable
-file.  You need the .ld files so you know which .i files to analyze
-together when doing a whole-program analysis.
-
-Please note that all .i (or .ii) files that end up in the reorg-ed
-ball directory are listed in some .ld file: .i files not pointed to by
-some executable (or .o, etc.) are likely to be configuration files or
-other junk you don't want.
-
-* Check for configure files
-
-Some files generated as part of the configure stage of the build
-process of some packages can be deliberately perverse: you don't want
-to analyze them.  Run the script to check what is a 'configure' or
-'configtemp' file:
-  ./find_config.pl
-
-When I ran it I found 3 files that were very simple and I just left
-them in the .i files as they were legal.  It seems that the rest don't
-generate an executable and therefore don't end up in a .i file.
-
-* Check that gcc builds them again
-
-Run the installed gcc 2.96 over all the .i files to verify that they
-build.  Be sure you no longer have your system cc1 or cc1plus pointing
-at cc1_interceptor before doing this.
-  ./gcc_all.pl
-
-Of those, two packages have files that fail when I run gcc on them
-again(!):
-  htdig-3.2.0-2.011302
-  glibc-2.2.5-34
-
-How this can be I don't know; If I had written rpmbuild and a
-reasonable build process for a package then if any of the files failed
-to build I would have had the whole process halt.  Evidently, some
-packages fail to build some of their files but the build keeps going
-anyway and rpmbuild returns success on them (!?).  I have included
-these two packages above in the release anyway, as only a few files in
-the packages fail and rpmbuild said their builds succeeded.  You are
-free to delete them from the list of packages you run experiments on.
-
-* If you re-release
-
-I am not a lawyer; however it seems to me that the captured .i files
-count as "derived works" from the original source.  Therefore it seems
-that you have to provide with them the license file with which the
-original package came.  When building RH7.3.i, the tarball of the
-resulting .i files, I have done this by simply including all the
-.src.rpm-s and referring the reader to to them in the Readme.
-
-Files ****
-
-To simplify things, the scripts make some assumptions about what files
-and directories are where.  I list them here; all are assumed to be
-under $HOME.
-
-ball_preproc: Where the captured preprocessing output of
-cc1_interceptor.pl goes.
-
-preproc: Link to ball_preproc.
-
-ball_build: The root of the tree where the source RPMs get built.
-
-ball: The directory that results from reorganizing the captured .i
-files according to the .note.cc1_im sections left behind in the
-executables and .o files.
-
-ball_fail_c.files and ball_fail_cc.files: The files where gcc_all.pl
-puts the list of .i files that fail to build with gcc after being
-captured by the build process.
-
-Acknowledgments ****************
-
-I used code and ideas for build-process interception from two
-different previous projects that dealt with this same problem.
-
-    The "The Cooperative Bug Isolation Project"
-    (http://www.cs.berkeley.edu/~liblit/sampler/) by Ben Liblit
-
-    The MOPS project (http://sourceforge.net/projects/mopscode) by Hao
-    Chen where he and Geoff Morrison in particular worked on the
-    build-process interception aspect.
-
-The idea of inserting metadata into an unused section in ELF .o files
-was borrowed from Ben and Hao.  I extended it back to the assembly
-stage.
-
-Ben Liblit, Hao Chen, John Kodumal, and Simon Goldsmith contributed to
-the discussions leading to these scripts.  Thanks especially to Simon
-Goldsmith for proof-reading this Readme [I of course take
-responsibility for any remaining mistakes].
-
-****************************************************************
-
-This is how to use the new build interception process.
-
-**** Using build_interceptor
-
-# Do this once.
+# One-time initial setup of build_interceptor.
 cd; cd build_interceptor
-# Check that the files you want to intercept are generated in
-# intercept.files.
-make intercept.files
-# Make the softlinks for sharing interception scripts.
-make soflinks
-# Actually, just 'make' will make both of them.
+make
+# Now check that the files you want to intercept are generated in
+# intercept.files.  You can change this file if you need to, but only
+# do it while build interception is off.
 
 # Make a place to put the .i files.
 cd
@@ -354,5 +130,112 @@ exit # the root shell
 # Run reorg on the output.
 # FIX: finish this.
 
-# Replay the build process.
-# FIX: finish this.
+Files ****
+
+To simplify things, the scripts make some assumptions about what files
+and directories are where.  I list them here; all are assumed to be
+under $HOME.
+
+ball_preproc: Where the captured preprocessing output of
+cc1_interceptor.pl goes.
+
+preproc: Link to ball_preproc.
+
+ball_build: The root of the tree where the source RPMs get built.
+
+ball: The directory that results from reorganizing the captured .i
+files according to the .note.cc1_im sections left behind in the
+executables and .o files.
+
+ball_fail_c.files and ball_fail_cc.files: The files where gcc_all.pl
+puts the list of .i files that fail to build with gcc after being
+captured by the build process.
+
+Design ****************
+
+Our design builds on the experience of the MOPS project and
+Cooperative Bug Isolation Project (CBI), which I talk more about in
+the Acknowledgments section below.
+
+There are other ways one might attempt build process interception.
+This particular design has been chosen to avoid some problems that are
+not at all obvious if you have not tried this before.  The salient
+lesson of those other projects is that build-processes are very
+complex and interception is hard to do without breaking them; testing
+is very difficult because if something fails it is hard to know how
+what went wrong or even if something went wrong.  The number one
+concern of the design is therefore to keep things as simple and
+non-intrusive as possible.
+
+1 - We do not pipeline the build interception with any further
+analysis of the generated .i files.  That is we just save the
+generated .i files, we don't run an analysis right then; the MOPS
+project (below) did attempt to analyze .i files as they were
+generated.  When a build would fail, they assumed that their analysis
+had failed.  When we later separated the interception from the
+analysis, we found that in fact the interception was often failing but
+this was going undetected.
+
+Another reason to not separate them is that if your analysis does
+fail, you often want to re-run it multiple times as you gradually
+minimize the input, such as while using the delta file minimizer tool
+(http://www.cs.berkeley.edu/~dsw/).  This is only possible if you have
+already materialized the .i file somewhere separately.
+
+Basically a complex process should be staged if at all possible to
+reduce complexity.
+
+2 - We do not attempt to keep metadata on build-process-generated
+files anywhere outside the files themselves.  Early versions of the
+MOPS projects attempted to put derived data from a .i file into
+another file and then somehow maintain an association between the two.
+This was found to be impossible due to build processes moving files
+around etc.
+
+All metadata for a file is inserted into the file in one way or
+another, depending on the current language the file is in: at the
+compile stage, it is inserted into the generated assembly (a trick
+novel to build_interceptor) and at the link stage it is inserted into
+the .o file using objcopy (a trick from MOPS and also CBI as well I
+think).
+
+3 - We do not attempt out-of-band communication between the various
+sub-processes of gcc, which differs from both MOPS and CBI.  MOPS for
+example attempts to capture the preprocessing stage, analyze it, and
+then insert the results in after the linking stage.  Getting rid of
+this long-range dependency between stages greatly simplifies things.
+
+4 - Similarly we do not attempt to parse the command-line arguments of
+gcc.  Again, the simplification of the process is huge; we only parse
+arguments of simple tools such as cc1 and collect2.
+
+Something you might be tempted to do along these lines is to remove
+-O* flags from the compile stage to speed things up, since perhaps you
+are only interested in the .i files and not in actually using the
+resulting executables.  Removing -O* from the compile stage alone will
+not work, as if it has been passed to the preprocessing stage the
+compile stage will fail to compile it due to various things having
+been inlined.  I suppose it would work to remove it from all stages,
+probably using the gcc spec file mechanism, but I don't consider it
+worth the complexity and possibility of failure.
+
+Acknowledgments ****************
+
+I used code and ideas for build-process interception from two
+different previous projects that dealt with this same problem.
+
+    The "The Cooperative Bug Isolation Project"
+    (http://www.cs.berkeley.edu/~liblit/sampler/) by Ben Liblit
+
+    The MOPS project (http://sourceforge.net/projects/mopscode) by Hao
+    Chen where he and Geoff Morrison in particular worked on the
+    build-process interception aspect.
+
+The idea of inserting metadata into an unused section in ELF .o files
+was borrowed from Ben and Hao.  I extended it back to the assembly
+stage.
+
+Ben Liblit, Hao Chen, John Kodumal, and Simon Goldsmith contributed to
+the discussions leading to these scripts.  Thanks especially to Simon
+Goldsmith for proof-reading this Readme [I of course take
+responsibility for any remaining mistakes].
