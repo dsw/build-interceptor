@@ -16,6 +16,7 @@ my %canonName =
 );
 my $dollar_zero = ${0};
 #  warn "before: $dollar_zero\n";
+$dollar_zero =~ s/_interceptor[.]pl$//;
 if (defined $canonName{$dollar_zero}) {
   $dollar_zero = $canonName{$dollar_zero};
 }

@@ -46,7 +46,7 @@ SOFTLINKS += ld_interceptor.pl
 # intercept.progs: if you run this target after interception is
 # already happening, the tools that point to softlinks here that are
 # not built yet will not be included.
-all: softlinks intercept.progs
+all: softlinks intercept.progs make_interceptor
 
 INTER_SCRIPS :=
 INTER_SCRIPS += as_interceptor.pl
@@ -141,3 +141,6 @@ cc1plus_interceptor.pl:
 	ln -s cc1_interceptor.pl $@
 ld_interceptor.pl:
 	ln -s collect2_interceptor.pl $@
+
+make_interceptor: script_interceptor.c
+	gcc -o $@ -DIPROGNAME='"make"' -DINTERCEPTORPATH='"make_interceptor.pl"' $^

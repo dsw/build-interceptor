@@ -97,7 +97,7 @@ sub do_one_file {
       #          unless defined $tmpfile;
       #        print "extracted tmpfile: $tmpfile\n";
 
-      die "What is this line doing?";
+      # die "What is this line doing?";
       die "bad ld file: $extractCmd"
         unless $tmpfile =~ s|^$home/preproc|$home/preproc|;
 
