@@ -53,6 +53,9 @@ mkpath($cc1_test_cache_bad);
 my $ar_cache = "$tmpdir/ar_cache";
 mkpath($ar_cache);
 
+# test-only extract
+my $extract = "${FindBin::RealBin}/extract_section.pl -t -q";
+
 # where are we?
 my $pwd = getcwd;
 
@@ -207,9 +210,6 @@ my $sec_name = basename($0);
 die "bad sec_name:$sec_name:" unless
   $sec_name eq 'ld' ||
   $sec_name eq 'collect2';
-
-# test-only extract
-my $extract = "${FindBin::RealBin}/extract_section.pl -t -q";
 
 my @not_intercepted;
 # if we are ld, then iterate through the .o files that were generated
