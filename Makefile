@@ -45,6 +45,9 @@ SOFTLINKS += ld_interceptor.pl
 # not built yet will not be included.
 all: softlinks intercept.files
 
+.PHONY: clean
+clean: clean-intercept.files clean-softlinks
+
 .PHONY: clean-intercept.files
 clean-intercept.files:
 	@if test -w intercept.files; then      \
