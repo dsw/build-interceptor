@@ -12,10 +12,6 @@ my $prog = "${0}_orig";         # compute the new executable name we are calling
 
 my @raw_args = @av;
 
-# mapping from build filesystem to isomorphic copy.  Make this
-# directory.
-my $prefix = "$ENV{HOME}/preproc";
-
 # where are we?
 my $pwd = `pwd`;
 chomp $pwd;
@@ -43,7 +39,7 @@ if ($outfile_abs !~ m|^/|) {
 }
 
 # We want to capture the output of the system call below.
-my $tmpfile = "$prefix/collect2.$$.tmp";
+my $tmpfile = "/tmp/collect2.$$.tmp";
 die "tmpfile:$tmpfile exists !?" if -e $tmpfile;
 
 # Print out the files that are linked in.
