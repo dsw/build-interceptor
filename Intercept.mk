@@ -29,6 +29,7 @@ print: intercept.files
 .PHONY: on
 on: intercept.files
 	@if test `whoami` != root; then echo "run this target as root"; false; fi
+	chmod a-w $<
 	@for F in `cat $<`; do                                \
           if ! test -e $${F}_orig; then                       \
             C="mv $$F $${F}_orig"; echo $$C; $$C;             \
@@ -46,3 +47,4 @@ off: intercept.files
           else echo "Interception already off for $${F}"; \
           fi                                              \
         done
+	chmod u+w $<

@@ -45,17 +45,23 @@ SOFTLINKS += ld_interceptor.pl
 # not built yet will not be included.
 all: softlinks intercept.files
 
-.PHONY: clean
-clean:
-	rm -f intercept.files
+.PHONY: clean-intercept.files
+clean-intercept.files:
+	@if test -w intercept.files; then      \
+          rm -f intercept.files;               \
+        else                                   \
+          echo "Do not attempt to change intercept.files while interception is on."; \
+        fi
+
+.PHONY: clean-softlinks
+clean-softlinks:
 	rm -f $(SOFTLINKS)
 
 .PHONY: clean-preproc
 clean-preproc:
 	rm -rf ${HOME}/preproc/*
 
-intercept.files:
-	rm -f $@
+intercept.files: clean-intercept.files
 	for F in $(USRTOOLS); do         \
           if which $$F &>/dev/null; then \
             echo "to intercept.files $$F"; \
