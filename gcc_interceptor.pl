@@ -39,6 +39,17 @@ if ($l && $l !~ /interceptor/) {
     $dollar_zero = $l;
 }
 
+my $specfile = "${FindBin::RealBin}/interceptor.specs";
+
+if ($dollar_zero =~ /(-[0-9][.][0-9.]+)$/) {
+    $specfile .= $1;
+}
+
+if (!-f $specfile) {
+    die "$0: can't find specfile $specfile";
+}
+
+
 if ("@ARGV" =~ /-E -P -\s*$/ || grep {$_ eq '-V'} @ARGV) {
     # -E -P kludge: don't output line markers if the program is just using gcc
     # to get preprocessor definitions.  What glibc does is:
@@ -51,7 +62,7 @@ if ("@ARGV" =~ /-E -P -\s*$/ || grep {$_ eq '-V'} @ARGV) {
 my @cmd_line =
   ("${dollar_zero}_orig",
    "--no-integrated-cpp",
-   "-specs=${FindBin::RealBin}/interceptor.specs",
+   "-specs=$specfile",
 # We no longer need this
 #     "-B$FindBin::RealBin",
    @ARGV);
