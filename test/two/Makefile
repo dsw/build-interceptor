@@ -28,7 +28,7 @@ check-interception:
 	-$(EXTRACT) .note.ld_interceptor foo
 
 foo: gronk.o blort.o
-	g++ -o $@ $^
+	/usr/bin/c++ -o $@ $^
 
 %.o: %.cc
-	g++ -c -o $@ $<
+	/usr/bin/c++ -c -o $@ $<

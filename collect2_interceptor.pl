@@ -8,7 +8,10 @@ use Cwd 'abs_path';
 # When used as a replacement to the system collect2 will just pass the
 # arguments through.
 
-#warn "collect2_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
+#my $splash = "collect2_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
+#warn $splash;                   # LOUD
+#open (LOG, ">>$ENV{HOME}/build_interceptor.log") or die $!; # LOUD
+#print LOG $splash;              # LOUD
 
 my @av = @ARGV;                 # @ARGV has magic, so copy it
 my $prog = "${0}_orig";         # compute the new executable name we are calling
@@ -292,6 +295,7 @@ die $! if system(@objcopy_cmd);
 # Delete the temporary file.
 unlink $tmpfile or die $!;
 
+#close (LOG) or die $!;          # LOUD
 exit $exit_value;
 
 # subroutines ****************

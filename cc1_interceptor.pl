@@ -6,7 +6,10 @@ use strict;
 # will intercept the build process and keep a copy of the .i files
 # generated.
 
-#warn "cc1_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
+#my $splash = "cc1_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
+#warn $splash;                   # LOUD
+#open (LOG, ">>$ENV{HOME}/build_interceptor.log") or die $!; # LOUD
+#print LOG $splash;              # LOUD
 
 my @av = @ARGV;                 # @ARGV has magic, so copy it
 my $prog = "${0}_orig";         # compute the new executable name we are calling
@@ -219,4 +222,5 @@ if ($outfile eq "-") {
 
 # exit
 #  close OUT or die $!;
+#close (LOG) or die $!;          # LOUD
 exit $exit_value;               # exit with the same value as cc1 did

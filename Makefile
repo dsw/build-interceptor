@@ -65,8 +65,16 @@ loud-off: $(LOUD_OFF)
 $(LOUD_OFF): loud-off/%:
 	perl -i.bak -pe 's/^(\s*)\#*/$1\#/ if /LOUD/' $*
 
+# timestamp the $HOME/build_interceptor.log; useful to run between
+# compilations
+.PHONY: stamp-log
+stamp-log:
+	echo >> ${HOME}/build_interceptor.log
+	date >> ${HOME}/build_interceptor.log
+	echo >> ${HOME}/build_interceptor.log
+
 .PHONY: clean
-clean: clean-intercept.progs clean-softlinks
+clean: clean-intercept.progs clean-softlinks clean-bak
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
@@ -80,6 +88,12 @@ clean-intercept.progs:
 .PHONY: clean-softlinks
 clean-softlinks:
 	rm -f $(SOFTLINKS)
+
+# .bak files are created when perl -i.bak filters files; this is done
+# by loud-on/loud-off
+.PHONY: clean-bak
+clean-bak:
+	rm -f *.bak
 
 .PHONY: clean-preproc
 clean-preproc:
