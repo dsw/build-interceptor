@@ -209,6 +209,8 @@ END2b
   ;
 }
 
+my $pkg = $ENV{BUILD_INTERCEPTOR_PACKAGE} || '';
+
 $metadata .= <<END3             # do interpolate!
         .ascii "\\n\\t)"
         .ascii "\\n\\trun_args:${run_args}"
@@ -216,6 +218,7 @@ $metadata .= <<END3             # do interpolate!
         .ascii "\\n\\tdumpbase:${dumpbase}"
         .ascii "\\n\\ttmpfile:${tmpfile}"
         .ascii "\\n\\tifile:${rel_tmpfile}"
+        .ascii "\\n\\tpackage:${pkg}"
         .ascii "\\n)\\n"
 END3
   ;
