@@ -1,10 +1,11 @@
 #!/usr/bin/perl -w
 # See License.txt for copyright and terms of use
 use strict;
-use File::Cwd;
+use Cwd;
 use File::Basename;
 use File::Path;
 use File::Spec;
+use File::Copy;
 
 # When used as a replacement to the system cc1 or cc1plus this script
 # will intercept the build process and keep a copy of the .i files
@@ -24,7 +25,7 @@ if (grep {/^-E$/} @av) {
 #    warn "non-compile call to $prog, @av\n";
     # system($prog, @av);
     # exit $? >> 8;
-    exec(@av) || die "$0: failed to exec @av";
+    exec($prog, @av) || die "$0: failed to exec @av";
 }
 
 # make a unique id for breaking symmetry with any other occurances of
@@ -79,11 +80,11 @@ if (@infiles) {
   die "no such file $infile" unless -f $infile;
   @av = grep {!/\.ii?$/} @av;   # remove from @av
   # we need an absolute name for $infile
-  my $infile_abs = File::Spec::rel2abs($infile);
+  my $infile_abs = File::Spec->rel2abs($infile);
   die unless -f $infile_abs;
   # make the temp file name
   if (defined $tmpfile) {
-      $tmpfile = File::Spec::rel2abs($tmpfile);
+      $tmpfile = File::Spec->rel2abs($tmpfile);
   } else {
       $tmpfile = $infile_abs;
   }
@@ -98,9 +99,9 @@ if (@infiles) {
 } else {
   # make the temp file name
   die unless $pwd =~ m|^/|;
-  my $tmpdir = "$pwd";
+  my $tmpdir = $pwd;
   if ($tmpfile) {
-      $tmpfile = File::Spec::rel2abs($tmpfile);
+      $tmpfile = File::Spec->rel2abs($tmpfile);
       $tmpfile =~ s|\.(.*)$|-$unique.$1|;
   } else {
       $tmpfile = "/STDIN-$unique";
@@ -112,9 +113,7 @@ if (@infiles) {
   ensure_dir_of_file_exists($tmpfile);
   # put the contents there
   die "already a file $tmpfile" if -e $tmpfile;
-  open (TEMP, ">$tmpfile") or die $!;
-  while(<STDIN>) {print TEMP $_;}
-  close (TEMP) or die $!;
+  copy(\*STDIN, $tmpfile) || die $!;
 }
 die "no such file $tmpfile" unless -f $tmpfile;
 unshift @av, $tmpfile;        # add input file to @av
