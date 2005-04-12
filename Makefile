@@ -17,7 +17,7 @@ USRTOOLS :=
 # don't use it for now.  It isn't critical to the correct operation of
 # build_interceptor.
 # USRTOOLS += make
-USRTOOLS_GCC = gcc $(notdir $(wildcard /usr/bin/gcc-*))
+USRTOOLS_GCC = gcc $(notdir $(wildcard /usr/bin/gcc-* /usr/bin/*-linux-gcc))
 USRTOOLS += $(USRTOOLS_GCC)
 USRTOOLS += g++ $(notdir $(wildcard /usr/bin/g++-*))
 USRTOOLS += cpp $(notdir $(wildcard /usr/bin/cpp-*))
@@ -134,7 +134,7 @@ clean-script-interceptor:
 	rm -rf make_interceptor
 
 # make interceptor specs for all gcc versions we need
-interceptor.specs.ALL: $(subst gcc,interceptor.specs,$(USRTOOLS_GCC))
+interceptor.specs.ALL: $(subst gcc,interceptor.specs,$(USRTOOLS_GCC:%-gcc=gcc))
 #interceptor.specs interceptor.specs-3.4 interceptor.specs-3.3 interceptor.specs-3.2 interceptor.specs-3.0
 
 # interceptor specs for a particular version
