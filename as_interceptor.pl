@@ -64,7 +64,7 @@ sub file_contains_ocaml_asm {
     # caml".
 
     my ($filename) = @_;
-    return 0 unless $filename =~ m,^/tmp/camlasm.*[.]s$,;
+    return 0 unless $filename =~ m,^/tmp/caml.*[.]s$,;
 
     my $fh = new FileHandle($filename) or die;
     my ($l1, $l2) = <$fh>;
