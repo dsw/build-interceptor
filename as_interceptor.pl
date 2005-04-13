@@ -6,6 +6,7 @@ use strict;
 use FindBin;
 use File::Spec;
 use FileHandle;
+use File::Basename;
 
 if (!$ENV{HOME}) {
     $ENV{HOME} = "${FindBin::RealBin}/..";
@@ -57,9 +58,23 @@ sub find_input_filename {
     return $infiles[0];
 }
 
+sub file_contains_ocaml_asm {
+    # Returns 1 iff we think this .s file was the output of ocamlopt.  They're
+    # named /tmp/camlasm*.s, and their contents start with ".data\n.globl
+    # caml".
+
+    my ($filename) = @_;
+    return 0 unless $filename =~ m,^/tmp/camlasm.*[.]s$,;
+
+    my $fh = new FileHandle($filename) or die;
+    my ($l1, $l2) = <$fh>;
+    return ($l1 && $l1 =~ /^\t[.]data/ and
+            $l2 && $l2 =~ /^\t[.]globl\s+caml/);
+}
+
 sub file_is_empty_p {
     # returns 1 iff file is composed entirely of empty/comment lines
-    
+
     my ($filename) = @_;
     my $fh = new FileHandle($filename) or die;
     local $_;
@@ -78,6 +93,23 @@ sub do_not_add_interceptions_to_this_file {
 }
 
 unshift @av, $prog;
+
+my $infile = find_input_filename();
+
+my $lang = 'x';
+if ($infile && -f $infile && file_contains_ocaml_asm($infile)) {
+    # It's hard to intercept ocamlopt, so for now it's good enough to ignore
+    # it here.
+    $lang = 'ocaml';
+
+    my $metadata = <<'END'         # do not interpolate
+        .section        .note.ocaml_interceptor,"",@progbits
+        .ascii "dummy\n"
+END
+;
+    my $fh = new FileHandle(">>$infile") or die;
+    print $fh $metadata;
+}
 
 # delegate to the real thing.
 #close (LOG) or die $!;          # LOUD
@@ -101,7 +133,6 @@ if (!-f $outfile) {
     die "$0: @av didn't produce $outfile\n";
 }
 
-my $infile = find_input_filename();
 if ($infile && -f $infile && file_is_empty_p($infile)) {
     # We don't need interceptions if the .S was empty.  Some packages have
     # some #ifdefs that end up creating empty .S files -- it's OK to link
@@ -121,6 +152,12 @@ if ($? || !$cc1_note) {
     my $f771_note = `$extract_pl .note.f771_interceptor $outfile 2>/dev/null`;
     if ($f771_note && !$?) {
         # Ignore fortran files for now
+        exit 0;
+    }
+
+    my $ocaml_note = `$extract_pl .note.ocaml_interceptor $outfile 2>/dev/null`;
+    if ($ocaml_note && !$?) {
+        # Ignore ocaml files for now
         exit 0;
     }
 
