@@ -161,6 +161,14 @@ sub check_object_fortran_only {
             (!check_object_intercepted($file)));
 }
 
+sub check_object_ocaml {
+    # check that an executable contains Ocaml
+    my ($file) = @_;
+    return ((0==system("$extract .note.ocaml_interceptor $file"))
+            # && (!check_object_intercepted($file))
+        );
+}
+
 sub check_object_has_ld_interception {
     my ($file) = @_;
     return 0 == system("$extract .note.ld_interceptor $file");
@@ -297,8 +305,19 @@ ${trace_output}\t)
 END
   ;
 
+# Stick this stuff into the object file
+add_or_append_section($outfile_abs, "${sec_name}_interceptor", $intercept_data);
+
 my $EXTRA_OBJ_EXT = $ENV{EXTRA_OBJECT_EXTENSIONS} ?
-  "|".$ENV{EXTRA_OBJECT_EXTENSIONS} : '';
+    "|".$ENV{EXTRA_OBJECT_EXTENSIONS} : '';
+
+# don't bother proclaiming failures for ocaml files
+if (check_object_ocaml($outfile_abs)) {
+    my $good = new FileHandle(">>$tmpdir/cc1_ignored_ocaml") or die $!;
+    print $good "$outfile_abs\n";
+    exit $exit_value;
+}
+
 
 my @not_intercepted;
 # if we are ld, then iterate through the .o files that were generated
@@ -367,7 +386,11 @@ for my $line (split '\n', $trace_output0) {
   } else {
       # actually run the extractor
       #      warn "\tNOT found in cache";
-      $built_with_interceptor = check_object_intercepted($file) || check_object_interceptless($file) || check_object_fortran_only($file);
+      $built_with_interceptor = (check_object_intercepted($file) ||
+                                 check_object_interceptless($file) ||
+                                 check_object_fortran_only($file) ||
+                                 check_object_ocaml($file)
+          );
       if ($built_with_interceptor) {
           outputToFile($cachefile_good, $file); # update the cache
       } else {
@@ -408,9 +431,6 @@ if (@not_intercepted) {
     my $good = new FileHandle(">>$tmpdir/cc1_good") or die $!;
     print $good "$outfile_abs\n";
 }
-
-# Stick this stuff into the object file
-add_or_append_section($outfile_abs, "${sec_name}_interceptor", $intercept_data);
 
 #close (LOG) or die $!;          # LOUD
 exit $exit_value;
