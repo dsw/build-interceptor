@@ -83,15 +83,12 @@ RedHat7.3.Readme.
 # One-time initial setup of build_interceptor.
 cd; cd build_interceptor
 
-# hack the interceptor.specs file so that it is right according to
-# your version of gcc.
-# --- interceptor.specs ---
-# I cannot belive the gcc people did this, but on gcc 3.4 it has to
-# look like this:
-#  %<P %(cpp_options_old0)
+# The makefile will build interceptor.specs for you according to your
+# auto-detected gcc version, however you might need to hack on it
+# anyway.  For example on gcc 3.4 one line has to look like this:
+#   %<P %(cpp_options_old0)
 # whereas on earlier versions of gcc, it has to look like this:
-%{<P} %(cpp_options_old0)
-# --- interceptor.specs END ---
+%   %{<P} %(cpp_options_old0)
 
 # Build the softlinks and the intercept.progs.
 make
