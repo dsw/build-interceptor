@@ -6,6 +6,14 @@ use IO::File;
 
 # Reorganize the build and preproc directories into the ball
 # directory.
+#
+# Note: This script expects three directories under $HOME to exist and
+# be organized a certian way:
+#   build: where the executables can be found
+#   preproc: where build interceptor put the intercepted .i files
+#   ball: where it will put the reorganized and renamed .i files and .ld files.
+# There is a newpreproc/oldpreproc mechanism in case you have moved
+# the preproc dir between building and running reorg.
 
 my $home = "$ENV{HOME}";
 
