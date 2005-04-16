@@ -13,6 +13,7 @@ use FindBin;
 # file.
 
 my $infile;
+my $section;
 my %md5sum2orig_filename;
 my %md5sum2friendly_name;
 my %friendly_name2md5sum;
@@ -25,6 +26,8 @@ sub read_command_line {
     my $arg = shift @ARGV;
     if ($arg =~ /-infile/) {
       $infile = shift @ARGV;
+    } elsif ($arg =~ /-insection/) {
+      $section = shift @ARGV;
     } else {
       die "Illegal argument $arg";
     }
@@ -34,7 +37,8 @@ sub read_command_line {
 }
 
 sub read_infile_notes {
-  my $extractCmd = "$extract .note.cc1_interceptor $infile 2>/dev/null";
+  my $section = shift || "cc1";  
+  my $extractCmd = "$extract .note.${section}_interceptor $infile 2>/dev/null";
 #    print "$extractCmd\n";
   my $exOut = `$extractCmd`;
   die "no interceptor notes in $infile" if $exOut eq '';
@@ -82,4 +86,4 @@ sub read_infile_notes {
 # ****
 
 read_command_line();
-read_infile_notes();
+read_infile_notes($section);
