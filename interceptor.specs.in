@@ -3,7 +3,7 @@
 # This spec file modifies the build process for build interception.
 # See http://gcc.gnu.org/onlinedocs/gcc-3.4.0/gcc/Spec-Files.html#Spec%20Files
 
-# This file should be processed by make-spec-file to create
+# This file should be processed by make-spec-file.pl to create
 # interceptor.specs-3.4, interceptor.specs-3.3, etc.
 
 

@@ -139,7 +139,7 @@ interceptor.specs.ALL: $(subst gcc,interceptor.specs,$(USRTOOLS_GCC:%-gcc=gcc))
 
 # interceptor specs for a particular version
 interceptor.specs-%: interceptor.specs.in
-	./make-spec-file $< $@
+	./make-spec-file.pl $< $@
 
 # default interceptor specs for gcc 3.3
 interceptor.specs: interceptor.specs-3.3

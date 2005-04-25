@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-# $Id: make-spec-file.pl,v 1.1 2005/03/30 02:42:04 quarl Exp $
+# $Id: make-spec-file.pl,v 1.2 2005/04/25 00:18:53 dsw Exp $
 
-# syntax: make-spec-file interceptor.specs.in interceptor.specs-3.4
+# syntax: make-spec-file.pl interceptor.specs.in interceptor.specs-3.4
 
 use strict;
 use warnings;
