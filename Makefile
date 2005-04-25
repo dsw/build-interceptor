@@ -96,7 +96,7 @@ stamp-log/%:
 	echo >> ${HOME}/build_interceptor.log
 
 .PHONY: clean
-clean: clean-intercept.progs clean-softlinks clean-script-interceptor clean-bak
+clean: clean-intercept.progs clean-softlinks clean-script-interceptor clean-bak clean-interceptor.specs
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
@@ -132,6 +132,10 @@ clean-preproc:
 .PHONY: clean-script-interceptor
 clean-script-interceptor:
 	rm -rf make_interceptor
+
+.PHONY: clean-interceptor.specs
+clean-interceptor.specs:
+	rm -f interceptor.specs-* interceptor.specs
 
 # make interceptor specs for all gcc versions we need
 interceptor.specs.ALL: $(subst gcc,interceptor.specs,$(USRTOOLS_GCC:%-gcc=gcc))
