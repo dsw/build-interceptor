@@ -96,6 +96,19 @@ unshift @av, $prog;
 
 my $infile = find_input_filename();
 
+if ($infile && -f $infile && file_is_empty_p($infile)) {
+    # if the file was empty, remember so.  (This is needed later by
+    # as_interceptor as well as collect2_interceptor)
+    my $metadata = <<'END'         # do not interpolate
+        .section        .note.as_interceptor_empty,"",@progbits
+        .ascii "dummy\n"
+END
+;
+
+    my $fh = new FileHandle(">>$infile") or die;
+    print $fh $metadata;
+}
+
 my $lang = 'x';
 if ($infile && -f $infile && file_contains_ocaml_asm($infile)) {
     # It's hard to intercept ocamlopt, so for now it's good enough to ignore
@@ -133,13 +146,13 @@ if (!-f $outfile) {
     die "$0: @av didn't produce $outfile\n";
 }
 
-if ($infile && -f $infile && file_is_empty_p($infile)) {
-    # We don't need interceptions if the .S was empty.  Some packages have
-    # some #ifdefs that end up creating empty .S files -- it's OK to link
-    # them.
+# if ($infile && -f $infile && file_is_empty_p($infile)) {
+#     # We don't need interceptions if the .S was empty.  Some packages have
+#     # some #ifdefs that end up creating empty .S files -- it's OK to link
+#     # them.
 
-    exit(0);
-}
+#     exit(0);
+# }
 
 if (do_not_add_interceptions_to_this_file($outfile_abs)) {
     # there shouldn't be an .notes at this point, but don't add or check for
@@ -149,6 +162,12 @@ if (do_not_add_interceptions_to_this_file($outfile_abs)) {
 
 my $cc1_note = `$extract_pl .note.cc1_interceptor $outfile 2>/dev/null`;
 if ($? || !$cc1_note) {
+    my $empty_note = `$extract_pl .note.as_interceptor_empty $outfile 2>/dev/null`;
+    if ($empty_note && !$?) {
+        # ignore empty .S files
+        exit 0;
+    }
+
     my $f771_note = `$extract_pl .note.f771_interceptor $outfile 2>/dev/null`;
     if ($f771_note && !$?) {
         # Ignore fortran files for now
