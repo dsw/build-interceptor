@@ -154,6 +154,11 @@ sub check_object_interceptless {
     return 0 == system("$extract .note.ignore_cc1_interceptor $file");
 }
 
+sub check_object_empty {
+    my ($file) = @_;
+    return 0 == system("$extract .note.as_interceptor_empty $file");
+}
+
 sub check_object_fortran_only {
     # check that an executable was Fortran, and not C/C++
     my ($file) = @_;
@@ -388,6 +393,7 @@ for my $line (split '\n', $trace_output0) {
       #      warn "\tNOT found in cache";
       $built_with_interceptor = (check_object_intercepted($file) ||
                                  check_object_interceptless($file) ||
+                                 check_object_empty($file) ||
                                  check_object_fortran_only($file) ||
                                  check_object_ocaml($file)
           );
