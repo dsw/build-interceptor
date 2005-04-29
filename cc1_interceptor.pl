@@ -48,7 +48,7 @@ my @raw_args = @av;
 
 # mapping from build filesystem to isomorphic copy.  Make this
 # directory.
-my $prefix = "$ENV{HOME}/preproc";
+my $prefix = $ENV{BUILD_INTERCEPTOR_PREPROC} || "$ENV{HOME}/preproc";
 
 # where are we?
 my $pwd = getcwd;

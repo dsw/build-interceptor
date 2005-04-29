@@ -20,7 +20,7 @@ die unless -d $build_dir;
 #  die if -e $build_dir;
 #  die if system("mkdir $build_dir");
 
-my $preproc_dir = "$home/$preproc";
+my $preproc_dir = $ENV{BUILD_INTERCEPTOR_PREPROC} || "$ENV{HOME}/preproc";
 die unless -d $preproc_dir;
 #  die if -e $preproc_dir;
 #  die if system("mkdir $preproc_dir");
