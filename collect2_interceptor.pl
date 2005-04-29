@@ -39,7 +39,7 @@ my $time0 = time;
 my $unique = "$$-$time0";
 
 # directory for all build interceptor temporaries
-my $tmpdir_interceptor = "$ENV{HOME}/build_interceptor_tmp";
+my $tmpdir_interceptor = $ENV{BUILD_INTERCEPTOR_TMP} || "$ENV{HOME}/build_interceptor_tmp";
 mkpath($tmpdir_interceptor);
 # directory for all the temporaries relevant to collect2 interceptor
 my $tmpdir = "$tmpdir_interceptor/collect2";
