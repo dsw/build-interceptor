@@ -91,7 +91,7 @@ necessary.
 
 <p><b>Limitations</b>
 
-The method described here requires that you be root on your box so you
+<p>The method described here requires that you be root on your box so you
 can replace the system cc1 and cc1plus programs, among others; this is
 done so that the build process you are intercepting does not have to
 be changed at all.  You can probably also get it to work by setting
@@ -109,7 +109,7 @@ conventions; gcc 3.2.3 seems to not work.
 
 <p><b>Background</b>
 
-When gcc/g++ compiles, it pre-processes .c or .cc files to .i or .ii
+<p>When gcc/g++ compiles, it pre-processes .c or .cc files to .i or .ii
 files (respectively), compiles .i or .ii files to .s files, assembles
 .s files to .o files, and links .o files to executables.  It
 traditionally does all these stages with separate programs (new
@@ -119,7 +119,7 @@ cc1 or cc1plus for C or C++ (respectively).
 
 <p><b>Basics of how the build interception works</b>
 
-The cc1_interceptor.pl script captures the .i and .ii files generated
+<p>The cc1_interceptor.pl script captures the .i and .ii files generated
 by the gcc compiler tool chain by replacing and imitating cc1.  It
 
    1) copies the pre-processed input, the .i file, to a new file,
@@ -142,7 +142,7 @@ them with softlinks to the interception scripts provided.
 
 <p><b>Licensing</b>
 
-All files in this directory tree and its subtrees are distributed
+<p>All files in this directory tree and its subtrees are distributed
 under the license in License.txt; please see that file for copyright
 and terms of use.
 
