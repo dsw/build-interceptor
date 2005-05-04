@@ -89,9 +89,9 @@ the .i files generated during a build of C or C++ programs with the
 gcc toolchain.  No modification to the original build process is
 necessary.
 
-<h4>Limitations</h4>
+<b>Limitations</b>
 
-<p>The method described here requires that you be root on your box so you
+The method described here requires that you be root on your box so you
 can replace the system cc1 and cc1plus programs, among others; this is
 done so that the build process you are intercepting does not have to
 be changed at all.  You can probably also get it to work by setting
@@ -107,9 +107,9 @@ undocumented flag "--no-integrated-cpp" which solves this problem.
 versions earlier than this seem to have different spec file
 conventions; gcc 3.2.3 seems to not work.
 
-<h4>Background</h4>
+<b>Background</b>
 
-<p>When gcc/g++ compiles, it pre-processes .c or .cc files to .i or .ii
+When gcc/g++ compiles, it pre-processes .c or .cc files to .i or .ii
 files (respectively), compiles .i or .ii files to .s files, assembles
 .s files to .o files, and links .o files to executables.  It
 traditionally does all these stages with separate programs (new
@@ -117,9 +117,9 @@ versions of gcc complicate this by integrating preprocessing and
 compilation), in particular the compiler-proper program being called
 cc1 or cc1plus for C or C++ (respectively).
 
-<h4>Basics of how the build interception works</h4>
+<b>Basics of how the build interception works</b>
 
-<p>The cc1_interceptor.pl script captures the .i and .ii files generated
+The cc1_interceptor.pl script captures the .i and .ii files generated
 by the gcc compiler tool chain by replacing and imitating cc1.  It
 
    1) copies the pre-processed input, the .i file, to a new file,
@@ -140,9 +140,9 @@ project; see below for details.
 executables (using the Intercept.mk makefile, as root) and replacing
 them with softlinks to the interception scripts provided.
 
-<h3>Licensing</h3>
+<b>Licensing</b>
 
-<p>All files in this directory tree and its subtrees are distributed
+All files in this directory tree and its subtrees are distributed
 under the license in License.txt; please see that file for copyright
 and terms of use.
 
