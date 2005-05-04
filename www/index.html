@@ -4,6 +4,8 @@
 </head>
 <body bgcolor=white>
 
+<h3>People</h3>
+
 <p><b>Maintainer:</b> Daniel S. Wilkerson
 <br><b>Developers:</b> Karl Chen
 
@@ -82,9 +84,11 @@ cat RH7.3.i-VERSION.tar.gz.* | gunzip | tar xv -f -
 
 <h2>Introduction</h2>
 
-<p>Welcome!  Build Interceptor is a collection of scripts for recording
-the .i files generated during a build of C or C++ programs with the
-gcc toolchain.  No modification to the original build process is
+<h3>Welcome!</h3>
+
+<p>Build Interceptor is a collection of scripts for recording the .i
+files generated during a build of C or C++ programs with the gcc
+toolchain.  No modification to the original build process is
 necessary.
 
 <h3>Limitations</h3>
@@ -148,9 +152,7 @@ and terms of use.
 
 <h2>Design</h2>
 
-<p>Our design builds on the experience of the MOPS project and
-Cooperative Bug Isolation Project (CBI), which I talk more about in
-the Acknowledgments section below.
+<h3>Simplicity</h3>
 
 <p>There are other ways one might attempt build process interception.
 This particular design has been chosen to avoid some problems that are
@@ -161,6 +163,10 @@ is very difficult because if something fails it is hard to know how
 what went wrong or even if something went wrong.  The number one
 concern of the design is therefore to keep things as simple and
 non-intrusive as possible.
+
+<p>Our design builds on the experience of the MOPS project and
+Cooperative Bug Isolation Project (CBI), which I talk more about in
+the Acknowledgments section below.
 
 <h3>Staged interception</h3>
 
@@ -226,6 +232,8 @@ probably using the gcc spec file mechanism, but I don't consider it
 worth the complexity and possibility of failure.
 
 <h2>Goals and amount of interception</h2>
+
+<h3>Only use what you need</h3>
 
 <p>What tools must be intercepted during the build process depends on
 what your goal is.  You can turn off the interception of tools by
