@@ -310,74 +310,99 @@ these scripts the process of building Red hat 7.3 from source and
 capturing the .i files.  Those instructions are still available in
 RedHat7.3.Readme.
 
-<pre>
-# One-time initial setup of build_interceptor.
+<p>One-time initial setup of build_interceptor.
+<font color=blue><pre>
 cd; cd build_interceptor
+</pre></font>
 
-# The makefile will build interceptor.specs for you according to your
-# auto-detected gcc version, however you might need to hack on it
-# anyway.  For example on gcc 3.4 one line has to look like this:
-#   %&lt;P %(cpp_options_old0)
-# whereas on earlier versions of gcc, it has to look like this:
-%   %{&lt;P} %(cpp_options_old0)
+<p>The makefile will build interceptor.specs for you according to your
+auto-detected gcc version, however you might need to hack on it
+anyway.  For example on gcc 3.4 one line has to look like this:
+<font color=blue><pre>
+%&lt;P %(cpp_options_old0)
+</pre></font>
+<p>whereas on earlier versions of gcc, it has to look like this:
+<font color=blue><pre>
+%{&lt;P} %(cpp_options_old0)
+</pre></font>
 
-# Build the softlinks and the intercept.progs.
+<p>Build the softlinks and the intercept.progs.
+<font color=blue><pre>
 make
-# Now check that the files you want to intercept are generated in
-# intercept.progs.  You can change this file if you need to, but only
-# do it while build interception is off!  Otherwise you can get into
-# an inconsistent state.
+</pre></font>
+<p>Now check that the files you want to intercept are generated in
+intercept.progs.  You can change this file if you need to, but only
+do it while build interception is off!  Otherwise you can get into
+an inconsistent state.
 
-# Make a place to put the .i files.
+<p>Make a place to put the .i files.
+<font color=blue><pre>
 cd
 mkdir ball_preproc
 ln -s ball_preproc preproc
+</pre></font>
 
-# Move your system gcc to gcc_orig and link gcc to gcc_interceptor.pl.
-# NOTE: it is important to be in $HOME/build_interceptor so that `pwd`
-# works below; $HOME will become '/root' once you su.
+<p>Move your system gcc to gcc_orig and link gcc to gcc_interceptor.pl.
+NOTE: it is important to be in $HOME/build_interceptor so that `pwd`
+works below; $HOME will become '/root' once you su.
+<font color=blue><pre>
 cd; cd build_interceptor
 su
 make -f Intercept.mk on
-# You could exit the root shell now, but I find it easier to instead
-# just leave one shell open as root for turning interception on and
-# off and do user things in another shell.
+</pre></font>
+<p>You could exit the root shell now, but I find it easier to instead
+just leave one shell open as root for turning interception on and
+off and do user things in another shell.
+<font color=blue><pre>
 exit # the root shell
+</pre></font>
 
-# At any time you can check the interception state.
+<p>At any time you can check the interception state.
+<font color=blue><pre>
 make -f Intercept.mk
+</pre></font>
 
-# Build your project.
+<p>Build your project.
 
-# If you mess up and need to start over again, just do this.
+<p>If you mess up and need to start over again, just do this.
+<font color=blue><pre>
 rm -rf preproc/*
-# If you want to build two different projects and capture both, just
-# move the link.
+</pre></font>
+<p>If you want to build two different projects and capture both, just
+move the link.
+<font color=blue><pre>
 mkdir ball_preproc2
 ln -s ball_preproc2 preproc
+</pre></font>
 
-# Before compiling anything else with gcc:
-# 1 - Make the data read-only.
+<p>Before compiling anything else with gcc:
+<p>1) Make the data read-only.
+<font color=blue><pre>
 cd
 chmod -R a-w ball_preproc
-# 2 - Point the preprocessor capture at another file
+</pre></font>
+<p>2) Point the preprocessor capture at another file.
+<font color=blue><pre>
 mkdir preproc_junk
 ln -s preproc_junk preproc
+</pre></font>
 
-# When you are done, put gcc back where it was.
+<p>When you are done, put gcc back where it was.
+<font color=blue><pre>
 cd; cd build_interceptor
 su
 make -f Intercept.mk off
 exit # the root shell
+</pre></font>
 
-# Run reorg on the output.  The script expects to find 1) a directory
-# for each project built in $HOME/build, and 2) the .i files generated
-# by interception in $HOME/preproc.  It will store the reorganized .i
-# and .ld files in $HOME/ball.
+<p>Run reorg on the output.  The script expects to find 1) a directory
+for each project built in $HOME/build, and 2) the .i files generated
+by interception in $HOME/preproc.  It will store the reorganized .i
+and .ld files in $HOME/ball.
+<font color=blue><pre>
 cd; cd build_interceptor
 ./reorg_build.pl
-
-</pre>
+</pre></font>
 
 <h3>Files</h3>
 
@@ -461,7 +486,7 @@ responsibility for any remaining mistakes].
 <p>Thanks to Andy Begel for his in-depth explanation of dynamic linking
 under various circumstances and operating systems.
 
-<h2></h2>
+<h2>&nbsp;</h2>
 
 </body>
 </html>
