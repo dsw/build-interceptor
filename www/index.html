@@ -311,23 +311,23 @@ capturing the .i files.  Those instructions are still available in
 RedHat7.3.Readme.
 
 <p>One-time initial setup of build_interceptor.
-<font color=green><pre>
+<font color=#664><pre>
 cd; cd build_interceptor
 </pre></font>
 
 <p>The makefile will build interceptor.specs for you according to your
 auto-detected gcc version, however you might need to hack on it
 anyway.  For example on gcc 3.4 one line has to look like this:
-<font color=green><pre>
+<font color=#664><pre>
 %&lt;P %(cpp_options_old0)
 </pre></font>
 <p>whereas on earlier versions of gcc, it has to look like this:
-<font color=green><pre>
+<font color=#664><pre>
 %{&lt;P} %(cpp_options_old0)
 </pre></font>
 
 <p>Build the softlinks and the intercept.progs.
-<font color=green><pre>
+<font color=#664><pre>
 make
 </pre></font>
 <p>Now check that the files you want to intercept are generated in
@@ -336,7 +336,7 @@ do it while build interception is off!  Otherwise you can get into
 an inconsistent state.
 
 <p>Make a place to put the .i files.
-<font color=green><pre>
+<font color=#664><pre>
 cd
 mkdir ball_preproc
 ln -s ball_preproc preproc
@@ -345,7 +345,7 @@ ln -s ball_preproc preproc
 <p>Move your system gcc to gcc_orig and link gcc to gcc_interceptor.pl.
 NOTE: it is important to be in $HOME/build_interceptor so that `pwd`
 works below; $HOME will become '/root' once you su.
-<font color=green><pre>
+<font color=#664><pre>
 cd; cd build_interceptor
 su
 make -f Intercept.mk on
@@ -353,42 +353,42 @@ make -f Intercept.mk on
 <p>You could exit the root shell now, but I find it easier to instead
 just leave one shell open as root for turning interception on and
 off and do user things in another shell.
-<font color=green><pre>
+<font color=#664><pre>
 exit # the root shell
 </pre></font>
 
 <p>At any time you can check the interception state.
-<font color=green><pre>
+<font color=#664><pre>
 make -f Intercept.mk
 </pre></font>
 
 <p>Build your project.
 
 <p>If you mess up and need to start over again, just do this.
-<font color=green><pre>
+<font color=#664><pre>
 rm -rf preproc/*
 </pre></font>
 <p>If you want to build two different projects and capture both, just
 move the link.
-<font color=green><pre>
+<font color=#664><pre>
 mkdir ball_preproc2
 ln -s ball_preproc2 preproc
 </pre></font>
 
 <p>Before compiling anything else with gcc:
 <p>1) Make the data read-only.
-<font color=green><pre>
+<font color=#664><pre>
 cd
 chmod -R a-w ball_preproc
 </pre></font>
 <p>2) Point the preprocessor capture at another file.
-<font color=green><pre>
+<font color=#664><pre>
 mkdir preproc_junk
 ln -s preproc_junk preproc
 </pre></font>
 
 <p>When you are done, put gcc back where it was.
-<font color=green><pre>
+<font color=#664><pre>
 cd; cd build_interceptor
 su
 make -f Intercept.mk off
@@ -399,7 +399,7 @@ exit # the root shell
 for each project built in $HOME/build, and 2) the .i files generated
 by interception in $HOME/preproc.  It will store the reorganized .i
 and .ld files in $HOME/ball.
-<font color=green><pre>
+<font color=#664><pre>
 cd; cd build_interceptor
 ./reorg_build.pl
 </pre></font>
