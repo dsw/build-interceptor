@@ -87,7 +87,7 @@ the .i files generated during a build of C or C++ programs with the
 gcc toolchain.  No modification to the original build process is
 necessary.
 
-<p><b>Limitations</b>
+<h3>Limitations</h3>
 
 <p>The method described here requires that you be root on your box so you
 can replace the system cc1 and cc1plus programs, among others; this is
@@ -105,7 +105,7 @@ undocumented flag "--no-integrated-cpp" which solves this problem.
 versions earlier than this seem to have different spec file
 conventions; gcc 3.2.3 seems to not work.
 
-<p><b>Background</b>
+<h3>Background</h3>
 
 <p>When gcc/g++ compiles, it pre-processes .c or .cc files to .i or .ii
 files (respectively), compiles .i or .ii files to .s files, assembles
@@ -115,7 +115,7 @@ versions of gcc complicate this by integrating preprocessing and
 compilation), in particular the compiler-proper program being called
 cc1 or cc1plus for C or C++ (respectively).
 
-<p><b>Basics of how the build interception works</b>
+<h3>Basics of how the build interception works</h3>
 
 <p>The cc1_interceptor.pl script captures the .i and .ii files generated
 by the gcc compiler tool chain by replacing and imitating cc1.  It <ol>
@@ -140,7 +140,7 @@ project; see below for details.
 executables (using the Intercept.mk makefile, as root) and replacing
 them with softlinks to the interception scripts provided.
 
-<p><b>Licensing</b>
+<h3>Licensing</h3>
 
 <p>All files in this directory tree and its subtrees are distributed
 under the license in License.txt; please see that file for copyright
@@ -162,7 +162,7 @@ what went wrong or even if something went wrong.  The number one
 concern of the design is therefore to keep things as simple and
 non-intrusive as possible.
 
-<p><b>Staged interception</b>
+<h3>Staged interception</h3>
 
 <p>We do not pipeline the build interception with any further analysis
 of the generated .i files.  That is we just save the generated .i
@@ -181,7 +181,7 @@ already materialized the .i file somewhere separately.
 <p>Basically a complex process should be staged if at all possible to
 reduce complexity.
 
-<p><b>Metadata lives in data</b>
+<h3>Metadata lives in data</h3>
 
 <p>We do not attempt to keep metadata on build-process-generated files
 anywhere outside the files themselves.  Early versions of the MOPS
@@ -197,7 +197,7 @@ novel to build_interceptor) and at the link stage it is inserted into
 the .o file using objcopy (a trick from MOPS and also CBI as well I
 think).
 
-<p><b>Avoid long-range communication outside of data</b>
+<h3>Avoid long-range communication outside of data</h3>
 
 <p>We do not attempt out-of-band communication between the various
 sub-processes of gcc, which differs from both MOPS and CBI.  MOPS for
@@ -208,7 +208,7 @@ this long-range dependency between stages greatly simplifies things.
 <p><b>NOTE:</b> I think this may no longer be true with the new
 strategy of embedding .i files directly into ELF files.
 
-<p><b>Avoid parsing complex command-lines</b>
+<h3>Avoid parsing complex command-lines</h3>
 
 <p>Similarly we do not attempt to parse the command-line arguments
 of gcc.  Again, the simplification of the process is huge; we only
@@ -231,7 +231,7 @@ worth the complexity and possibility of failure.
 what your goal is.  You can turn off the interception of tools by
 removing them from intercept.progs after it is built.
 
-<p><b>File-by-file</b>
+<h3>File-by-file</h3>
 
 <p>For a file-by-file analysis of source code, you simply need the source
 files after pre-processing.  It is sufficient to just intercept
@@ -243,7 +243,7 @@ gcc spec file will tell gcc to not pass -P which means there should
 always be line directives in the .i file.  So if your analysis finds
 an error, it can always map it back to the original source line.
 
-<p><b>Whole-program</b>
+<h3>Whole-program</h3>
 
 <p>For a whole-program analysis of all the source in the package, you
 need to know for each executable which .i files went into it.  Each
@@ -263,7 +263,7 @@ output by cc1/cc1plus and .o files linked together by the linker as
 well as the command-line.  It would probably be best to insert the
 metadata after assembly using objcopy, just as with collect2.
 
-<p><b>Source-to-source</b>
+<h3>Source-to-source</h3>
 
 <p>If you wanted to do a source-to-source transformation on the
 original source you would need the preprocessing command line as well,
@@ -280,7 +280,7 @@ process to be deterministic, so the make interceptor removes -j from
 the command line; try out the TestMake.mk makefile with and without
 it.
 
-<p><b>Miscellaneous difficulties with gcc layering</b>
+<h3>Miscellaneous difficulties with gcc layering</h3>
 
 <p>You might have to experiment to figure out exactly what which layer to
 intercept.  I am using gcc 3.4.0 and it seems that neither cpp nor gcc
@@ -371,7 +371,7 @@ cd; cd build_interceptor
 
 </pre>
 
-<p><b>Files</b>
+<h3>Files</h3>
 
 <p>To simplify things, the scripts make some assumptions about what files
 and directories are where.  I list them here; all are assumed to be
@@ -452,6 +452,8 @@ responsibility for any remaining mistakes].
 
 <p>Thanks to Andy Begel for his in-depth explanation of dynamic linking
 under various circumstances and operating systems.
+
+<h2></h2>
 
 </body>
 </html>
