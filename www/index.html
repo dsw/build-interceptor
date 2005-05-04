@@ -4,7 +4,7 @@
 </head>
 <body bgcolor=white>
 
-<h1>Build Interceptor</h1>
+<h2>Build Interceptor</h2>
 
 <p><b>Maintainer:</b> Daniel S. Wilkerson
 <br><b>Developers:</b> Karl Chen
@@ -38,7 +38,7 @@ repository version as a guest user.
 
 <hr>
 
-<h1>RH7.3.i</h1>
+<h2>RH7.3.i</h2>
 
 <p><b>RH7.3.i</b> is the .i files generated while Red Hat Linux 7.3
 was built from source, as recorded by Build Interceptor.  I also
@@ -84,18 +84,18 @@ cat RH7.3.i-VERSION.tar.gz.* | gunzip | tar xv -f -
 
 <hr>
 
-<h1>Build Interceptor Readme</h1>
+<h2>Build Interceptor Readme</h2>
 <a href="http://build-interceptor.tigris.org/">http://build-interceptor.tigris.org/</a>
 <p><b>Daniel S. Wilkerson</b>
 
-<h2>Introduction</h2>
+<h3>Introduction</h3>
 
 <p>Welcome!  Build Interceptor is a collection of scripts for recording
 the .i files generated during a build of C or C++ programs with the
 gcc toolchain.  No modification to the original build process is
 necessary.
 
-<h3>Limitations</h3>
+<h4>Limitations</h4>
 
 <p>The method described here requires that you be root on your box so you
 can replace the system cc1 and cc1plus programs, among others; this is
@@ -113,7 +113,7 @@ undocumented flag "--no-integrated-cpp" which solves this problem.
 versions earlier than this seem to have different spec file
 conventions; gcc 3.2.3 seems to not work.
 
-<h3>Background</h3>
+<h4>Background</h4>
 
 <p>When gcc/g++ compiles, it pre-processes .c or .cc files to .i or .ii
 files (respectively), compiles .i or .ii files to .s files, assembles
@@ -123,7 +123,7 @@ versions of gcc complicate this by integrating preprocessing and
 compilation), in particular the compiler-proper program being called
 cc1 or cc1plus for C or C++ (respectively).
 
-<h3>Basics of how the build interception works</h3>
+<h4>Basics of how the build interception works</h4>
 
 <p>The cc1_interceptor.pl script captures the .i and .ii files generated
 by the gcc compiler tool chain by replacing and imitating cc1.  It
@@ -146,13 +146,13 @@ project; see below for details.
 executables (using the Intercept.mk makefile, as root) and replacing
 them with softlinks to the interception scripts provided.
 
-<h2>Licensing</h2>
+<h3>Licensing</h3>
 
 <p>All files in this directory tree and its subtrees are distributed
 under the license in License.txt; please see that file for copyright
 and terms of use.
 
-<h2>Design</h2>
+<h3>Design</h3>
 
 <p>Our design builds on the experience of the MOPS project and
 Cooperative Bug Isolation Project (CBI), which I talk more about in
@@ -231,7 +231,7 @@ been inlined.  I suppose it would work to remove it from all stages,
 probably using the gcc spec file mechanism, but I don't consider it
 worth the complexity and possibility of failure.
 
-<h2>Goals and amount of interception</h2>
+<h3>Goals and amount of interception</h3>
 
 <p>What tools must be intercepted during the build process depends on
 what your goal is.  You can turn off the interception of tools by
@@ -298,7 +298,7 @@ experimentation, each interceptor script prints at the start its 1)
 name, 2) parent process id, 3) own process id and 4) arguments all to
 standard error (this may have been commented out, just uncomment).
 
-<h2>Using the scripts</h2>
+<h3>Using the scripts</h3>
 
 <p>These scripts were originally written to capture the .i files
 generated when building the Red Hat Linux 7.3 distribution from source
@@ -377,7 +377,7 @@ cd; cd build_interceptor
 
 </pre>
 
-<h3>Files</h3>
+<h4>Files</h4>
 
 <p>To simplify things, the scripts make some assumptions about what files
 and directories are where.  I list them here; all are assumed to be
@@ -400,7 +400,7 @@ captured by the build process.
 
 </ul>
 
-<h2>FAQ</h2>
+<h3>FAQ</h3>
 
 <pre>
 Date: Fri, 28 Jan 2005 15:17:30 -0800
@@ -433,7 +433,7 @@ scheme that works, let me know, but I tried a few others and none of
 them worked.
 </pre>
 
-<h2>Acknowledgments</h2>
+<h3>Acknowledgments</h3>
 
 <p>I used code and ideas for build-process interception from two
 different previous projects that dealt with this same problem. <ul>
