@@ -89,7 +89,7 @@ the .i files generated during a build of C or C++ programs with the
 gcc toolchain.  No modification to the original build process is
 necessary.
 
-<b>Limitations</b>
+<p><b>Limitations</b>
 
 The method described here requires that you be root on your box so you
 can replace the system cc1 and cc1plus programs, among others; this is
@@ -107,7 +107,7 @@ undocumented flag "--no-integrated-cpp" which solves this problem.
 versions earlier than this seem to have different spec file
 conventions; gcc 3.2.3 seems to not work.
 
-<b>Background</b>
+<p><b>Background</b>
 
 When gcc/g++ compiles, it pre-processes .c or .cc files to .i or .ii
 files (respectively), compiles .i or .ii files to .s files, assembles
@@ -117,7 +117,7 @@ versions of gcc complicate this by integrating preprocessing and
 compilation), in particular the compiler-proper program being called
 cc1 or cc1plus for C or C++ (respectively).
 
-<b>Basics of how the build interception works</b>
+<p><b>Basics of how the build interception works</b>
 
 The cc1_interceptor.pl script captures the .i and .ii files generated
 by the gcc compiler tool chain by replacing and imitating cc1.  It
@@ -140,7 +140,7 @@ project; see below for details.
 executables (using the Intercept.mk makefile, as root) and replacing
 them with softlinks to the interception scripts provided.
 
-<b>Licensing</b>
+<p><b>Licensing</b>
 
 All files in this directory tree and its subtrees are distributed
 under the license in License.txt; please see that file for copyright
