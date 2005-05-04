@@ -406,18 +406,18 @@ cd; cd build_interceptor
 and directories are where.  I list them here; all are assumed to be
 under $HOME.<ul>
 
-<li><b><code>ball_preproc</code></b> Where the captured preprocessing output of
+<li><code>ball_preproc</code> Where the captured preprocessing output of
 cc1_interceptor.pl goes.
 
-<li><b><code>preproc</code></b> Link to ball_preproc.
+<li><code>preproc</code> Link to ball_preproc.
 
-<li><b><code>ball_build</code></b> The root of the tree where the source RPMs get built.
+<li><code>ball_build</code> The root of the tree where the source RPMs get built.
 
-<li><b><code>ball</code></b> The directory that results from reorganizing the captured .i
+<li><code>ball</code> The directory that results from reorganizing the captured .i
 files according to the .note.cc1_im sections left behind in the
 executables and .o files.
 
-<li><b><code>ball_fail_c.files</code></b> and <b><code>ball_fail_cc.files</code></b>
+<li><code>ball_fail_c.files</code> and <code>ball_fail_cc.files</code>
 The files where gcc_all.pl puts the list of .i files that fail to
 build with gcc after being captured by the build process.
 
