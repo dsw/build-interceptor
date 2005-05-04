@@ -80,9 +80,7 @@ cat RH7.3.i-VERSION.tar.gz.* | gunzip | tar xv -f -
 &nbsp; md5: <code>b83d101805a5a6b5570902ba7f708b5a</code>
 </ul>
 
-<h2>Readme</h2>
-
-<h3>Introduction</h3>
+<h2>Introduction</h2>
 
 <p>Welcome!  Build Interceptor is a collection of scripts for recording
 the .i files generated during a build of C or C++ programs with the
@@ -148,9 +146,7 @@ them with softlinks to the interception scripts provided.
 under the license in License.txt; please see that file for copyright
 and terms of use.
 
-<hr>
-
-<h3>Design</h3>
+<h2>Design</h2>
 
 <p>Our design builds on the experience of the MOPS project and
 Cooperative Bug Isolation Project (CBI), which I talk more about in
@@ -229,9 +225,7 @@ been inlined.  I suppose it would work to remove it from all stages,
 probably using the gcc spec file mechanism, but I don't consider it
 worth the complexity and possibility of failure.
 
-<hr>
-
-<h3>Goals and amount of interception</h3>
+<h2>Goals and amount of interception</h2>
 
 <p>What tools must be intercepted during the build process depends on
 what your goal is.  You can turn off the interception of tools by
@@ -298,9 +292,7 @@ experimentation, each interceptor script prints at the start its 1)
 name, 2) parent process id, 3) own process id and 4) arguments all to
 standard error (this may have been commented out, just uncomment).
 
-<hr>
-
-<h3>Using the scripts</h3>
+<h2>Using the scripts</h2>
 
 <p>These scripts were originally written to capture the .i files
 generated when building the Red Hat Linux 7.3 distribution from source
@@ -396,15 +388,13 @@ cc1_interceptor.pl goes.
 files according to the .note.cc1_im sections left behind in the
 executables and .o files.
 
-<li><code>ball_fail_c.files</code> and <code>ball_fail_cc.files</li>:
+<li><code>ball_fail_c.files</code> and <code>ball_fail_cc.files</code>:
 The files where gcc_all.pl puts the list of .i files that fail to
 build with gcc after being captured by the build process.
 
 </ul>
 
-<hr>
-
-<h3>FAQ</h3>
+<h2>FAQ</h2>
 
 <pre>
 Date: Fri, 28 Jan 2005 15:17:30 -0800
@@ -437,9 +427,7 @@ scheme that works, let me know, but I tried a few others and none of
 them worked.
 </pre>
 
-<hr>
-
-<h3>Acknowledgments</h3>
+<h2>Acknowledgments</h2>
 
 <p>I used code and ideas for build-process interception from two
 different previous projects that dealt with this same problem. <ul>
