@@ -36,8 +36,6 @@ still testing it.  Feel free to just get the current Subversion
 repository version as a guest user.
 </ul>
 
-<hr>
-
 <h3>RH7.3.i</h3>
 
 <p><b>RH7.3.i</b> is the .i files generated while Red Hat Linux 7.3
@@ -148,6 +146,8 @@ them with softlinks to the interception scripts provided.
 under the license in License.txt; please see that file for copyright
 and terms of use.
 
+<hr>
+
 <h3>Design</h3>
 
 <p>Our design builds on the experience of the MOPS project and
@@ -227,6 +227,8 @@ been inlined.  I suppose it would work to remove it from all stages,
 probably using the gcc spec file mechanism, but I don't consider it
 worth the complexity and possibility of failure.
 
+<hr>
+
 <h3>Goals and amount of interception</h3>
 
 <p>What tools must be intercepted during the build process depends on
@@ -293,6 +295,8 @@ are interchangeable; why do the both exist?  To assist in this
 experimentation, each interceptor script prints at the start its 1)
 name, 2) parent process id, 3) own process id and 4) arguments all to
 standard error (this may have been commented out, just uncomment).
+
+<hr>
 
 <h3>Using the scripts</h3>
 
@@ -396,6 +400,8 @@ captured by the build process.
 
 </ul>
 
+<hr>
+
 <h3>FAQ</h3>
 
 <pre>
@@ -428,6 +434,8 @@ the mapping first, you find it.  If you can come up with another
 scheme that works, let me know, but I tried a few others and none of
 them worked.
 </pre>
+
+<hr>
 
 <h3>Acknowledgments</h3>
 
