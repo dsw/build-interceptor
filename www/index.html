@@ -9,7 +9,7 @@
 <p><b>Maintainer:</b> Daniel S. Wilkerson
 <br><b>Developers:</b> Karl Chen
 
-<p><b>Build Interceptor</b> captures the .i files of any project while
+<p><b>Summary:</b> captures the .i files of any project while
 it is built from source using the gcc toolchain.
 
 <p>Anyone who has tried this on a large scale will find out that it is
@@ -38,7 +38,7 @@ repository version as a guest user.
 
 <h3>RH7.3.i</h3>
 
-<p><b>RH7.3.i</b> is the .i files generated while Red Hat Linux 7.3
+<p><b>Summary:</b> is the .i files generated while Red Hat Linux 7.3
 was built from source, as recorded by Build Interceptor.  I also
 include the source RPMs for Red Hat Linux 7.3; the ISOs are <a
 href=ftp://mirrors.hpcf.upr.edu/pub/Mirrors/redhat/ftp.redhat.com/linux/7.3/en/iso/i386/>here</a>.
@@ -235,7 +235,7 @@ worth the complexity and possibility of failure.
 what your goal is.  You can turn off the interception of tools by
 removing them from intercept.progs after it is built.
 
-<b>File-by-file</b>
+<p><b>File-by-file</b>
 
 <p>For a file-by-file analysis of source code, you simply need the source
 files after pre-processing.  It is sufficient to just intercept
@@ -247,7 +247,7 @@ gcc spec file will tell gcc to not pass -P which means there should
 always be line directives in the .i file.  So if your analysis finds
 an error, it can always map it back to the original source line.
 
-<b>Whole-program</b>
+<p><b>Whole-program</b>
 
 <p>For a whole-program analysis of all the source in the package, you
 need to know for each executable which .i files went into it.  Each
@@ -267,7 +267,7 @@ output by cc1/cc1plus and .o files linked together by the linker as
 well as the command-line.  It would probably be best to insert the
 metadata after assembly using objcopy, just as with collect2.
 
-<b>Source-to-source</b>
+<p><b>Source-to-source</b>
 
 <p>If you wanted to do a source-to-source transformation on the
 original source you would need the preprocessing command line as well,
@@ -284,7 +284,7 @@ process to be deterministic, so the make interceptor removes -j from
 the command line; try out the TestMake.mk makefile with and without
 it.
 
-<b>Miscellaneous difficulties with gcc layering</b>
+<p><b>Miscellaneous difficulties with gcc layering</b>
 
 <p>You might have to experiment to figure out exactly what which layer to
 intercept.  I am using gcc 3.4.0 and it seems that neither cpp nor gcc
@@ -377,7 +377,7 @@ cd; cd build_interceptor
 
 </pre>
 
-<b>Files</b>
+<p><b>Files</b>
 
 <p>To simplify things, the scripts make some assumptions about what files
 and directories are where.  I list them here; all are assumed to be
