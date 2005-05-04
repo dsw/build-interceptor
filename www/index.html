@@ -164,7 +164,7 @@ what went wrong or even if something went wrong.  The number one
 concern of the design is therefore to keep things as simple and
 non-intrusive as possible.
 
-<p><b>Staged interception<b>
+<p><b>Staged interception</b>
 
 <p>We do not pipeline the build interception with any further analysis
 of the generated .i files.  That is we just save the generated .i
@@ -183,7 +183,7 @@ already materialized the .i file somewhere separately.
 <p>Basically a complex process should be staged if at all possible to
 reduce complexity.
 
-<p><b>Metadata lives in data<b>
+<p><b>Metadata lives in data</b>
 
 <p>We do not attempt to keep metadata on build-process-generated files
 anywhere outside the files themselves.  Early versions of the MOPS
@@ -199,7 +199,7 @@ novel to build_interceptor) and at the link stage it is inserted into
 the .o file using objcopy (a trick from MOPS and also CBI as well I
 think).
 
-<p><b>Avoid long-range communication outside of data<b>
+<p><b>Avoid long-range communication outside of data</b>
 
 <p>We do not attempt out-of-band communication between the various
 sub-processes of gcc, which differs from both MOPS and CBI.  MOPS for
@@ -210,7 +210,7 @@ this long-range dependency between stages greatly simplifies things.
 <p><b>NOTE:</b> I think this may no longer be true with the new
 strategy of embedding .i files directly into ELF files.
 
-<p><b>Avoid parsing complex command-lines<b>
+<p><b>Avoid parsing complex command-lines</b>
 
 <p>Similarly we do not attempt to parse the command-line arguments
 of gcc.  Again, the simplification of the process is huge; we only
