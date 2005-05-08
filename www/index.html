@@ -9,10 +9,15 @@
 <p><b>Maintainer:</b> Daniel S. Wilkerson
 <br><b>Developers:</b> <a href="http://www.cs.berkeley.edu/~quarl/">Karl Chen</a>
 
+<p>This work was supported by professors <a
+href=http://theory.stanford.edu/~aiken/>Alex Aiken</a> and <a
+href=http://www.cs.berkeley.edu/~daw/>David Wagner</a> and was done at
+UC Berkeley.
+
 <h3>Build Interceptor</h3>
 
 <p><b>Summary:</b> captures the .i files of any project while
-it is built from source using the gcc toolchain.
+it is built from source using the gcc tool-chain.
 
 <p>Anyone who has tried this on a large scale will find out that it is
 non-trivial to build a project from source and obtain the .i files
@@ -83,7 +88,7 @@ cat RH7.3.i-VERSION.tar.gz.* | gunzip | tar xv -f -
 
 <p>Build Interceptor is a collection of scripts for recording the .i
 files generated during a build of C or C++ programs with the gcc
-toolchain.  No modification to the original build process is
+tool-chain.  No modification to the original build process is
 necessary.
 
 <h3>Limitations</h3>
@@ -100,9 +105,8 @@ as the preprocessor and compiler had been integrated; however since
 then by looking through the source code I discovered the seemingly
 undocumented flag "--no-integrated-cpp" which solves this problem.
 
-<p>Compilers other than gcc are not supported.  Gcc 3.4.0 works but
-versions earlier than this seem to have different spec file
-conventions; gcc 3.2.3 seems to not work.
+<p>Compilers other than gcc are not supported.  Gcc 3.3 and 3.4 work;
+gcc 3.2.3 seems to not work.
 
 <h3>Background</h3>
 
@@ -422,40 +426,12 @@ build with gcc after being captured by the build process.
 
 </ul>
 
-<h2>FAQ</h2>
-
-<pre>
-Date: Fri, 28 Jan 2005 15:17:30 -0800
-Scott McPeak wrote:
-
-> Do you know there is a form of -j that takes no arguments?
-
-Thanks for pointing this out.  For now I will just turn it off.
-
-> I bet it's just whether the next argument is entirely numeric, which
-> would at least be a fairly simple rule, but still stupid.
-
-These are the kind of situations that you have to be very careful to
-not get yourself into with the primary tools, such as gcc.  Hao was
-attempting to parse gcc's arguments, and these sorts of things killed
-his design.
-
-> Also, why do you transform /usr/bin/gmake into /usr/bin/make?
-
-I do this for gcc_interceptor.pl as well.  Think about what happens
-when you call make as /usr/bin/gmake.  This follows a softlink (which
-is always there) to /usr/bin/make, which has been replaced (by build
-interception) with a softlink to my script
-/home/dsw/build_interceptor/make_interceptor.pl (say), which is what
-runs.  Now, that script has to find the real make, which it does as
-${0}_orig.  In this case, that is /usr/bin/gmake_orig, which doesn't
-exist.  However /usr/bin/make_orig does exist, and my going through
-the mapping first, you find it.  If you can come up with another
-scheme that works, let me know, but I tried a few others and none of
-them worked.
-</pre>
-
 <h2>Acknowledgments</h2>
+
+<p>This work was supported by professors <a
+href=http://theory.stanford.edu/~aiken/>Alex Aiken</a> and <a
+href=http://www.cs.berkeley.edu/~daw/>David Wagner</a> and was done at
+UC Berkeley.
 
 <p>I used code and ideas for build-process interception from two
 different previous projects that dealt with this same problem. <ul>
