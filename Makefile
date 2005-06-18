@@ -6,8 +6,10 @@ ifneq ($(notdir ${PWD}),build_interceptor)
   $(error Run this makefile in the build_interceptor directory under your HOME directory.)
 endif
 
-ifeq ($(shell whoami),root)
-  $(error Do not run any targets in this makefile as root.)
+ifneq (${BI_FORCE_ROOT},1)
+  ifeq ($(shell whoami),root)
+    $(error Do not run any targets in this makefile as root.)
+  endif
 endif
 
 # The list of user tools that we are intercepting.  The user could
