@@ -80,7 +80,7 @@ sub find_output_filename {
 
     for (my $i=0; $i<@raw_args; ++$i) {
         if ($raw_args[$i] =~ /^-o/) {
-            die "multiple -o options" if defined $outfile;
+            my $prev_outfile = $outfile;
             if ($raw_args[$i] eq '-o') {
                 $outfile = $raw_args[$i+1];
                 ++$i;
@@ -90,6 +90,8 @@ sub find_output_filename {
                 die "should have matched: $raw_args[$i]"; # something is very wrong
             }
             die "-o without file" unless defined $outfile;
+
+            die "$0: multiple -o options" if ($old_outfile && $old_outfile ne $outfile);
         }
     }
 
