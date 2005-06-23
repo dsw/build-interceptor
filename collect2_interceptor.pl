@@ -91,7 +91,7 @@ sub find_output_filename {
             }
             die "-o without file" unless defined $outfile;
 
-            die "$0: multiple -o options" if ($old_outfile && $old_outfile ne $outfile);
+            die "$0: multiple -o options" if ($prev_outfile && $prev_outfile ne $outfile);
         }
     }
 
