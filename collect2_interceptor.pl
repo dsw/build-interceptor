@@ -363,8 +363,9 @@ for my $line (split '\n', $trace_output0) {
       #
       #     _LIB_VERSION_TYPE _LIB_VERSION = _IEEE_;
       #
-      # All it does is change error handling; -lm is still required.  So I
-      # think it is safe to ignore this particular library.
+      # All it does is change error handling; -lm is still required.  It gets
+      # added as a result of gcc -mieee-fp.  So I think it is safe to ignore
+      # this particular library.
       next;
   } elsif ($line =~ m/^([^()]+\.(?:o|os|oS|lo|sho|po|opic|pic_o|ro$EXTRA_OBJ_EXT))$/) {
       # TODO: remove .sho,po,opic,pic_o,ro after figuring out which packages
