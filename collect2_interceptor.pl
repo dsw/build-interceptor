@@ -30,7 +30,7 @@ my $prog = "${0}_orig";         # compute the new executable name we are calling
 my @raw_args = @av;
 
 if (grep {/^--help$/ || /^--version$/ || /^-[vV]$/ } @raw_args) {
-    exec ( ($prog, @raw_args) ) || die "Couldn't exec $prog @raw_args\n";
+    exec ( ($prog, @raw_args) ) || die "$0: Couldn't exec $prog @raw_args\n";
 }
 
 # make a unique id for breaking symmetry with any other occurances of
@@ -61,14 +61,14 @@ mkpath($ar_cache);
 # collect2 and ld are called on the same file.  Update: It seems that
 # collect2 calls ld.
 my $sec_name = basename($0);
-die "bad sec_name:$sec_name:" unless
+die "$0: bad sec_name:$sec_name:" unless
   $sec_name eq 'ld' ||
   $sec_name eq 'collect2';
 
 # test-only extract
 my $extract_pl = "${FindBin::RealBin}/extract_section.pl";
 if (!-f $extract_pl) {
-    die "Couldn't find extract_section.pl (should be $extract_pl)\n";
+    die "$0: Couldn't find extract_section.pl (should be $extract_pl)\n";
 }
 my $extract = "$extract_pl -t -q";
 
@@ -87,9 +87,9 @@ sub find_output_filename {
             } elsif ($raw_args[$i] =~ /^-o(.+)$/) {
                 $outfile = $1;
             } else {
-                die "should have matched: $raw_args[$i]"; # something is very wrong
+                die "$0: should have matched: $raw_args[$i]"; # something is very wrong
             }
-            die "-o without file" unless defined $outfile;
+            die "$0: -o without file" unless defined $outfile;
 
             die "$0: multiple -o options" if ($prev_outfile && $prev_outfile ne $outfile);
         }
@@ -140,7 +140,7 @@ sub archive_extract_object {
 
     my $file = "$dname/$object";
     if (! -f $file) {
-        die "Couldn't find archive $archive object $object";
+        die "$0: Couldn't find archive $archive object $object";
     }
 
     return $file;
@@ -254,7 +254,7 @@ if ($ret) {
   if ($exit_value) {
     exit $exit_value;
   } else {
-    die "Failure return not reflected in the exit value: ret:$ret";
+    die "$0: Failure return not reflected in the exit value: ret:$ret";
   }
 }
 
@@ -382,7 +382,7 @@ for my $line (split '\n', $trace_output0) {
   }
 
   # get the file id
-  die "Something is wrong, no such file :$file:" unless -f $file;
+  die "$0: Something is wrong, no such file :$file:" unless -f $file;
   # my $file_id = getCanonIdForFile($file);
   my $file_id = md5_file($file);
 
@@ -469,7 +469,7 @@ sub getCanonIdForFile {
 #        $atime,$mtime,$ctime,$blksize,$blocks) = stat($file);
   my (undef,$ino,undef,undef,undef,undef,undef,undef,
       undef,$mtime,$ctime,undef,undef) = stat($filename);
-  die "no such file $filename"
+  die "$0: no such file $filename"
     unless defined $ino && defined $mtime && defined $ctime;
   my $file_id = "${ino}_${ctime}_${mtime}";
   return $file_id;
