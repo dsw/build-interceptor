@@ -318,6 +318,8 @@ add_or_append_section($outfile_abs, "${sec_name}_interceptor", $intercept_data);
 my $EXTRA_OBJ_EXT = $ENV{EXTRA_OBJECT_EXTENSIONS} ?
     "|".$ENV{EXTRA_OBJECT_EXTENSIONS} : '';
 
+my $EXTRA_IGNORE_LINES = $ENV{EXTRA_IGNORE_LINES};
+
 # don't bother proclaiming failures for ocaml files
 if (check_object_ocaml($outfile_abs)) {
     my $good = new FileHandle(">>$tmpdir/cc1_ignored_ocaml") or die $!;
@@ -352,6 +354,13 @@ for my $line (split '\n', $trace_output0) {
       # ignore for now
       next;
       # $file = $1;
+  } elsif ($EXTRA_IGNORE_LINES && $line =~ m/^${EXTRA_IGNORE_LINES}$/) {
+      # Some packages have weird names for shared libraries that we can also
+      # ignore.
+      #
+      # Some packages have extra crud that we just have to ignore (e.g. jpeg
+      # files)
+      next;
   } elsif ($line =~ m/-lieee \(.*\/libieee.a\)$/) {
       # These are the contents of the file ieee-math.c which build the
       # *shared* library /usr/lib/libieee.a:
