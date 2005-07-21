@@ -72,6 +72,14 @@ sub file_contains_ocaml_asm {
             $l2 && $l2 =~ /^\t[.]globl\s+caml/);
 }
 
+sub file_contains_java_asm {
+    # Returns 1 iff we think this .s file was the output of gcj.
+    my ($filename) = @_;
+    my $fh = new FileHandle($filename) or die;
+    my ($l1) = <$fh>;
+    return ($l1 =~ /^\t.file\s+".+?[.]java"/);
+}
+
 sub file_is_empty_p {
     # returns 1 iff file is composed entirely of empty/comment lines
 
@@ -117,6 +125,18 @@ if ($infile && -f $infile && file_contains_ocaml_asm($infile)) {
 
     my $metadata = <<'END'         # do not interpolate
         .section        .note.ocaml_interceptor,"",@progbits
+        .ascii "dummy\n"
+END
+;
+    my $fh = new FileHandle(">>$infile") or die;
+    print $fh $metadata;
+}
+
+if ($infile && -f $infile && file_contains_java_asm($infile)) {
+    $lang = 'java';
+
+    my $metadata = <<'END'         # do not interpolate
+        .section        .note.java_interceptor,"",@progbits
         .ascii "dummy\n"
 END
 ;
@@ -177,6 +197,12 @@ if ($? || !$cc1_note) {
     my $ocaml_note = `$extract_pl .note.ocaml_interceptor $outfile 2>/dev/null`;
     if ($ocaml_note && !$?) {
         # Ignore ocaml files for now
+        exit 0;
+    }
+
+    my $java_note = `$extract_pl .note.java_interceptor $outfile 2>/dev/null`;
+    if ($java_note && !$?) {
+        # Ignore java files for now
         exit 0;
     }
 
