@@ -99,13 +99,13 @@ if (@infiles) {
   my $infile_abs = File::Spec->rel2abs($infile);
   die unless -f $infile_abs;
   # make the temp file name
-  if (defined $orig_filename) {
+  if ($orig_filename) {
       $tmpfile = $orig_filename;
   } else {
       $tmpfile = $infile_abs;
   }
   $tmpfile =~ s|\.(.*)$|-$unique.$1|;
-  die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
+  die "$0: not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
   $rel_tmpfile = ".$tmpfile";
   $tmpfile = "$prefix$tmpfile";
   ensure_dir_of_file_exists($tmpfile);
