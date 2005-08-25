@@ -50,21 +50,8 @@ USRTOOLS_GCC_FULL = $(wildcard $(shell          \
 	    done                                \
 	done | sort -u) )
 
-# Script sharing: These tools are intercepted by a script that is also
-# intercepting another tool.
-SOFTLINKS :=
-SOFTLINKS += g++_interceptor.pl
-SOFTLINKS += cpp_interceptor.pl
-SOFTLINKS += tradcpp0_interceptor.pl
-SOFTLINKS += cc1plus_interceptor.pl
-SOFTLINKS += ld_interceptor.pl
-
 .PHONY: all interceptor.specs.ALL
-# NOTE: for a subtle reason, softlinks should come before
-# intercept.progs: if you run this target after interception is
-# already happening, the tools that point to softlinks here that are
-# not built yet will not be included.
-all: softlinks intercept.progs make_interceptor interceptor.specs.ALL
+all: intercept.progs make_interceptor interceptor.specs.ALL
 
 INTER_SCRIPS :=
 INTER_SCRIPS += as_interceptor.pl
@@ -98,7 +85,7 @@ stamp-log/%:
 	echo >> ${HOME}/build_interceptor.log
 
 .PHONY: clean
-clean: clean-intercept.progs clean-softlinks clean-script-interceptor clean-bak clean-interceptor.specs
+clean: clean-intercept.progs clean-script-interceptor clean-bak clean-interceptor.specs
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
@@ -109,10 +96,6 @@ clean-intercept.progs:
           false; \
         else echo "No intercept.progs to remove."; \
         fi
-
-.PHONY: clean-softlinks
-clean-softlinks:
-	rm -f $(SOFTLINKS)
 
 # .bak files are created when perl -i.bak filters files; this is done
 # by loud-on/loud-off
@@ -155,9 +138,6 @@ intercept.progs: clean-intercept.progs
 	echo $(USRTOOLS_FULL) $(USRTOOLS_GCC_FULL) | xargs -n 1 > $@
 	@echo
 	@echo "$@: " && cat $@
-
-.PHONY: softlinks
-softlinks: $(SOFTLINKS)
 
 make_interceptor: script_interceptor.c
 	gcc -o $@ -DIPROGNAME='"make"' -DINTERCEPTORPATH='"make_interceptor.pl"' $^
