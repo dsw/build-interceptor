@@ -159,18 +159,5 @@ intercept.progs: clean-intercept.progs
 .PHONY: softlinks
 softlinks: $(SOFTLINKS)
 
-# It doesn't seem that you can easily check softlinks into cvs, so I
-# make them here.
-g++_interceptor.pl:
-	ln -s gcc_interceptor.pl $@
-cpp_interceptor.pl:
-	ln -s cpp0_interceptor.pl $@
-tradcpp0_interceptor.pl:
-	ln -s cpp0_interceptor.pl $@
-cc1plus_interceptor.pl:
-	ln -s cc1_interceptor.pl $@
-ld_interceptor.pl:
-	ln -s collect2_interceptor.pl $@
-
 make_interceptor: script_interceptor.c
 	gcc -o $@ -DIPROGNAME='"make"' -DINTERCEPTORPATH='"make_interceptor.pl"' $^
