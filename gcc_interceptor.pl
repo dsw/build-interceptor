@@ -59,10 +59,14 @@ if ("@ARGV" =~ /-E -P -\s*$/ || grep {$_ eq '-V'} @ARGV) {
     exec("${dollar_zero}_orig", @ARGV) || die;
 }
 
+my $BUILD_INTERCEPTOR_EXTRA_GCC_ARGS = [
+    split(/ /, $ENV{BUILD_INTERCEPTOR_EXTRA_GCC_ARGS})];
+
 my @cmd_line =
   ("${dollar_zero}_orig",
    "--no-integrated-cpp",
    "-specs=$specfile",
+   @$BUILD_INTERCEPTOR_EXTRA_GCC_ARGS,
 # We no longer need this
 #     "-B$FindBin::RealBin",
    @ARGV);
