@@ -245,10 +245,10 @@ END
 # Stick this stuff into the object file
 add_or_append_section($outfile_abs, "${sec_name}_interceptor", $intercept_data);
 
-my $EXTRA_OBJ_EXT = $ENV{EXTRA_OBJECT_EXTENSIONS} ?
-    "|".$ENV{EXTRA_OBJECT_EXTENSIONS} : '';
+my $EXTRA_OBJ_EXT = $ENV{BUILD_INTERCEPTOR_EXTRA_OBJECT_EXTENSIONS} ?
+    "|".$ENV{BUILD_INTERCEPTOR_EXTRA_OBJECT_EXTENSIONS} : '';
 
-my $EXTRA_IGNORE_LINES = $ENV{EXTRA_IGNORE_LINES};
+my $EXTRA_IGNORE_LINES = $ENV{BUILD_INTERCEPTOR_EXTRA_IGNORE_LINES};
 
 # don't bother proclaiming failures for ocaml files
 if (check_object_ocaml($outfile_abs)) {
