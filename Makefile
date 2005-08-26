@@ -15,10 +15,7 @@ endif
 # The list of user tools that we are intercepting.  The user could
 # build this file by hand if this automated way doesn't work.
 USRTOOLS :=
-# NOTE: make interceptor doesn't look for the -j flag correctly, so
-# don't use it for now.  It isn't critical to the correct operation of
-# build_interceptor.
-# USRTOOLS += make
+USRTOOLS += make
 USRTOOLS_GCC = gcc $(notdir $(wildcard /usr/bin/gcc-* /usr/bin/*-linux-gcc))
 USRTOOLS += $(USRTOOLS_GCC)
 USRTOOLS += g++ $(notdir $(wildcard /usr/bin/g++-*))
@@ -52,26 +49,6 @@ USRTOOLS_GCC_FULL = $(wildcard $(shell          \
 
 .PHONY: all interceptor.specs.ALL
 all: intercept.progs make_interceptor interceptor.specs.ALL
-
-INTER_SCRIPS :=
-INTER_SCRIPS += as_interceptor.pl
-INTER_SCRIPS += cc1_interceptor.pl
-INTER_SCRIPS += collect2_interceptor.pl
-INTER_SCRIPS += cpp0_interceptor.pl
-INTER_SCRIPS += gcc_interceptor.pl
-INTER_SCRIPS += make_interceptor.pl
-
-LOUD_ON := $(addprefix loud-on/,$(INTER_SCRIPS))
-.PHONY: loud-on $(LOUD_ON)
-loud-on: $(LOUD_ON)
-$(LOUD_ON): loud-on/%:
-	perl -i.bak -pe 's/^(\s*)\#+/$1/ if /LOUD/' $*
-
-LOUD_OFF := $(addprefix loud-off/,$(INTER_SCRIPS))
-.PHONY: loud-off $(LOUD_OFF)
-loud-off: $(LOUD_OFF)
-$(LOUD_OFF): loud-off/%:
-	perl -i.bak -pe 's/^(\s*)\#*/$1\#/ if /LOUD/' $*
 
 # timestamp the $HOME/build_interceptor.log; useful to run between
 # compilations

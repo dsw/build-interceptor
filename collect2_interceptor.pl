@@ -1,6 +1,11 @@
 #!/usr/bin/perl -w
 # See License.txt for copyright and terms of use
 use strict;
+use warnings;
+use FindBin;
+use lib "${FindBin::RealBin}";
+use BuildInterceptor ':all';
+
 use FindBin;
 use Cwd;
 use Cwd 'abs_path';
@@ -9,28 +14,13 @@ use File::Path;                 # provides mkpath
 use File::Basename;
 use File::Temp;
 use FileHandle;
-use Digest::MD5;
 use Memoize;
 
 # When used as a replacement to the system collect2 will just pass the
 # arguments through.
 
-if (!$ENV{HOME}) {
-    $ENV{HOME} = "${FindBin::RealBin}/..";
-}
-
-#my $splash = "collect2_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
-#warn $splash;                   # LOUD
-#open (LOG, ">>$ENV{HOME}/build_interceptor.log") or die $!; # LOUD
-#print LOG $splash;              # LOUD
-
-my @av = @ARGV;                 # @ARGV has magic, so copy it
-my $prog = "${0}_orig";         # compute the new executable name we are calling
-
-my @raw_args = @av;
-
-if (grep {/^--help$/ || /^--version$/ || /^-[vV]$/ } @raw_args) {
-    exec ( ($prog, @raw_args) ) || die "$0: Couldn't exec $prog @raw_args\n";
+if (grep {/^--help$/ || /^--version$/ || /^-[vV]$/ } @$raw_args) {
+    exec_prog();
 }
 
 # make a unique id for breaking symmetry with any other occurances of
@@ -72,39 +62,6 @@ if (!-f $extract_pl) {
 }
 my $extract = "$extract_pl -t -q";
 
-# POSIXLY_CORRECT breaks objcopy
-delete $ENV{POSIXLY_CORRECT};
-
-sub find_output_filename {
-    my $outfile;
-
-    for (my $i=0; $i<@raw_args; ++$i) {
-        if ($raw_args[$i] =~ /^-o/) {
-            my $prev_outfile = $outfile;
-            if ($raw_args[$i] eq '-o') {
-                $outfile = $raw_args[$i+1];
-                ++$i;
-            } elsif ($raw_args[$i] =~ /^-o(.+)$/) {
-                $outfile = $1;
-            } else {
-                die "$0: should have matched: $raw_args[$i]"; # something is very wrong
-            }
-            die "$0: -o without file" unless defined $outfile;
-
-            die "$0: multiple -o options" if ($prev_outfile && $prev_outfile ne $outfile);
-        }
-    }
-
-    if (!defined $outfile) {
-        $outfile = 'a.out';
-    }
-    return $outfile;
-}
-
-sub md5_file {
-    my ($filename) = @_;
-    return Digest::MD5->new->addfile(new FileHandle($filename))->hexdigest;
-}
 memoize('md5_file');
 
 sub canonicalize {
@@ -222,51 +179,26 @@ sub add_or_append_section {
     add_section($file, $section, $existing_note . $content);
 }
 
-sub do_not_add_interceptions_to_this_file {
-    my ($outfile_abs) = @_;
-    my $r = $ENV{BUILD_INTERCEPTOR_DO_NOT_ADD_INTERCEPTIONS_TO_FILES};
-    return ($r and $outfile_abs =~ /^$r$/);
-}
-
 # where are we?
 my $pwd = getcwd;
 
-my $outfile = find_output_filename();
+my $outfile = get_output_filename() || 'a.out';
 my $outfile_abs = File::Spec->rel2abs($outfile);
 
 # Print out the files that are linked in.
-unshift @av, "--trace";
-my $run_args = join(':', @av);
+unshift @$argv, "--trace";
+my $run_args = join(':', @$argv);
 
-my @av2 = map {quoteit($_)} @av;
-my $cmd = $prog . ' ' . join(' ', @av2) ;
-#. ' 2>&1';
-
-# Don't catch stderr -- random error messages go there and can confuse us
-# [this would break for example linking any object that invokes tmpnam()].
-
-# Just delegate to the real thing.
-#warn "collect2_interceptor.pl: system $cmd\n";
-my $trace_output0 = `$cmd`;      # hidden system call here to run real linker
-my $ret = $?;
-my $exit_value = $ret >> 8;
-if ($ret) {
-  if ($exit_value) {
-    exit $exit_value;
-  } else {
-    die "$0: Failure return not reflected in the exit value: ret:$ret";
-  }
-}
-
-if (!-e $outfile_abs) {
-    warn "$0: output file $outfile_abs not found\n";
-    exit($exit_value || 1);
-}
+# Run the real ld and get its stdout.  Don't catch stderr -- random error
+# messages go there and can confuse us [this would break for example linking
+# any object that invokes tmpnam()].
+my $trace_output0 = pipe_prog();                  # delegate to the real thing
+check_output_file($outfile_abs);
 
 my $executable_p = -x $outfile_abs &&
  $outfile_abs !~ /[.](?:so(?:[.]\d+)*(?:-UTF8)?|la|al|o|lo|os|oS|po|opic|pic_o|sho)$/;
 
-if (do_not_add_interceptions_to_this_file($outfile_abs)) {
+if (do_not_add_interceptions_to_this_file_p($outfile_abs)) {
     # Don't add .note.ld_interceptor, and in addition, remove
     # .note.cc1_interceptor.
     #
@@ -277,8 +209,7 @@ if (do_not_add_interceptions_to_this_file($outfile_abs)) {
 }
 
 # Double-indent this to quote it.
-my $trace_output = $trace_output0;
-$trace_output =~ s|^(.*)$|\t\t$1|gm;
+my $trace_output = tab_indent_lines($trace_output0);
 # Make sure ends in a newline, since we count on that below for tab quoting.
 die unless $trace_output =~ m|\n$|;
 
@@ -293,7 +224,7 @@ $intercept_data .= <<END        # do interpolate!
 END
   ;
 
-for my $a (@raw_args) {
+for my $a (@$raw_args) {
 $intercept_data .= <<END        # do interpolate!
 \t\t${a}
 END
@@ -303,7 +234,6 @@ END
 $intercept_data .= <<END        # do interpolate!
 \t)
 \trun_args:${run_args}
-\tcmd:${cmd}
 \toutfile:${outfile}
 \toutfile_abs:${outfile_abs}
 \ttrace_output: (
@@ -324,7 +254,7 @@ my $EXTRA_IGNORE_LINES = $ENV{EXTRA_IGNORE_LINES};
 if (check_object_ocaml($outfile_abs)) {
     my $good = new FileHandle(">>$tmpdir/cc1_ignored_ocaml") or die $!;
     print $good "$outfile_abs\n";
-    exit $exit_value;
+    exit 0;
 }
 
 
@@ -464,8 +394,7 @@ if (@not_intercepted) {
     print $good "$outfile_abs\n";
 }
 
-#close (LOG) or die $!;          # LOUD
-exit $exit_value;
+exit 0;
 
 # subroutines ****************
 
@@ -497,16 +426,4 @@ sub outputToFile {
     mkpath(dirname($file));
     my $f = new FileHandle(">>$file") || die $!;
     print $f $data;
-}
-
-# We have to pass to the shell in order to collect from standard err
-# or else re-write this all in C.  No, does not seem to be any way to
-# use the list-argument version of system or exec and capture the
-# stderr output of a subprocess without going all the way down to
-# doing the process and pipe manipulation myself; I might then more
-# easily do this in C.
-sub quoteit {
-  my ($arg) = @_;
-  $arg =~ s|'|'\\''|;
-  return "'$arg'";
 }

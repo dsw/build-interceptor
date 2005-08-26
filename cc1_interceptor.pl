@@ -1,12 +1,15 @@
 #!/usr/bin/perl -w
 # See License.txt for copyright and terms of use
+
 use strict;
+use warnings;
+use FindBin;
+use lib "${FindBin::RealBin}";
+use BuildInterceptor ':all';
+
 use Cwd;
-use File::Basename;
-use File::Path;
 use File::Spec;
 use File::Copy;
-use Digest::MD5;
 use FileHandle;
 use FindBin;
 
@@ -14,44 +17,17 @@ use FindBin;
 # will intercept the build process and keep a copy of the .i files
 # generated.
 
-if (!$ENV{HOME}) {
-    $ENV{HOME} = "${FindBin::RealBin}/..";
+# If we being invoked as a preprocessor, just delegate to the real thing.
+if (grep {/^-E$/} @$argv) {
+    exec_prog();
 }
 
-#my $splash = "cc1_interceptor.pl:".getppid()."/$$: $0 @ARGV\n"; # LOUD
-#warn $splash;                   # LOUD
-#open (LOG, ">>$ENV{HOME}/build_interceptor.log") or die $!; # LOUD
-#print LOG $splash;              # LOUD
-
-my @av = @ARGV;                 # @ARGV has magic, so copy it
-my $prog = "${0}_orig";         # compute the new executable name we are calling
-
-# If we being invoked as a preprocessor, just delegate to the real
-# thing.
-if (grep {/^-E$/} @av) {
-#    warn "non-compile call to $prog, @av\n";
-    # system($prog, @av);
-    # exit $? >> 8;
-    exec($prog, @av) || die "$0: failed to exec @av";
-}
-
-# make a unique id for breaking symmetry with any other occurances of
-# this process
-my $time0 = time;
-my $unique = "$$-$time0";
-
-#  # print out our raw args
-#  open OUT, ">>build.$unique.cc1_out" or die $!;
-#  print OUT "---raw args---\n";
-#  print OUT (join("\n", @av), "\n---end-args---\n");
-my @raw_args = @av;
-
-# mapping from build filesystem to isomorphic copy.  Make this
-# directory.
+# Mapping from build filesystem to isomorphic copy.
 my $prefix = $ENV{BUILD_INTERCEPTOR_PREPROC} || "$ENV{HOME}/preproc";
 
-# where are we?
 my $pwd = getcwd;
+
+my $orig_filename = get_orig_filename();
 
 # Input behavior:
 # If you specify multiple input files, it just uses the last one.
@@ -63,175 +39,55 @@ my $pwd = getcwd;
 # If you give as an input file '-' then it will make a file -.s as the
 # output file!  I don't reproduce this behavior.
 
-# If we have been told the original name of the file, use that.
-my $orig_filename = '';
-my @orig_filenames = grep {/^---build_interceptor-orig_filename=.*$/} @av;
-if (@orig_filenames) {
-  die "more than one orig_filenames" if ($#orig_filenames > 0);
-  $orig_filenames[0] =~ /^---build_interceptor-orig_filename=(.*)$/;
-  $orig_filename = File::Spec->rel2abs($1);
-#    warn "tmpfile:${tmpfile}: from --build_interceptor-orig_filenames\n";
-  @av = grep {!/^---build_interceptor-orig_filename=.*$/} @av;
-}
-
-# POSIXLY_CORRECT breaks objcopy
-delete $ENV{POSIXLY_CORRECT};
-
-sub ensure_dir_of_file_exists($) {
-    my ($f) = (@_);
-    mkpath(dirname($f));
-}
-
-sub md5_file {
-    my ($filename) = @_;
-    return Digest::MD5->new->addfile(new FileHandle($filename))->hexdigest;
-}
-
-my @infiles = grep {/\.ii?$/} @av; # get any input files
-my $infile;
-my $tmpfile;
-my $rel_tmpfile;
-if (@infiles) {
-  $infile = $infiles[$#infiles]; # the last infile
-  die "no such file $infile" unless -f $infile;
-  @av = grep {!/\.ii?$/} @av;   # remove from @av
-  # we need an absolute name for $infile
-  my $infile_abs = File::Spec->rel2abs($infile);
-  die unless -f $infile_abs;
-  # make the temp file name
-  if ($orig_filename) {
-      $tmpfile = $orig_filename;
-  } else {
-      $tmpfile = $infile_abs;
-  }
-  $tmpfile =~ s|\.(.*)$|-$unique.$1|;
-  die "$0: not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
-  $rel_tmpfile = ".$tmpfile";
-  $tmpfile = "$prefix$tmpfile";
-  ensure_dir_of_file_exists($tmpfile);
-  # put the contents there
-  die "already a file $tmpfile" if -e $tmpfile;
-  copy($infile_abs, $tmpfile) || die $!;
-} else {
-  # make the temp file name
-  die unless $pwd =~ m|^/|;
-  my $tmpdir = $pwd;
-  if (defined $orig_filename) {
-      $tmpfile = $orig_filename;
-      $tmpfile =~ s|\.(.*)$|-$unique.$1|;
-  } else {
-      $tmpfile = "/STDIN-$unique";
-  }
-  die "not absolute filename:$tmpfile" unless $tmpfile =~ m|^/|;
-  $tmpfile = "$tmpdir$tmpfile";
-  $rel_tmpfile = ".$tmpfile";
-  $tmpfile = "$prefix$tmpfile";
-  ensure_dir_of_file_exists($tmpfile);
-  # put the contents there
-  die "already a file $tmpfile" if -e $tmpfile;
-  copy(\*STDIN, $tmpfile) || die $!;
-}
-die "no such file $tmpfile" unless -f $tmpfile;
+my ($infile, $input, $tname) = get_input_and_tname();
+my $rel_tmpfile = "." . uniquify_filename($tname);
+my $tmpfile = "$prefix/$rel_tmpfile";
+# put the contents there
+copy_file($input, $tmpfile);
 
 my $md5 = md5_file($tmpfile);
 
-unshift @av, $tmpfile;        # add input file to @av
+unshift @$argv, $tmpfile;        # add input file to @$argv
+
+my $dumpbase = get_dumpbase();     # this seems to be the original source file
 
 # Output behavior:
 # You can specify an output file with -o FILE; the space before FILE is required
-my $outfile;                    # the output file
-my $dumpbase;                   # this seems to be the original source file
-for (my $i=0; $i<@av; ++$i) {
-  if ($av[$i] =~ /^-o/) {
-    die "multiple -o options" if defined $outfile;
-    if ($av[$i] eq '-o') {
-      $outfile = $av[$i+1];
-      ++$i;
-    } elsif ($av[$i] =~ /^-o(.*)$/) {
-      $outfile = $1;
-    } else {
-      die "should have matched: $av[$i]"; # something is very wrong
-    }
-    die "-o without file" unless defined $outfile;
-  } elsif ($av[$i] eq '-dumpbase') {
-    if (defined $dumpbase) {
-      # I suspect this will never happen; NOTE: it has been tested by
-      # inserting artificial stuff into @av.
-      $dumpbase .= ":";
-      $dumpbase .= $av[$i+1];
-    } else {
-      $dumpbase = $av[$i+1];
-    }
-  }
-}
-# if file is '-' it uses standard out.
-if (!defined $outfile) {
-  # If you don't say, it uses standard out if the input was standard
-  # in
-  if (!@infiles) {
-    $outfile = '-';
-  }
-  # Otherwise, it puts it in the last .i file mentioned with .i
-  # replaced with .s
-  else {
-    $outfile = $infile;
-    $outfile =~ s|\.ii?$|.s|;
-  }
-}
+my $outfile = get_output_filename() || deduce_output_filename($infile);
 die unless defined $outfile;
 
-# prefix with the name of the program we are calling
-unshift @av, $prog;
-
-# run
-#  print OUT "---modified---\n";
-#  print OUT (join("\n", @av), "\n---end-args---\n");
-my $run_args = join(':', @av);
-#warn "cc1_interceptor.pl: @av\n";
-system(@av);
-my $ret = $?;
-my $exit_value = $ret >> 8;
-if ($ret) {
-  if ($exit_value) {
-    exit $exit_value;
-  } else {
-    die "Failure return not reflected in the exit value: ret:$ret";
-  }
-}
-
-if ($outfile ne '-' && !-f $outfile) {
-    die "$0: $prog didn't produce $outfile\n";
-}
+my $run_args = join(':', $prog, $argv);
+run_prog();                                       # delegate to the real thing
+check_output_file($outfile);
 
 # append metadata to output
-my $metadata = <<'END1'         # do not interpolate
+my $metadata = <<'END'                              # do not interpolate
         .section        .note.cc1_interceptor,"",@progbits
-END1
+END
   ;
 
 # initialize anything still uninitialized
 $infile = '-' unless defined $infile;
-$dumpbase = '' unless defined $dumpbase;
-$metadata .= <<END2             # do interpolate!
+$metadata .= <<END                                  # do interpolate!
         .ascii "("
         .ascii "\\n\\tpwd:${pwd}"
         .ascii "\\n\\tdollar_zero:$0"
         .ascii "\\n\\traw_args: ("
-END2
-  ;
+END
+    ;
 
-for my $a (@raw_args) {
-  $metadata .= <<END2b          # do interpolate!
+for my $a (@$raw_args) {
+    $metadata .= <<END                                # do interpolate!
         .ascii "\\n\\t\\t${a}"
-END2b
-  ;
+END
+;
 }
 
 my $pkg = $ENV{BUILD_INTERCEPTOR_PACKAGE} || '';
 my $timestamp = $ENV{BUILD_INTERCEPTOR_TIMESTAMP} || '';
 my $chroot_id = $ENV{BUILD_INTERCEPTOR_CHROOT_ID} || '';
 
-$metadata .= <<END3             # do interpolate!
+$metadata .= <<END                                  # do interpolate!
         .ascii "\\n\\t)"
         .ascii "\\n\\trun_args:${run_args}"
         .ascii "\\n\\torig_filename:${orig_filename}"
@@ -242,19 +98,92 @@ $metadata .= <<END3             # do interpolate!
         .ascii "\\n\\tpackage:${pkg} ${timestamp} ${chroot_id}"
         .ascii "\\n\\tmd5:${md5}"
         .ascii "\\n)\\n"
-END3
+END
   ;
 
-if ($outfile eq "-") {
-  print $metadata;
-} else {
-  die unless -f $outfile;
-  open (FILEOUT, ">>$outfile") or die $!;
-  print FILEOUT $metadata;
-  close (FILEOUT) or die $!;
+append_to_file($outfile, $metadata);
+
+
+
+sub get_orig_filename {
+    my $orig_filename = '';
+    my @orig_filenames = grep {/^---build_interceptor-orig_filename=.*$/} @$argv;
+    if (@orig_filenames) {
+        die "more than one orig_filenames" if ($#orig_filenames > 0);
+        $orig_filenames[0] =~ /^---build_interceptor-orig_filename=(.*)$/;
+        $orig_filename = File::Spec->rel2abs($1);
+        # warn "tmpfile:${tmpfile}: from --build_interceptor-orig_filenames\n";
+        @$argv = grep {!/^---build_interceptor-orig_filename=.*$/} @$argv;
+    }
+    return $orig_filename;
 }
 
-# exit
-#  close OUT or die $!;
-#close (LOG) or die $!;          # LOUD
-exit $exit_value;               # exit with the same value as cc1 did
+sub get_input_and_tname {
+    # If we have been told the original name of the file, use that.
+    my @infiles = grep {/\.ii?$/} @$argv; # get any input files
+    my $infile;
+    my $tname;
+    my $input;
+    if (@infiles) {
+        $infile = $infiles[$#infiles]; # the last infile
+        die "$0: no such file '$infile'" unless -f $infile;
+        @$argv = grep {!/\.ii?$/} @$argv;   # remove from @$argv
+        # make the temp file name
+        $input = File::Spec->rel2abs($infile);
+        $tname = $orig_filename || $input;
+    } else {
+        $infile = '-';
+        # make the temp file name
+        $input = \$STDIN;
+        $tname = $orig_filename || "$pwd/STDIN";
+    }
+
+    return ($infile, $input, $tname);
+}
+
+sub get_dumpbase {
+    my $dumpbase = [];
+    for (my $i=0; $i<@$argv; ++$i) {
+        if ($argv->[$i] eq '-dumpbase') {
+            push(@$dumpbase, $argv->[$i+1]);
+        }
+    }
+    return join(":",$dumpbase);
+}
+
+sub deduce_output_filename {
+    my ($infile) = @_;
+
+    # If we don't see an output filename on the command line, deduce it.
+    my $outfile;
+
+    # By default, output to stdout if input from stdin.  "-" means stdout.
+    if ($infile eq '-') {
+        $outfile = '-';
+    }
+    # Otherwise, it puts it in the last .i file mentioned with .i
+    # replaced with .s
+    else {
+        $outfile = $infile;
+        $outfile =~ s|\.ii?$|.s|;
+    }
+    return $outfile;
+}
+
+sub uniquify_filename {
+    my ($filename) = @_;
+    my $time0 = time;
+    my $unique = "$time0-$$";
+
+    # $filename =~ s|\.|-$unique.| ||
+    $filename .= "-$unique";
+    return $filename;
+}
+
+sub copy_file {
+    my ($input, $tmpfile) = @_;
+    ensure_dir_of_file_exists($tmpfile);
+    die "$0: tmpfile '$tmpfile' already exists" if -e $tmpfile;
+    copy($input, $tmpfile) || die "$0: $!";
+    die "$0: couldn't copy to tmpfile '$tmpfile'" unless -e $tmpfile;
+}
