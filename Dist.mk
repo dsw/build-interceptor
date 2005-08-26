@@ -1,13 +1,13 @@
 # Disk.mk; see License.txt for copyright and terms of use
 
-DIR := build_interceptor
+DIR := build-interceptor
 VERSION := 2004.11.19
 
 # for people at Berkeley who aren't me
 # CICH := :ext:cich:/home/cvs/repository
 CICH := /home/cvs/repository
 
-CVS_TAG := build_interceptor_2004_11_19
+CVS_TAG := build-interceptor_2004_11_19
 
 HERE := $(shell pwd)
 

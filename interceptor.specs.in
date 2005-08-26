@@ -21,7 +21,7 @@
 # It is nice if we can find out the name of the original file to help
 # in creating a name for the temporary file.
 *cc1_options:
-+ ---build_interceptor-orig_filename=%i
++ ---build-interceptor-orig_filename=%i
 
 *cc1plus_options:
-+ ---build_interceptor-orig_filename=%i
++ ---build-interceptor-orig_filename=%i

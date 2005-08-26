@@ -107,13 +107,13 @@ append_to_file($outfile, $metadata);
 
 sub get_orig_filename {
     my $orig_filename = '';
-    my @orig_filenames = grep {/^---build_interceptor-orig_filename=.*$/} @$argv;
+    my @orig_filenames = grep {/^---build-interceptor-orig_filename=.*$/} @$argv;
     if (@orig_filenames) {
         die "more than one orig_filenames" if ($#orig_filenames > 0);
-        $orig_filenames[0] =~ /^---build_interceptor-orig_filename=(.*)$/;
+        $orig_filenames[0] =~ /^---build-interceptor-orig_filename=(.*)$/;
         $orig_filename = File::Spec->rel2abs($1);
-        # warn "tmpfile:${tmpfile}: from --build_interceptor-orig_filenames\n";
-        @$argv = grep {!/^---build_interceptor-orig_filename=.*$/} @$argv;
+        # warn "tmpfile:${tmpfile}: from --build-interceptor-orig_filenames\n";
+        @$argv = grep {!/^---build-interceptor-orig_filename=.*$/} @$argv;
     }
     return $orig_filename;
 }

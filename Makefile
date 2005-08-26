@@ -2,8 +2,8 @@
 # first place.  Generally, run targets in this makefile as a normal
 # user.
 
-ifneq ($(notdir ${PWD}),build_interceptor)
-  $(error Run this makefile in the build_interceptor directory under your HOME directory.)
+ifeq ($(wildcard Intercept.mk),)
+  $(error Run this makefile in the build-interceptor directory.)
 endif
 
 ifneq (${BI_FORCE_ROOT},1)
@@ -50,16 +50,16 @@ USRTOOLS_GCC_FULL = $(wildcard $(shell          \
 .PHONY: all interceptor.specs.ALL
 all: intercept.progs make_interceptor interceptor.specs.ALL
 
-# timestamp the $HOME/build_interceptor.log; useful to run between
+# timestamp the $HOME/build-interceptor.log; useful to run between
 # compilations
 .PHONY: stamp-log
 stamp-log: stamp-log/---
 .PHONY: stamp-log/%
 stamp-log/%:
-	echo >> ${HOME}/build_interceptor.log
-	date >> ${HOME}/build_interceptor.log
-	echo '$*' >> ${HOME}/build_interceptor.log
-	echo >> ${HOME}/build_interceptor.log
+	echo >> ${HOME}/build-interceptor.log
+	date >> ${HOME}/build-interceptor.log
+	echo '$*' >> ${HOME}/build-interceptor.log
+	echo >> ${HOME}/build-interceptor.log
 
 .PHONY: clean
 clean: clean-intercept.progs clean-script-interceptor clean-bak clean-interceptor.specs
@@ -80,12 +80,12 @@ clean-intercept.progs:
 clean-bak:
 	rm -f *.bak
 
-.PHONY: clean-build_interceptor
-clean-build_interceptor: clean-build_interceptor_tmp clean-preproc
+.PHONY: clean-build-interceptor
+clean-build-interceptor: clean-build-interceptor-tmp clean-preproc
 
-.PHONY: clean-build_interceptor_tmp
-clean-build_interceptor_tmp:
-	rm -rf ${HOME}/build_interceptor_tmp
+.PHONY: clean-build-interceptor-tmp
+clean-build-interceptor-tmp:
+	rm -rf ${HOME}/build-interceptor-tmp
 
 .PHONY: clean-preproc
 clean-preproc:

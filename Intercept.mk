@@ -7,8 +7,8 @@
 # this makefile as root.  Use Makefile to build intercept.progs as a
 # normal user.
 
-ifneq ($(notdir ${PWD}),build_interceptor)
-  $(error Run this makefile in the build_interceptor directory under your HOME directory)
+ifeq ($(wildcard Intercept.mk),)
+  $(error Run this makefile in the build-interceptor directory.)
 endif
 
 # Print the current interception state.
@@ -25,7 +25,7 @@ print: intercept.progs
         done
 
 # Note: I use $PWD rather than $HOME because this script will be run
-# as root and $HOME will be /root.  Just type 'cd build_interceptor'
+# as root and $HOME will be /root.  Just type 'cd build-interceptor'
 # before su-ing to root.
 #
 # If you don't run these two targets as root then some non-atomic
