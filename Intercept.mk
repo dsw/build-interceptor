@@ -1,7 +1,5 @@
 #!/usr/bin/make -f
 
-# TODO: fix bug when e.g. gcc is a symlink to gcc-3.3
-
 # This makefile will move your system gcc toolchain away and point
 # softlinks at the intereceptor scripts.  Generally, run targets in
 # this makefile as root.  Use Makefile to build intercept.progs as a
