@@ -6,7 +6,7 @@ ifeq ($(wildcard Intercept.mk),)
   $(error Run this makefile in the build-interceptor directory.)
 endif
 
-ifneq (${BI_FORCE_ROOT},1)
+ifneq (${BUILD_INTERCEPTOR_FORCE_ROOT},1)
   ifeq ($(shell whoami),root)
     $(error Do not run any targets in this makefile as root.)
   endif
