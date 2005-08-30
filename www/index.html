@@ -72,7 +72,7 @@ cat RH7.3.i-VERSION.tar.gz.* | gunzip | tar xv -f -
 </code>
 
 <ul>
-<li><a href=http://cich.cs.berkeley.edu/dsw/public_html/RH7.3.i-2004.11.19.tar.gz.aa>RH7.3.i-2004.11.19.tar.gz.aa</a> 
+<li><a href=http://cich.cs.berkeley.edu/dsw/public_html/RH7.3.i-2004.11.19.tar.gz.aa>RH7.3.i-2004.11.19.tar.gz.aa</a>
 &nbsp; md5: <code>546c269999d54ad8e3581963912a5c61</code>
 <li><a href=http://cich.cs.berkeley.edu/dsw/public_html/RH7.3.i-2004.11.19.tar.gz.ab>RH7.3.i-2004.11.19.tar.gz.ab</a>
 &nbsp; md5: <code>e9c4c8880df6576360cfcda1d4cb9833</code>
@@ -425,6 +425,17 @@ The files where gcc_all.pl puts the list of .i files that fail to
 build with gcc after being captured by the build process.
 
 </ul>
+
+  <h2>Weaknesses</h2>
+
+  <ul>
+    <li>Build-Interceptor currently gets the gcc version at run time from the
+      binary name.  If you have multiple gcc versions installed simultaneously,
+      they must be named gcc-x.y (e.g. /usr/bin/gcc-3.4) for this version
+      detecting to work.
+    </li>
+  </ul>
+  
 
 <h2>Acknowledgments</h2>
 
