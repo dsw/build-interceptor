@@ -327,8 +327,18 @@ anyway.  For example on gcc 3.4 one line has to look like this:
 
 <p>Build the intercept.progs and other support files.
 <pre>
-make
+make all setup-default-gcc.auto
 </pre>
+The above will autodetect the version of gcc that "gcc" runs.  If this does
+not work correctly, explicitly specify the version with
+<pre>
+make all setup-default-gcc-VERSION
+</pre>
+Where VERSION is the version of gcc, e.g.
+<pre>
+make all setup-default-gcc-3.4
+</pre>
+
 <p>Now check that the files you want to intercept are generated in
 intercept.progs.  You can change this file if you need to, but only
 do it while build interception is off!  Otherwise you can get into
