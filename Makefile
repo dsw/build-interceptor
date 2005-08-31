@@ -15,7 +15,9 @@ endif
 # The list of user tools that we are intercepting.  The user could
 # build this file by hand if this automated way doesn't work.
 USRTOOLS :=
-USRTOOLS += make
+# dsw: this makes it a pain to use the build-interceptor makefiles;
+# turn it on only if you need it
+#USRTOOLS += make
 USRTOOLS_GCC = gcc $(notdir $(wildcard /usr/bin/gcc-* /usr/bin/*-linux-gcc))
 USRTOOLS += $(USRTOOLS_GCC)
 USRTOOLS += g++ $(notdir $(wildcard /usr/bin/g++-*))
@@ -104,10 +106,10 @@ interceptor.specs.ALL: $(subst gcc,interceptor.specs,$(USRTOOLS_GCC:%-gcc=gcc))
 #interceptor.specs interceptor.specs-3.4 interceptor.specs-3.3 interceptor.specs-3.2 interceptor.specs-3.0
 
 # interceptor specs for a particular version
+.PRECIOUS: interceptor.specs-%
 interceptor.specs-%: interceptor.specs.in
 	./make-spec-file.pl $< $@
 
-# default interceptor specs for gcc 3.3
 interceptor.specs:
 	@echo >&2
 	@echo 'You must run "make setup-default-gcc-VERSION", e.g. "make setup-default-gcc-3.4",' >&2
