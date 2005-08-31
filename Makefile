@@ -108,8 +108,20 @@ interceptor.specs-%: interceptor.specs.in
 	./make-spec-file.pl $< $@
 
 # default interceptor specs for gcc 3.3
-interceptor.specs: interceptor.specs-3.3
-	ln -fs $< $@
+interceptor.specs:
+	@echo >&2
+	@echo 'You must run "make setup-default-gcc-VERSION", e.g. "make setup-default-gcc-3.4",' >&2
+	@echo 'or make "setup-default-gcc.auto"' >&2
+	exit 1
+
+setup-default-gcc-%:
+	@echo "--- Default gcc version is $*."
+	@test -f interceptor.specs-$* || ( echo "--- Invalid gcc version $* (can't find interceptor.specs-$*)">&2 && exit 1 )
+	ln -fs interceptor.specs-$* interceptor.specs
+
+auto_detected_default_gcc_version := $(shell (gcc -v >/dev/null) 2>&1 | perl -ne '/^gcc version (.\..)/ && print $$1')
+
+setup-default-gcc.auto: setup-default-gcc-$(auto_detected_default_gcc_version)
 
 intercept.progs: clean-intercept.progs
 	echo $(USRTOOLS_FULL) $(USRTOOLS_GCC_FULL) | xargs -n 1 > $@
