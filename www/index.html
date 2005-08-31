@@ -278,18 +278,20 @@ anyway.  For example on gcc 3.4 one line has to look like this:
 %{&lt;P} %(cpp_options_old0)
 </pre>
 
-<p>Build the intercept.progs and other support files.
+<p>Build the intercept.progs and other support files.  If you run "make all"
+without first running "make setup-default-gcc*", make will explain that you
+need to do so.
 <pre>
-make all setup-default-gcc.auto
+make setup-default-gcc.auto all
 </pre>
 The above will auto-detect the version of gcc that "gcc" runs.  If this does
 not work correctly, explicitly specify the version with
 <pre>
-make all setup-default-gcc-VERSION
+make setup-default-gcc-VERSION all
 </pre>
-Where VERSION is the version of gcc, e.g.
+where VERSION is the version of gcc, e.g.
 <pre>
-make all setup-default-gcc-3.4
+make setup-default-gcc-3.4 all
 </pre>
 
 <p>Now check that the files you want to intercept are generated in
