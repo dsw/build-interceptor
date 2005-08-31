@@ -15,7 +15,7 @@ print: intercept.progs
 	@echo "Interception is:"
 	@for F in `cat $<`; do        \
           if test -e $${F}_orig; then \
-            echo -n "on";             \
+            echo -n "on ";            \
           else                        \
             echo -n "off";            \
           fi;                         \
