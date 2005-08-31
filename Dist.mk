@@ -1,7 +1,7 @@
 # Disk.mk; see License.txt for copyright and terms of use
 
 DIR := build-interceptor
-VERSION := 2005.08.30
+VERSION := 2005.08.31
 
 .SUFFIXES:
 
