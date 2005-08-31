@@ -1,7 +1,7 @@
 # Disk.mk; see License.txt for copyright and terms of use
 
 DIR := build-interceptor
-VERSION := 2005.8.30
+VERSION := 2005.08.30
 
 .SUFFIXES:
 
@@ -12,7 +12,7 @@ default_target:; @echo "You must give an explicit target to make -f Dist.mk"
 # **** make a distribution
 .PHONY: dist
 dist: distclean
-	svn export . $(DIR)
+	svn export http://build-interceptor.tigris.org/svn/build-interceptor/trunk $(DIR)
 	mv $(DIR) $(DIR)-$(VERSION)
 	tar cvzf $(DIR)-$(VERSION).tar.gz $(DIR)-$(VERSION)
 	chmod 444 $(DIR)-$(VERSION).tar.gz
