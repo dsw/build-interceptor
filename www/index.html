@@ -156,20 +156,27 @@ think).
 
 <h3>Avoid long-range communication outside of data</h3>
 
-<p>We do not attempt out-of-band communication between the various
-sub-processes of gcc, which differs from both MOPS and CBI.  MOPS for
-example attempts to capture the preprocessing stage, analyze it, and
-then insert the results in after the linking stage.  Getting rid of
-this long-range dependency between stages greatly simplifies things.
+<p>We do not attempt complex out-of-band communication between the
+various sub-processes of gcc, which differs from both MOPS and CBI.
+MOPS for example attempts to capture the preprocessing stage, analyze
+it, and then insert the results in after the linking stage.  Getting
+rid of this long-range dependency between stages greatly simplifies
+things.
 
-<p><b>NOTE:</b> I think this may no longer be true with the new
-strategy of embedding .i files directly into ELF files.
+<p>We do by default insert the preprocessing output captured at the
+start of the compilation stage into the .o file at the end of the
+assembly stage.  This is pretty simple as the out of band data is the
+preprocessing output which has been stored in a temporary file with a
+name computed to not collide with others and located in a canonical
+place; the name of this file is in-band, embedded in the file as it is
+passed along.
 
 <h3>Avoid parsing complex command-lines</h3>
 
-<p>Similarly we do not attempt to parse the command-line arguments
-of gcc.  Again, the simplification of the process is huge; we only
-parse arguments of simple tools such as cc1 and collect2; their
+<p>Similarly we manage to almost completely avoid parsing the
+command-line arguments of gcc, though a few situations forced us to do
+it a little.  Again, the simplification of the process is huge; we
+only parse arguments of simple tools such as cc1 and collect2; their
 command-lines are much simpler as another tool uses them, not a human.
 
 <p>Something you might be tempted to do along these lines is to remove
@@ -253,6 +260,8 @@ standard error (this may have been commented out, just uncomment).
 
 <h2>Using the scripts</h2>
 
+<h3>Setup</h3>
+
 <p>One-time initial setup of build_interceptor.
 <pre>
 cd; cd build_interceptor
@@ -273,7 +282,7 @@ anyway.  For example on gcc 3.4 one line has to look like this:
 <pre>
 make all setup-default-gcc.auto
 </pre>
-The above will autodetect the version of gcc that "gcc" runs.  If this does
+The above will auto-detect the version of gcc that "gcc" runs.  If this does
 not work correctly, explicitly specify the version with
 <pre>
 make all setup-default-gcc-VERSION
@@ -294,6 +303,8 @@ cd
 mkdir ball_preproc
 ln -s ball_preproc preproc
 </pre>
+
+<h3>Interception</h3>
 
 <p>Move your system gcc to gcc_orig and link gcc to gcc_interceptor.pl.
 NOTE: it is important to be in $HOME/build_interceptor so that `pwd`
@@ -353,6 +364,8 @@ make -f Intercept.mk off
 exit # the root shell
 </pre>
 
+<h3>Extraction</h3>
+
 <p>There are two ways to find the intercepted .i files.  The first is
 that they are down in $HOME/preproc.  The second is that they are
 embedded into the ELF files.  You can get them out that way as
@@ -379,7 +392,7 @@ extract_section.pl .file.a78dd86286867621359f8629a7bad88e a.out
 
 <p>The primary assumption is that there is a binary file gcc-VERSION
 and that all other names such as "gcc" or "cc" are symbolic links (not
-hardlinks) to gcc-VERSION.  If this is not the case things will not
+hard-links) to gcc-VERSION.  If this is not the case things will not
 work.  In particular this assumption fails for Slackware.
 
 <p>Using this assumption, build-Interceptor gets the gcc version at
