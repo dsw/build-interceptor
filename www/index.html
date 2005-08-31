@@ -360,6 +360,11 @@ exit # the root shell
 <pre>
 make -f Intercept.mk
 </pre>
+<p>If you are intercepting make as well and you want to avoid running
+the intercepted make, you can do this while interception is on.
+<pre>
+make_orig -f Intercept.mk
+</pre>
 
 <p>Build your project.
 
@@ -394,14 +399,37 @@ make -f Intercept.mk off
 exit # the root shell
 </pre>
 
-<p>Run reorg on the output.  The script expects to find 1) a directory
-for each project built in $HOME/build, and 2) the .i files generated
-by interception in $HOME/preproc.  It will store the reorganized .i
-and .ld files in $HOME/ball.
+<p>There are two ways to find the intercepted .i files.  The first is
+that they are down in $HOME/preproc.  The second is that they are
+embedded into the ELF files.  You can get them out that way as
+follows.
+
 <pre>
-cd; cd build_interceptor
-./reorg_build.pl
+extract_section.pl .note.cc1_interceptor a.out
 </pre>
+
+<p>Which prints out some metadata we inserted into the ELF.
+<pre>
+(
+        . . .
+        md5:a78dd86286867621359f8629a7bad88e
+)
+</pre>
+
+<p>Use this to print out the .i file.
+<pre>
+extract_section.pl .file.a78dd86286867621359f8629a7bad88e a.out
+</pre>
+
+<h2>Weaknesses</h2>
+
+<ul>
+  <li>Build-Interceptor currently gets the gcc version at run time from the
+    binary name.  If you have multiple gcc versions installed simultaneously,
+    they must be named gcc-x.y (e.g. /usr/bin/gcc-3.4) for this version
+    detecting to work.
+  </li>
+</ul>
 
 <h3>Files</h3>
 
@@ -414,28 +442,7 @@ cc1_interceptor.pl goes.
 
 <li><code>preproc</code> Link to ball_preproc.
 
-<li><code>ball_build</code> The root of the tree where the source RPMs get built.
-
-<li><code>ball</code> The directory that results from reorganizing the captured .i
-files according to the .note.cc1_im sections left behind in the
-executables and .o files.
-
-<li><code>ball_fail_c.files</code> and <code>ball_fail_cc.files</code>
-The files where gcc_all.pl puts the list of .i files that fail to
-build with gcc after being captured by the build process.
-
 </ul>
-
-  <h2>Weaknesses</h2>
-
-  <ul>
-    <li>Build-Interceptor currently gets the gcc version at run time from the
-      binary name.  If you have multiple gcc versions installed simultaneously,
-      they must be named gcc-x.y (e.g. /usr/bin/gcc-3.4) for this version
-      detecting to work.
-    </li>
-  </ul>
-  
 
 <h2>Acknowledgments</h2>
 
