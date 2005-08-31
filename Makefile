@@ -111,10 +111,10 @@ interceptor.specs-%: interceptor.specs.in
 interceptor.specs:
 	@echo >&2
 	@echo 'You must run "make setup-default-gcc-VERSION", e.g. "make setup-default-gcc-3.4",' >&2
-	@echo 'or make "setup-default-gcc.auto"' >&2
+	@echo 'or "make setup-default-gcc.auto"' >&2
 	exit 1
 
-setup-default-gcc-%:
+setup-default-gcc-%: interceptor.specs-%
 	@echo "--- Default gcc version is $*."
 	@test -f interceptor.specs-$* || ( echo "--- Invalid gcc version $* (can't find interceptor.specs-$*)">&2 && exit 1 )
 	ln -fs interceptor.specs-$* interceptor.specs
