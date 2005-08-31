@@ -17,7 +17,8 @@ use FileHandle;
 
 my $exit_value = 0;
 
-die "Usage: $0 <section-name> [<executable> | <object> | <library>] ...\n" unless @ARGV >= 2;
+die "Usage: $0 <section-name> [<executable> | <object> | <library>] ... <filename>\n"
+  unless @ARGV >= 2;
 
 my @argv1;
 my $test_only;                  # just test for the existance of the section
