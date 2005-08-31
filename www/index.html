@@ -4,31 +4,24 @@
 </head>
 <body bgcolor=white>
 
-<h3>People</h3>
+<p><b>Summary:</b> Build Interceptor captures the .i files of any
+project while it is built from source using the gcc tool-chain.
 
 <p><b>Maintainer:</b> Daniel S. Wilkerson
 <br><b>Developers:</b> <a href="http://www.cs.berkeley.edu/~quarl/">Karl Chen</a>
-
-<p>This work was supported by professors <a
-href=http://theory.stanford.edu/~aiken/>Alex Aiken</a> and <a
-href=http://www.cs.berkeley.edu/~daw/>David Wagner</a> and was done at
-UC Berkeley.
-
-<h3>Build Interceptor</h3>
-
-<p><b>Summary:</b> captures the .i files of any project while
-it is built from source using the gcc tool-chain.
 
 <p>Anyone who has tried this on a large scale will find out that it is
 non-trivial to build a project from source and obtain the .i files
 generated during the build process.  I give step-by-step instructions
 on how to use the provided scripts to do this without *any*
 modification to the build process of the project you are trying to
-capture.
+capture.  These scripts were used to capture the build process of
+92.5% of the projects in the Red Hat Linux 7.3 distribution.
 
-<p>These scripts were used to capture the build process of 92.5% of
-the projects in the Red Hat Linux 7.3 distribution, resulting in the
-RH7.3.i dataset below.
+<p>This work was supported by professors <a
+href=http://theory.stanford.edu/~aiken/>Alex Aiken</a> and <a
+href=http://www.cs.berkeley.edu/~daw/>David Wagner</a> and was done at
+UC Berkeley.
 
 <ul>
 <li><a
@@ -40,46 +33,6 @@ a4299ddab5ad0e3c7aecc53a5e750101
 this release, but I haven't released another version yet as we are
 still testing it.  <b>Feel free to just get the current Subversion
 repository version as a guest user.</b>
-</ul>
-
-<h3>RH7.3.i</h3>
-
-<p><b>Summary:</b> is the .i files generated while Red Hat Linux 7.3
-was built from source, as recorded by Build Interceptor.  I also
-include the source RPMs for Red Hat Linux 7.3; the ISOs are <a
-href=ftp://mirrors.hpcf.upr.edu/pub/Mirrors/redhat/ftp.redhat.com/linux/7.3/en/iso/i386/>here</a>.
-
-<p><font color=red><b>NOTE: I am considering removing RH7.3.i from the
-web.  If you think this is a bad idea, let me know.</b></font> Build
-interceptor is now hosted on tigris.org and they are not willing to
-host such large files as this on their site.  If you are actually
-using RH7.3.i, please let me know.
-
-<p><b>NOTE:</b> In my naivete, it looks like I omitted capturing the
-.i files for dynamically linked libraries; that is, the .i files
-published for an executable will not include the .i files for the
-dynamically linked libraries that it would be linked with at run-time.
-I will confirm this and post the definitive answer.  This will be
-fixed in future versions of Build Interceptor.
-
-<p>The tarball is 3.6 Gig, so I used 'split' to break it apart into
-four chunks each less than 1 Gig.  There is no need to ever
-materialize it as one file; just download each file and do this.
-
-<p>
-<code>
-cat RH7.3.i-VERSION.tar.gz.* | gunzip | tar xv -f -
-</code>
-
-<ul>
-<li><a href=http://cich.cs.berkeley.edu/dsw/public_html/RH7.3.i-2004.11.19.tar.gz.aa>RH7.3.i-2004.11.19.tar.gz.aa</a>
-&nbsp; md5: <code>546c269999d54ad8e3581963912a5c61</code>
-<li><a href=http://cich.cs.berkeley.edu/dsw/public_html/RH7.3.i-2004.11.19.tar.gz.ab>RH7.3.i-2004.11.19.tar.gz.ab</a>
-&nbsp; md5: <code>e9c4c8880df6576360cfcda1d4cb9833</code>
-<li><a href=http://cich.cs.berkeley.edu/dsw/public_html/RH7.3.i-2004.11.19.tar.gz.ac>RH7.3.i-2004.11.19.tar.gz.ac</a>
-&nbsp; md5: <code>f8448f06c01c5a3df62a7bd5b7cade89</code>
-<li><a href=http://cich.cs.berkeley.edu/dsw/public_html/RH7.3.i-2004.11.19.tar.gz.ad>RH7.3.i-2004.11.19.tar.gz.ad</a>
-&nbsp; md5: <code>b83d101805a5a6b5570902ba7f708b5a</code>
 </ul>
 
 <h2>Introduction</h2>
@@ -431,15 +384,23 @@ extract_section.pl .note.cc1_interceptor a.out
 extract_section.pl .file.a78dd86286867621359f8629a7bad88e a.out
 </pre>
 
-<h3>Weaknesses</h3>
+<h3>Weaknesses / Bugs</h3>
 
-<ul>
-  <li>Build-Interceptor currently gets the gcc version at run time from the
-    binary name.  If you have multiple gcc versions installed simultaneously,
-    they must be named gcc-x.y (e.g. /usr/bin/gcc-3.4) for this version
-    detecting to work.
-  </li>
-</ul>
+<p>The primary assumption is that there is a binary file gcc-VERSION
+and that all other names such as "gcc" or "cc" are symbolic links (not
+hardlinks) to gcc-VERSION.  If this is not the case things will not
+work.  In particular this assumption fails for Slackware.
+
+<p>Using this assumption, build-Interceptor gets the gcc version at
+run time from the binary name.  If you have multiple gcc versions
+installed simultaneously, they must be named gcc-x.y
+(e.g. /usr/bin/gcc-3.4) for this version detecting to work.
+
+<p>Build-interceptor changes ongoingly to deal with various usage
+scenarios.  There are some old scripts lying around that I don't to
+get rid of but that are unlikely to work out of the box.  If I don't
+explicitly mention that you should use a script, then it is not
+guaranteed to work.
 
 <h3>Files</h3>
 
