@@ -56,7 +56,7 @@ my $dumpbase = get_dumpbase();     # this seems to be the original source file
 my $outfile = get_output_filename() || deduce_output_filename($infile);
 die unless defined $outfile;
 
-my $run_args = join(':', $prog, $argv);
+my $run_args = join(':', $prog, @$argv);
 run_prog();                                       # delegate to the real thing
 check_output_file($outfile);
 
@@ -148,7 +148,7 @@ sub get_dumpbase {
             push(@$dumpbase, $argv->[$i+1]);
         }
     }
-    return join(":",$dumpbase);
+    return join(":",@$dumpbase);
 }
 
 sub deduce_output_filename {
