@@ -17,6 +17,19 @@ on how to use the provided scripts to do this without *any*
 modification to the build process of the project you are trying to
 capture.
 
+<p><font color=red size=+1> WARNING: During install build-interceptor
+searches around for programs on your system that resemble a compiler
+and its tools and messes with them <underline>as root</underline>.
+This is done because it is the only way to be absolutely sure that all
+calls to the compiler, linker etc. are intercepted.  Although we have
+taken all the precautions we could think of and although you can
+review the list of programs that will be intercepted before committing
+to moving them, this is still a rather dangerous thing to do.  Thus we
+recommend you install a separate operating system image solely for the
+purpose of building packages with build-interceptor and for no other
+use.
+</font>
+
 <p>This work was supported by professors <a
 href=http://theory.stanford.edu/~aiken/>Alex Aiken</a> and <a
 href=http://www.cs.berkeley.edu/~daw/>David Wagner</a> and was done at
