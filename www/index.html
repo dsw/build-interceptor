@@ -4,6 +4,8 @@
 </head>
 <body bgcolor=white>
 
+<h1>Build Interceptor</h1>
+
 <p><b>Summary:</b> Build Interceptor captures the .i files of any
 project while it is built from source using the gcc tool-chain.
 
@@ -18,17 +20,24 @@ modification to the build process of the project you are trying to
 capture.
 
 <p><font color=red size=+1> WARNING: During install build-interceptor
-searches around for programs on your system that resemble a compiler
-and its tools and messes with them <underline>as root</underline>.
-This is done because it is the only way to be absolutely sure that all
-calls to the compiler, linker etc. are intercepted.  Although we have
-taken all the precautions we could think of and although you can
-review the list of programs that will be intercepted before committing
-to moving them, this is still a rather dangerous thing to do.  Thus we
-recommend you install a separate operating system image solely for the
-purpose of building packages with build-interceptor and for no other
-use.
-</font>
+searches for programs on your system that resemble a compiler
+tool-chain and messes with them.  Unless you use a chroot bubble or a
+virtual machine, it is necessary to do this <u>as root</u>.</font> I
+must recommend that you install a separate operating system image
+solely for the purpose of building packages with build-interceptor.
+That said, my install/de-install makefile is pretty smart at
+preventing you from shooting yourself in the foot (it saved me several
+times): you can review the files to be moved before committing to do
+so and it won't allow nonsensical operations such as
+double-installation.  Therefore I am willing to use it on my own
+development box and I have never messed it up this way.
+
+<p>We move the original installed tool-chain like this because it is
+the only way to be absolutely sure that all calls to the compiler,
+linker etc. are intercepted; all other tricks with environment
+variables etc. can be subverted by the build process, whereas with our
+technique the build process would have to use a different compiler or
+actively search for where we hid the real one.
 
 <p>This work was supported by professors <a
 href=http://theory.stanford.edu/~aiken/>Alex Aiken</a> and <a
