@@ -48,17 +48,18 @@ operating in a Byzantine Compilation Regime</h3>
 
 <p><font color=red> <b>WARNING: During its install process,
 build-interceptor searches for programs on your system that resemble a
-compiler tool-chain and messes with them.  Unless you operate within a
-chroot bubble or a virtual machine, it is necessary to do this install
-(but not the interception) <u>as root</u>.</b> </font> I must
-recommend that you install a separate operating system image solely
-for the purpose of building packages with build-interceptor.  That
-said, my install/de-install makefile is pretty smart at preventing you
-from shooting yourself in the foot (it saved me several times): you
-can review the files to be moved before committing to do so and it
-won't allow nonsensical operations such as double-installation.
-Therefore I am willing to use it on my own development box and I have
-never messed it up this way.
+compiler tool-chain and messes with them.  It is therefore necessary
+to do this install (but not the interception) <u>as root</u>.</b>
+</font> I must recommend that you install a separate operating system
+image (perhaps within a chroot bubble or a virtual machine) solely for
+the purpose of building packages with build-interceptor.
+
+<p>That said, my install/de-install makefile is pretty smart at
+preventing you from shooting yourself in the foot (it saved me several
+times): you can review the files to be moved before committing to do
+so and it won't allow nonsensical operations such as
+double-installation.  Therefore I am willing to use it on my own
+development box and I have never messed it up this way.
 
 <p>We move the original installed tool-chain like this because it is
 the only way to be absolutely sure that all calls to the compiler,
