@@ -9,7 +9,7 @@
 <p><b>Summary:</b> Build Interceptor captures the .i files of any
 project while it is built from source using the gcc tool-chain.
 
-<p><b>Maintainer:</b> Daniel S. Wilkerson
+<p><b>Maintainer:</b> <a href="http://www.cs.berkeley.edu/~dsw/">Daniel S. Wilkerson</a>
 <br><b>Developers:</b> <a href="http://www.cs.berkeley.edu/~quarl/">Karl Chen</a>
 
 <p>Anyone who has tried this on a large scale will find out that it is
@@ -18,26 +18,6 @@ generated during the build process.  I give step-by-step instructions
 on how to use the provided scripts to do this without *any*
 modification to the build process of the project you are trying to
 capture.
-
-<p><font color=red size=+1> WARNING: During install build-interceptor
-searches for programs on your system that resemble a compiler
-tool-chain and messes with them.  Unless you use a chroot bubble or a
-virtual machine, it is necessary to do this <u>as root</u>.</font> I
-must recommend that you install a separate operating system image
-solely for the purpose of building packages with build-interceptor.
-That said, my install/de-install makefile is pretty smart at
-preventing you from shooting yourself in the foot (it saved me several
-times): you can review the files to be moved before committing to do
-so and it won't allow nonsensical operations such as
-double-installation.  Therefore I am willing to use it on my own
-development box and I have never messed it up this way.
-
-<p>We move the original installed tool-chain like this because it is
-the only way to be absolutely sure that all calls to the compiler,
-linker etc. are intercepted; all other tricks with environment
-variables etc. can be subverted by the build process, whereas with our
-technique the build process would have to use a different compiler or
-actively search for where we hid the real one.
 
 <p>This work was supported by professors <a
 href=http://theory.stanford.edu/~aiken/>Alex Aiken</a> and <a
@@ -62,6 +42,31 @@ a4299ddab5ad0e3c7aecc53a5e750101
 </code>
 
 </ul>
+
+<h3>A warning on the toxicity of the techniques necessary while
+operating in a Byzantine Compilation Regime</h3>
+
+<p><font color=red size=+1> WARNING: During its install process,
+build-interceptor searches for programs on your system that resemble a
+compiler tool-chain and messes with them.  Unless you operate within a
+chroot bubble or a virtual machine, it is necessary to do this install
+(but not the interception) <u>as root</u>.</font> I must recommend
+that you install a separate operating system image solely for the
+purpose of building packages with build-interceptor.  That said, my
+install/de-install makefile is pretty smart at preventing you from
+shooting yourself in the foot (it saved me several times): you can
+review the files to be moved before committing to do so and it won't
+allow nonsensical operations such as double-installation.  Therefore I
+am willing to use it on my own development box and I have never messed
+it up this way.
+
+<p>We move the original installed tool-chain like this because it is
+the only way to be absolutely sure that all calls to the compiler,
+linker etc. are intercepted; all other tricks with environment
+variables etc. can be subverted by the build process, whereas with our
+technique in order to avoid interception the build process would have
+to use a different compiler or actively search for where we hid the
+real one.
 
 <h2>Introduction</h2>
 
