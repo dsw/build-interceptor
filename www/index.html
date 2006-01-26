@@ -298,32 +298,34 @@ standard error (this may have been commented out, just uncomment).
 
 <h3>Setup</h3>
 
-<p>This is the one-time initial setup of build_interceptor.
+<p>This is the one-time initial setup of build_interceptor.  Note that
+as is traditional, commands executed as a normal user are preceded by
+a '$' and those executed as root are preceded by a '#'.
 
 <ul>
 
 <li>Make a place to put the .i files in your $HOME directory.
 <pre>
-    cd
-    mkdir ball_preproc
-    ln -s ball_preproc preproc
+    $ cd
+    $ mkdir ball_preproc
+    $ ln -s ball_preproc preproc
 </pre>
 
 <li>Build the interceptor.specs file according to your auto-detected
 gcc version.
 <pre>
-    cd build_interceptor
-    make setup-default-gcc.auto
+    $ cd build_interceptor
+    $ make setup-default-gcc.auto
 </pre>
 
 <p>The above line will auto-detect the version of gcc that "gcc" runs.
 If this does not work correctly, explicitly specify the version with
 <pre>
-    make setup-default-gcc-VERSION
+    $ make setup-default-gcc-VERSION
 </pre>
 where VERSION is the version of gcc, e.g.
 <pre>
-    make setup-default-gcc-3.4
+    $ make setup-default-gcc-3.4
 </pre>
 
 <p>You might need to hack on it anyway after it is built.  For example
@@ -342,7 +344,7 @@ do so.
 
 <li>Build the intercept.progs and other support files.  
 <pre>
-    make
+    $ make
 </pre>
 
 <p>Now check that the files you want to intercept are generated in
@@ -358,59 +360,61 @@ inconsistent state.
 
 <li>Move your system gcc to gcc_orig and link gcc to gcc_interceptor.pl.
 <pre>
-    cd; cd build_interceptor
-    su
-    make -f Intercept.mk on
+    $ cd; cd build_interceptor
+    $ su
+    # make -f Intercept.mk on
 </pre>
 
 <p>You could exit the root shell now, but I find it easier to instead
 just leave one shell open as root for turning interception on and
 off and do user things in another shell.
 <pre>
-    exit # leave the root shell
+    # exit (leave the root shell)
 </pre>
 
-<p>At any time you can check the interception state.
+<p>At any time you can check the interception state; this works as
+root or non-root, however other targets in Intercept.mk that mutate
+the system state will check if you are root before allowing them.
 <pre>
-    make -f Intercept.mk
+    $ make -f Intercept.mk
 </pre>
 <p>If you are intercepting make as well and you want to avoid running
 the intercepted make, you can do this while interception is on.
 <pre>
-    make_orig -f Intercept.mk
+    $ make_orig -f Intercept.mk
 </pre>
 
 <li>Build your project.
 
 <p>If you mess up and need to start over again, just do this.
 <pre>
-    rm -rf preproc/*
+    $ rm -rf preproc/*
 </pre>
 <p>If you want to build two different projects and capture both, just
 move the link.
 <pre>
-    mkdir ball_preproc2
-    ln -s ball_preproc2 preproc
+    $ mkdir ball_preproc2
+    $ ln -s ball_preproc2 preproc
 </pre>
 
 <p><u>Before compiling anything else with gcc</u>:
 <p>1) Make the data read-only.
 <pre>
-    cd
-    chmod -R a-w ball_preproc
+    $ cd
+    $ chmod -R a-w ball_preproc
 </pre>
 <p>2) Point the preprocessor capture at another file.
 <pre>
-    mkdir preproc_junk
-    ln -s preproc_junk preproc
+    $ mkdir preproc_junk
+    $ ln -s preproc_junk preproc
 </pre>
 
 <li>When you are done, put gcc back where it was.
 <pre>
-    cd; cd build_interceptor
-    su
-    make -f Intercept.mk off
-    exit # leave the root shell
+    $ cd; cd build_interceptor
+    $ su
+    # make -f Intercept.mk off
+    # exit (leave the root shell)
 </pre>
 
 </ul>
