@@ -298,107 +298,122 @@ standard error (this may have been commented out, just uncomment).
 
 <h3>Setup</h3>
 
-<p>One-time initial setup of build_interceptor.
+<p>This is the one-time initial setup of build_interceptor.
+
+<ul>
+
+<li>Make a place to put the .i files in your $HOME directory.
 <pre>
-cd; cd build_interceptor
+    cd
+    mkdir ball_preproc
+    ln -s ball_preproc preproc
 </pre>
 
-<p>The makefile will build interceptor.specs for you according to your
-auto-detected gcc version, however you might need to hack on it
-anyway.  For example on gcc 3.4 one line has to look like this:
+<li>Build the interceptor.specs file according to your auto-detected
+gcc version.
 <pre>
-%&lt;P %(cpp_options_old0)
-</pre>
-<p>whereas on earlier versions of gcc, it has to look like this:
-<pre>
-%{&lt;P} %(cpp_options_old0)
+    cd build_interceptor
+    make setup-default-gcc.auto
 </pre>
 
-<p>Build the intercept.progs and other support files.  If you run "make all"
-without first running "make setup-default-gcc*", make will explain that you
-need to do so.
+<p>The above line will auto-detect the version of gcc that "gcc" runs.
+If this does not work correctly, explicitly specify the version with
 <pre>
-make setup-default-gcc.auto all
-</pre>
-The above will auto-detect the version of gcc that "gcc" runs.  If this does
-not work correctly, explicitly specify the version with
-<pre>
-make setup-default-gcc-VERSION all
+    make setup-default-gcc-VERSION
 </pre>
 where VERSION is the version of gcc, e.g.
 <pre>
-make setup-default-gcc-3.4 all
+    make setup-default-gcc-3.4
+</pre>
+
+<p>You might need to hack on it anyway after it is built.  For example
+on gcc 3.4 one line has to look like this:
+<pre>
+    %&lt;P %(cpp_options_old0)
+</pre>
+<p>whereas on earlier versions of gcc, it has to look like this:
+<pre>
+    %{&lt;P} %(cpp_options_old0)
+</pre>
+
+<p>If you run "make all" (below) without first running one of the
+"make setup-default-gcc*" targets, make will explain that you need to
+do so.
+
+<li>Build the intercept.progs and other support files.  
+<pre>
+    make
 </pre>
 
 <p>Now check that the files you want to intercept are generated in
-intercept.progs.  You can change this file if you need to, but only
-do it while build interception is off!  Otherwise you can get into
-an inconsistent state.
+intercept.progs.  You can change this file if you need to, but only do
+it while build interception is off!  Otherwise you can get into an
+inconsistent state.
 
-<p>Make a place to put the .i files.
-<pre>
-cd
-mkdir ball_preproc
-ln -s ball_preproc preproc
-</pre>
+</ul>
 
 <h3>Interception</h3>
 
-<p>Move your system gcc to gcc_orig and link gcc to gcc_interceptor.pl.
+<ul>
+
+<li>Move your system gcc to gcc_orig and link gcc to gcc_interceptor.pl.
 <pre>
-cd; cd build_interceptor
-su
-make -f Intercept.mk on
+    cd; cd build_interceptor
+    su
+    make -f Intercept.mk on
 </pre>
+
 <p>You could exit the root shell now, but I find it easier to instead
 just leave one shell open as root for turning interception on and
 off and do user things in another shell.
 <pre>
-exit # the root shell
+    exit # leave the root shell
 </pre>
 
 <p>At any time you can check the interception state.
 <pre>
-make -f Intercept.mk
+    make -f Intercept.mk
 </pre>
 <p>If you are intercepting make as well and you want to avoid running
 the intercepted make, you can do this while interception is on.
 <pre>
-make_orig -f Intercept.mk
+    make_orig -f Intercept.mk
 </pre>
 
-<p>Build your project.
+<li>Build your project.
 
 <p>If you mess up and need to start over again, just do this.
 <pre>
-rm -rf preproc/*
+    rm -rf preproc/*
 </pre>
 <p>If you want to build two different projects and capture both, just
 move the link.
 <pre>
-mkdir ball_preproc2
-ln -s ball_preproc2 preproc
+    mkdir ball_preproc2
+    ln -s ball_preproc2 preproc
 </pre>
 
-<p>Before compiling anything else with gcc:
+<p><u>Before compiling anything else with gcc</u>:
 <p>1) Make the data read-only.
 <pre>
-cd
-chmod -R a-w ball_preproc
+    cd
+    chmod -R a-w ball_preproc
 </pre>
 <p>2) Point the preprocessor capture at another file.
 <pre>
-mkdir preproc_junk
-ln -s preproc_junk preproc
+    mkdir preproc_junk
+    ln -s preproc_junk preproc
 </pre>
 
-<p>When you are done, put gcc back where it was.
+<li>When you are done, put gcc back where it was.
 <pre>
-cd; cd build_interceptor
-su
-make -f Intercept.mk off
-exit # the root shell
+    cd; cd build_interceptor
+    su
+    make -f Intercept.mk off
+    exit # the root shell
 </pre>
+
+</ul>
 
 <h3>Extraction</h3>
 
@@ -407,22 +422,53 @@ that they are down in $HOME/preproc.  The second is that they are
 embedded into the ELF files.  You can get them out that way as
 follows.
 
+<ul>
+
+<li>Print out the metadata we inserted into the ELF.
 <pre>
-extract_section.pl .note.cc1_interceptor a.out
+    $ extract_section.pl .note.cc1_interceptor a.out
+    (
+            . . .
+            md5:a78dd86286867621359f8629a7bad88e
+    )
 </pre>
 
-<p>Which prints out some metadata we inserted into the ELF.
+<li>Use this output to construct the name of the ELF section containing
+the .i file and print that out.
 <pre>
-(
-        . . .
-        md5:a78dd86286867621359f8629a7bad88e
-)
+    $ extract_section.pl .file.a78dd86286867621359f8629a7bad88e a.out
+    [... the .i file contents here...]
 </pre>
 
-<p>Use this to print out the .i file.
-<pre>
-extract_section.pl .file.a78dd86286867621359f8629a7bad88e a.out
-</pre>
+</ul>
+
+<h3>Files</h3>
+
+<p>Build-interceptor needs a place to put the pre-processed output,
+the .i files.  The name of the directory where it puts them is
+hard-coded into the scripts:
+
+<ul>
+
+<li><code>$HOME/preproc</code>: where the scripts put the .i files.
+
+</ul>
+
+<p>However it is not recommended to use the tool by simply making a
+preproc directory since after interception is over, you want to move
+that directory so that other compilations on your system do not
+inadvertently put more .i files in there.  Thus in the above
+instructions I use a layer of indirection as follows:
+
+<ul>
+
+<li><code>$HOME/ball_preproc</code>: An actual directory for holding the .i
+files.
+
+<li><code>$HOME/preproc</code>: a softlink to ball_preproc that should
+be moved as soon as interception is done.
+
+</ul>
 
 <h3>Weaknesses / Bugs</h3>
 
@@ -441,19 +487,6 @@ scenarios.  There are some old scripts lying around that I don't to
 get rid of but that are unlikely to work out of the box.  If I don't
 explicitly mention that you should use a script, then it is not
 guaranteed to work.
-
-<h3>Files</h3>
-
-<p>To simplify things, the scripts make some assumptions about what files
-and directories are where.  I list them here; all are assumed to be
-under $HOME.<ul>
-
-<li><code>ball_preproc</code> Where the captured preprocessing output of
-cc1_interceptor.pl goes.
-
-<li><code>preproc</code> Link to ball_preproc.
-
-</ul>
 
 <h2>Acknowledgments</h2>
 
