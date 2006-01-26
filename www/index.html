@@ -307,8 +307,8 @@ a '$' and those executed as root are preceded by a '#'.
 <li>Make a place to put the .i files in your $HOME directory.
 <pre>
     $ cd
-    $ mkdir ball_preproc
-    $ ln -s ball_preproc preproc
+    $ mkdir preproc-foo1
+    $ ln -s preproc-foo1 preproc
 </pre>
 
 <li>Build the interceptor.specs file according to your auto-detected
@@ -393,15 +393,15 @@ the intercepted make, you can do this while interception is on.
 <p>If you want to build two different projects and capture both, just
 move the link.
 <pre>
-    $ mkdir ball_preproc2
-    $ ln -s ball_preproc2 preproc
+    $ mkdir preproc-foo2
+    $ ln -s preproc-foo2 preproc
 </pre>
 
 <p><u>Before compiling anything else with gcc</u>:
 <p>1) Make the data read-only.
 <pre>
     $ cd
-    $ chmod -R a-w ball_preproc
+    $ chmod -R a-w preproc-foo1
 </pre>
 <p>2) Point the preprocessor capture at another file.
 <pre>
@@ -466,10 +466,10 @@ instructions I use a layer of indirection as follows:
 
 <ul>
 
-<li><code>$HOME/ball_preproc</code>: An actual directory for holding the .i
+<li><code>$HOME/preproc-foo1</code>: An actual directory for holding the .i
 files.
 
-<li><code>$HOME/preproc</code>: a softlink to ball_preproc that should
+<li><code>$HOME/preproc</code>: a softlink to preproc-foo1 that should
 be moved as soon as interception is done.
 
 </ul>
