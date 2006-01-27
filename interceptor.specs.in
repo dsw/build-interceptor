@@ -2,6 +2,7 @@
 
 # This spec file modifies the build process for build interception.
 # See http://gcc.gnu.org/onlinedocs/gcc-3.4.0/gcc/Spec-Files.html#Spec%20Files
+# http://gcc.gnu.org/onlinedocs/gcc-4.0.2/gcc/Spec-Files.html#Spec-Files
 
 # This file should be processed by make-spec-file.pl to create
 # interceptor.specs-3.4, interceptor.specs-3.3, etc.
@@ -12,6 +13,7 @@
 %rename cpp_options cpp_options_old0
 
 *cpp_options:
+!!!gcc-4.0!!! %<P %(cpp_options_old0)
 !!!gcc-3.4!!! %<P %(cpp_options_old0)
 !!!gcc-3.3!!! %{<P} %(cpp_options_old0)
 !!!gcc-3.2!!! %{<P} %(cpp_options_old0)
