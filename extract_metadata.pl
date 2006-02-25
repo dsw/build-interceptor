@@ -80,7 +80,8 @@ sub read_infile_notes {
           defined $md5;
       $md5sum2orig_filename{$md5} = $orig_filename;
     }
-  }
+  };
+  warn ($@) if ($@);
 }
 
 # ****
