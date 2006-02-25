@@ -20,8 +20,8 @@ my %md5sum2orig_filename;
 my %md5sum2friendly_name;
 my %friendly_name2md5sum;
 
-my $extract = "${FindBin::RealBin}/extract_section.pl";
-die "Can't find $extract" unless -f $extract;
+my $extract_section = "${FindBin::RealBin}/extract_section.pl";
+die "Can't find $extract_section" unless -f $extract_section;
 
 sub read_command_line {
   while(@ARGV) {
@@ -39,18 +39,18 @@ sub read_command_line {
   die "provide an outdir using the flag -outdir" unless $outdir;
 }
 
-sub read_infile_notes {
-  my $extractCmd = "$extract .note.cc1_interceptor $infile 2>/dev/null";
-#    print "$extractCmd\n";
-  my $exOut = `$extractCmd`;
-  die "no interceptor notes in $infile" if $exOut eq '';
+sub read_cc1_notes {
+  my $extract_sectionCmd = "$extract_section .note.cc1_interceptor $infile 2>/dev/null";
+#    print "$extract_sectionCmd\n";
+  my $exOut = `$extract_sectionCmd`;
+  die "no cc1_interceptor notes in $infile" if $exOut eq '';
   eval {
     # for each .i file mentioned:
     my @components = ($exOut =~ m/\s* ( ^ \( $ .*? ^ \) $ ) \s*/gmsx);
     for my $comp (@components) {
-#        warn "---- comp\n";
-#        warn "$comp\n";
-#        warn "\n----\n";
+#        print "---- comp\n";
+#        print "$comp\n";
+#        print "\n----\n";
       my ($pwd, $dollar_zero, $raw_args, $run_args, $orig_filename,
           $infile, $dumpbase, $tmpfile, $ifile, $package0, $md5) =
         $comp =~
@@ -68,7 +68,7 @@ sub read_infile_notes {
         \n ^\t package:       (.*?) $
         \n ^\t md5:           (.*?) $
         |xsm;
-      die "bad ELF file: $extractCmd" unless
+      die "bad ELF file: $extract_sectionCmd" unless
           defined $pwd           &&
           defined $dollar_zero   &&
           defined $raw_args      &&
@@ -80,9 +80,12 @@ sub read_infile_notes {
           defined $ifile         &&
           defined $package0      &&
           defined $md5;
+
+      # **** get what we want out of it
       $md5sum2orig_filename{$md5} = $orig_filename;
     }
-  }
+  };
+  print ($@) if ($@);
 }
 
 sub try_one_prefix {
@@ -95,7 +98,7 @@ sub try_one_prefix {
         my $stuff = $1;
         die unless length($stuff) == $len;
         my $delim = $len ? '_' : ''; # don't use a delimiter if using none of the md5
-        $orig_filename =~ m|^.*?([^/]*)(\.ii?)$| or die "can't match name '$orig_filename'";
+        $orig_filename =~ m|^.*?([^/]*)(\.[^\.]+)$| or die "can't match name '$orig_filename'";
         my ($stem, $suffix) = ($1, $2);
         my $friendly_name = "${stem}${delim}${stuff}${suffix}";
         if ($friendly_name2md5sum{$friendly_name}) {
@@ -133,16 +136,16 @@ sub extract_preproc_sections {
     die unless defined $friendly_name;
     my $outfile = "$outdir/$friendly_name";
     die "something's wrong: file already exists: $outfile" if -e $outfile;
-    my $extractCmd = "$extract .file.$md5 $infile 2>/dev/null > $outfile";
-    print "$extractCmd\n";
-    die "command failed" if system($extractCmd);
+    my $extract_sectionCmd = "$extract_section .file.$md5 $infile 2>/dev/null > $outfile";
+#    print "$extract_sectionCmd\n";
+    die "command failed" if system($extract_sectionCmd);
   }
 }
 
 # ****
 
 read_command_line();
-read_infile_notes();
+read_cc1_notes();
 die "directory exists: $outdir" if -e $outdir;
 mkdir $outdir or die "can't make directory $outdir";
 compute_friendly_names();
