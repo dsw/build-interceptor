@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 
-# $Id: make-spec-file.pl,v 1.2 2005/04/25 00:18:53 dsw Exp $
+# $Id$
 
 # syntax: make-spec-file.pl interceptor.specs.in interceptor.specs-3.4
 
@@ -17,8 +17,19 @@ my ($ver) = ($output =~ m/-([0-9][.][0-9.]+)$/) or die;
 
 print $out "# specs for gcc $ver\n";
 
+my $found = 0;
+
 for (<$in>) {
-    if (!/^!/ || s/^!!!gcc-$ver!!! //) {
-        print $out $_;
+    if (/^!/) {
+        if (s/^!!!gcc-$ver!!! //) {
+            ++$found;
+        } else {
+            next;
+        }
     }
+    print $out $_;
+}
+
+if (!$found) {
+    die "$0: no data for gcc version $ver\n";
 }
