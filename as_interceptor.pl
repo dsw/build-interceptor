@@ -43,6 +43,21 @@ sub file_contains_java_asm {
     return ($l1 =~ /^\t.file\s+".+?[.]java"/);
 }
 
+sub file_contains_gcj_resource {
+    # Returns 1 iff we think this .s file was the output of gcj --resource.
+    # These are simply data files (such as a .gif) embedded in a .o with a
+    # little bit of stub code to access it.
+    my ($filename) = @_;
+    my $fh = new FileHandle($filename) or die;
+    local $_;
+    while (<$fh>) {
+        if (/^\.globl _Jv_RegisterResource/) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 my $infile = find_input_filename();
 
 if ($infile && -f $infile && file_is_empty_p($infile)) {
@@ -75,6 +90,17 @@ if ($infile && -f $infile && file_contains_java_asm($infile)) {
 
     my $metadata = <<'END'         # do not interpolate
         .section        .note.java_interceptor,"",@progbits
+        .ascii "dummy\n"
+END
+;
+    append_to_file($infile, $metadata);
+}
+
+if ($infile && -f $infile && file_contains_gcj_resource($infile)) {
+    $lang = 'java_resource';
+
+    my $metadata = <<'END'         # do not interpolate
+        .section        .note.java_resource_interceptor,"",@progbits
         .ascii "dummy\n"
 END
 ;
@@ -124,6 +150,12 @@ if ($? || !$cc1_note) {
     my $java_note = `$extract_pl .note.java_interceptor $outfile 2>/dev/null`;
     if ($java_note && !$?) {
         # Ignore java files for now
+        exit 0;
+    }
+
+    my $java_resource_note = `$extract_pl .note.java_resource_interceptor $outfile 2>/dev/null`;
+    if ($java_resource_note && !$?) {
+        # Ignore java resource files
         exit 0;
     }
 
