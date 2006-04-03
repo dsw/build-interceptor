@@ -178,9 +178,9 @@ sub file_is_empty_p {
         if (/^\s*#/) { next; }
         if (/^\s*$/) { next; }
         # The line ".text" (with nothing else after it) should still let the
-        # file count as an "empty" file (allegro4.1 #ifdefs out everything
-        # except the ".text").
-        # if (/^[.]text$/) { next; }
+        # file count as an "empty" file (.s files in allegro4.1 #ifdef out
+        # everything except the ".text").
+        if (/^[.]text$/) { next; }
         return 0;
     }
     return 1;
