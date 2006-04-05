@@ -34,7 +34,7 @@ if ($version >= 3.0) {
 my $specfile = get_spec_file($version);
 
 if (grep {$_ eq '-v'} @$raw_args) {
-    print "Build-Interceptor enabled; gcc appears to be version $version, so using $specfile\n";
+    print "Build-Interceptor enabled; gcc appears to be version $version, so using specfile $specfile\n";
 }
 
 if (!-f $specfile) {
