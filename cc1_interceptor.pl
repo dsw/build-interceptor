@@ -184,6 +184,6 @@ sub copy_file {
     my ($input, $tmpfile) = @_;
     ensure_dir_of_file_exists($tmpfile);
     die "$0: tmpfile '$tmpfile' already exists" if -e $tmpfile;
-    copy($input, $tmpfile) || die "$0: $!";
+    copy($input, $tmpfile) || die "$0: couldn't copy $input $tmpfile: $!";
     die "$0: couldn't copy to tmpfile '$tmpfile'" unless -e $tmpfile;
 }
