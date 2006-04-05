@@ -64,7 +64,7 @@ stamp-log/%:
 	echo >> ${HOME}/build-interceptor.log
 
 .PHONY: clean
-clean: clean-intercept.progs clean-script-interceptor clean-bak clean-interceptor.specs
+clean: clean-intercept.progs clean-script-interceptor clean-bak
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
@@ -96,34 +96,6 @@ clean-preproc:
 .PHONY: clean-script-interceptor
 clean-script-interceptor:
 	rm -rf make_interceptor
-
-.PHONY: clean-interceptor.specs
-clean-interceptor.specs:
-	rm -f interceptor.specs-* interceptor.specs
-
-# make interceptor specs for all gcc versions we need
-interceptor.specs.ALL: $(subst gcc,interceptor.specs,$(USRTOOLS_GCC:%-gcc=gcc))
-#interceptor.specs interceptor.specs-3.4 interceptor.specs-3.3 interceptor.specs-3.2 interceptor.specs-3.0
-
-# interceptor specs for a particular version
-.PRECIOUS: interceptor.specs-%
-interceptor.specs-%: interceptor.specs.in
-	./make-spec-file.pl $< $@ || (rm -f $@; exit 1)
-
-interceptor.specs:
-	@echo >&2
-	@echo 'You must run "make setup-default-gcc-VERSION", e.g. "make setup-default-gcc-3.4",' >&2
-	@echo 'or "make setup-default-gcc.auto"' >&2
-	exit 1
-
-setup-default-gcc-%: interceptor.specs-%
-	@echo "--- Default gcc version is $*."
-	@test -f interceptor.specs-$* || ( echo "--- Invalid gcc version $* (can't find interceptor.specs-$*)">&2 && exit 1 )
-	ln -fs interceptor.specs-$* interceptor.specs
-
-auto_detected_default_gcc_version := $(shell (gcc -v >/dev/null) 2>&1 | perl -ne '/^gcc version (.\..)/ && print $$1')
-
-setup-default-gcc.auto: setup-default-gcc-$(auto_detected_default_gcc_version)
 
 intercept.progs: clean-intercept.progs
 	echo $(USRTOOLS_FULL) $(USRTOOLS_GCC_FULL) | xargs -n 1 > $@
