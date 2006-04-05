@@ -108,7 +108,7 @@ interceptor.specs.ALL: $(subst gcc,interceptor.specs,$(USRTOOLS_GCC:%-gcc=gcc))
 # interceptor specs for a particular version
 .PRECIOUS: interceptor.specs-%
 interceptor.specs-%: interceptor.specs.in
-	./make-spec-file.pl $< $@
+	./make-spec-file.pl $< $@ || (rm -f $@; exit 1)
 
 interceptor.specs:
 	@echo >&2
