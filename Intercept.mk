@@ -40,6 +40,10 @@ on: intercept.progs
 	@for F in `cat $<`; do                                                                                                                    \
           if readlink $${F} | grep ccache >/dev/null ; then                                                                                       \
             echo "ERROR: Do not use Build-Interceptor in conjunction with CCache." >&2 ;                                                          \
+            echo "1) Turn off interception: 'cd build-interceptor; make -f Intercept.mk off'." >&2 ;                                                          \
+            echo "2) Move away ccache." >&2 ;                                                          \
+            echo "3) Re-configure build-interceptor: 'cd build-interceptor; make clean; make'" >&2 ;                                                          \
+            echo "4) Turn on interception: 'cd build-interceptor; make -f Intercept.mk on'." >&2 ;                                                          \
             exit 1 ;                                                                                                                              \
           fi ;                                                                                                                                    \
           if readlink $${F} >/dev/null && grep -x -F `dirname $${F}`/`readlink $${F}` $< >/dev/null ; then                                        \
