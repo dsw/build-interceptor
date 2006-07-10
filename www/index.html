@@ -311,38 +311,7 @@ a '$' and those executed as root are preceded by a '#'.
     $ ln -s preproc-foo1 preproc
 </pre>
 
-<li>Build the interceptor.specs file according to your auto-detected
-gcc version.
-<pre>
-    $ cd build_interceptor
-    $ make setup-default-gcc.auto
-</pre>
-
-<p>The above line will auto-detect the version of gcc that "gcc" runs.
-If this does not work correctly, explicitly specify the version with
-<pre>
-    $ make setup-default-gcc-VERSION
-</pre>
-where VERSION is the version of gcc, e.g.
-<pre>
-    $ make setup-default-gcc-3.4
-</pre>
-
-<p>You might need to hack on it anyway after it is built.  For example
-on gcc 3.4 one line has to look like this:
-<pre>
-    %&lt;P %(cpp_options_old0)
-</pre>
-<p>whereas on earlier versions of gcc, it has to look like this:
-<pre>
-    %{&lt;P} %(cpp_options_old0)
-</pre>
-
-<p>If you run "make all" (below) without first running one of the
-"make setup-default-gcc*" targets, make will explain that you need to
-do so.
-
-<li>Build the intercept.progs and other support files.  
+<li>Build the intercept.progs and other support files.
 <pre>
     $ make
 </pre>
