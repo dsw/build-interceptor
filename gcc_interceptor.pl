@@ -22,7 +22,7 @@ if ("@$raw_args" =~ /-E -P -\s*$/ || grep {$_ eq '-V'} @$raw_args) {
 }
 
 my $BUILD_INTERCEPTOR_EXTRA_GCC_ARGS = [
-    split(/ /, $ENV{BUILD_INTERCEPTOR_EXTRA_GCC_ARGS}||'')];
+    split_var($ENV{BUILD_INTERCEPTOR_EXTRA_GCC_ARGS}||'')];
 
 my $version = get_gcc_version();
 

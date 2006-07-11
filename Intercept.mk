@@ -54,12 +54,12 @@ on: intercept.progs
             C="mv $$F $${F}_orig"; echo $$C; $$C;                                                                                                 \
             I=`basename $${F} | sed 's,-.*,,'`;                                                                                                   \
             if test -e $${I}_interceptor.pl -a -e $${I}_interceptor ; then                                                                        \
-              C="ln -s ${PWD}/$${I}_interceptor $$F"; echo $$C; $$C;                                                                              \
+              C="ln -s $${PWD}/$${I}_interceptor $$F"; echo $$C; $$C;                                                                             \
               if ! test -e $${F}_interceptor.pl ; then                                                                                            \
-                C="ln -s ${PWD}/$${I}_interceptor.pl $${F}_interceptor.pl";echo $$C; $$C;                                                         \
+                C="ln -s $${PWD}/$${I}_interceptor.pl $${F}_interceptor.pl";echo $$C; $$C;                                                        \
               fi                                                                                                                                  \
             else                                                                                                                                  \
-              C="ln -s ${PWD}/$${I}_interceptor.pl $$F"; echo $$C; $$C;                                                                           \
+              C="ln -s $${PWD}/$${I}_interceptor.pl $$F"; echo $$C; $$C;                                                                          \
             fi                                                                                                                                    \
           else echo "Interception already on for $${F}";                                                                                          \
           fi                                                                                                                                      \

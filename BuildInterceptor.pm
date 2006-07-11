@@ -28,6 +28,7 @@ our @EXPORT_OK = qw(
      do_not_add_interceptions_to_this_file_p
      tab_indent_lines
      check_output_file
+     split_var
      $arg0
      $prog
      $raw_args
@@ -225,6 +226,21 @@ sub check_output_file {
     if ($outfile ne '-' && !-f $outfile) {
         die "$0: $prog didn't produce $outfile\n";
     }
+}
+
+# split a string at spaces, but not on "\ ".
+#    join(",",split_var("x y   z\\ q")) => "x,y,z q"
+sub split_var {
+    my ($x) = @_;
+    die unless defined $x;
+
+    my $q = chr 255;
+    die if $x =~ /$q/;
+
+    $x =~ s/\\ /$q/g;
+    my @r = map { s/$q/ /g; $_ } split(/ +/, $x);
+
+    return @r;
 }
 
 1;
