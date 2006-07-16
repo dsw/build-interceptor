@@ -1,0 +1,82 @@
+# This makefile is copied into the extracted directory as
+# "generic_Makefile".  It is intended to contain the actual build
+# logic and should be included by the main makefile.
+
+ifndef CONFIGURE_MK
+  $(error This makefile should be included only from Configure.mk, not used stand-alone)
+endif
+
+.SUFFIXES:
+
+# a do-nothing target
+.PHONY: none
+none:
+	@echo "Please supply a make target"
+
+ifndef CC
+  $(error Define CC)
+endif
+ifndef CFLAGS
+  $(error Define CFLAGS)
+endif
+ifndef LD-l
+  $(error Define LD-l)
+endif
+
+LDFLAGS :=
+LDFLAGS += $(LD-l)
+# print out the actual libraries that we are linking against
+LDFLAGS += -Wl,--trace
+
+# **** construct the list of source files
+SrcFiles.incl.mk:
+	rm -f $@
+	ls src/*.i > $@
+	perl -lpe 's/^(.*)$$/IFILES += $$1/ or die' -i $@
+IFILES :=
+-include SrcFiles.incl.mk
+
+# **** construct the list of object files
+ObjFiles.incl.mk: SrcFiles.incl.mk
+	rm -f $@
+	perl -lpe 's/^IFILES \+= (.*)\.i$$/OFILES += $$1.o/ or die' <$< >$@
+OFILES :=
+-include ObjFiles.incl.mk
+
+# **** list of executable target files
+EXE := main.exe
+
+$(EXE): $(OFILES)
+
+.PHONY: exe-all
+exe-all: $(EXE)
+
+# **** clean targets
+.PHONY: clean
+clean:
+	find src -type f -name "*.o" | xargs rm -f
+	rm -f $(EXE) $(EXE:.exe=.exe.a) $(OFILES)
+
+.PHONY: clean-lists
+clean-lists:
+	rm -f SrcFiles.incl.mk ObjFiles.incl.mk
+
+.PHONY: clean-all
+clean-all: clean-lists clean
+
+# **** normal build rules
+.PRECIOUS: %.i
+%.i: %.c
+	$(CC) $(CFLAGS) -E -o $@ $<
+
+.PRECIOUS: %.o
+$(OFILES): %.o: %.i
+	$(CC) $(CFLAGS) -c -o $@ $(CFLAGS) $<
+
+$(EXE): %.exe:
+	$(CC) $(CFLAGS) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
+# **** check targets
+.PHONY: check
+check:
+	./main.exe

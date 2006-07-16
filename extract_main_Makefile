@@ -1,0 +1,21 @@
+# This makefile is copied into the extracted directory as "Makefile".
+# It is intended to contain all of the configuration variables.
+
+# default target
+.PHONY: all
+all: exe-all
+
+# build targets
+CC := gcc
+CFLAGS :=
+CFLAGS += -Wall
+# apache:
+# CFLAGS += 
+LD-l :=
+# NOTE: this is usually automatically filled in by extract_build.pl
+LD-l += $(error define LD-l)
+# apache:
+# LD-l += -lm -lcrypt -lgcc -lgcc_s -lc -lgcc -lgcc_s
+
+CONFIGURE_MK := not the empty string
+include generic_Makefile

@@ -36,7 +36,9 @@ sub read_command_line {
   }
   # verify
   die "provide an infile using the flag -infile" unless $infile;
+  die "no such file: $infile" unless -f $infile;
   die "provide an outdir using the flag -outdir" unless $outdir;
+  die "directory already exists: $outdir" if -e $outdir;
 }
 
 sub read_cc1_notes {

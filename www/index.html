@@ -394,10 +394,52 @@ move the link.
 
 <h3>Extraction</h3>
 
-<p>There are two ways to find the intercepted .i files.  The first is
-that they are down in $HOME/preproc.  The second is that they are
-embedded into the ELF files.  You can get them out that way as
-follows.
+<p>After intercepting a build, one would like to access the
+intercepted .i files.  Build-interceptor comes with a script for just
+this purpose: extract_build.pl.  This script creates an 'abstraction'
+of the build process: a directory containing 1) the intercepted .i
+files and 2) a Makefile such that typing 'make' "replays" the build.
+That is, suppose we have intercepted the build of an executable
+'a.out'.  <ul>
+
+<li>We may then extract the entire build at once.
+
+<pre>
+    $ extract_build.pl -infile a.out -outdir xdir
+</pre>
+
+The result will be a new directory <code>xdir</code> that contains a
+Makefile and some .i files in a src subdirectory.  The
+generic_Makefile is the same for all projects and contains the build
+logic; it is included by the Makefile which has variables configured
+from interception of the build process.
+
+<pre>
+    $ ls xdir
+    Makefile
+    generic_Makefile
+    src
+</pre>
+
+<li> The xdir/Makefile is very simple: it just compiles each .i file
+and links them together; therefore the extracted build process is much
+more likely to be amenable to a static analysis or a source-to-source
+transformation than the original build process.  Changing to that
+directory we may now rebuild a.out from those .i files.
+
+<pre>
+    $ cd xdir
+    $ make
+    $ make check  # to run the resulting executable
+</pre>
+
+</ul>
+
+<p>I think it is possible however for extract_build.pl to fail to
+correctly set up the Makefile, depending on the complexity of the
+original build process.  Therefore we give two more primitive ways of
+getting at the .i files directly.  First, the .i files are embedded
+into the ELF files; you can get them out of the ELF as follows.
 
 <ul>
 
@@ -416,6 +458,34 @@ the .i file and print that out.
     $ extract_section.pl .file.a78dd86286867621359f8629a7bad88e a.out
     [... the .i file contents here...]
 </pre>
+
+</ul>
+
+<p>However, even this method may cause problems, because for some huge
+projects (Mozilla) the embedded .i files will cause the ELF file to
+exceed the file size limit on some systems (like mine which is 2 Gig).
+In case of this eventuality do as follows. <ul>
+
+<li>Turn off the "feature" that the .i file is embedded into the ELF
+by setting the environment variable
+BUILD_INTERCEPTOR_DONT_EMBED_PREPROC or commenting out this line in
+as_interceptor.pl
+
+<pre>
+    system('objcopy', $outfile, '--add-section', ".file.$md5=$tmpfile")
+</pre>
+
+<li>The .i files may be found down in $HOME/preproc.  Print out the
+name of the temporary file where the .i file was saved; it is still
+there unless you have intercepted another project in the mean time and
+also gotten very unlucky.
+
+<pre>
+    $ extract_section.pl .note.cc1_interceptor a.out
+    (
+            . . .
+            tmpfile:/home/dsw/preproc/./home/dsw/foo/hello.c-1153018736-18133
+    )
 
 </ul>
 
