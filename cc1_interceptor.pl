@@ -85,7 +85,7 @@ END
 
 my $pkg = $ENV{BUILD_INTERCEPTOR_PACKAGE} || '';
 my $timestamp = $ENV{BUILD_INTERCEPTOR_TIMESTAMP} || '';
-my $chroot_id = $ENV{BUILD_INTERCEPTOR_CHROOT_ID} || '';
+my $vm_id = $ENV{BUILD_INTERCEPTOR_VM_ID} || '';
 
 $metadata .= <<END                                  # do interpolate!
         .ascii "\\n\\t)"
@@ -95,7 +95,7 @@ $metadata .= <<END                                  # do interpolate!
         .ascii "\\n\\tdumpbase:${dumpbase}"
         .ascii "\\n\\ttmpfile:${tmpfile}"
         .ascii "\\n\\tifile:${rel_tmpfile}"
-        .ascii "\\n\\tpackage:${pkg} ${timestamp} ${chroot_id}"
+        .ascii "\\n\\tpackage:${pkg} ${timestamp} ${vm_id}"
         .ascii "\\n\\tmd5:${md5}"
         .ascii "\\n)\\n"
 END
