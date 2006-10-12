@@ -34,10 +34,10 @@ my $orig_filename = get_orig_filename();
 # If there is no input file, it uses standard in.
 #
 # Assumptions:
-# I assume any .i or .ii file is an input file and that no other files
-# are input files.
-# If you give as an input file '-' then it will make a file -.s as the
-# output file!  I don't reproduce this behavior.
+# - any .i or .ii file is an input file and that no other files
+#   are input files.
+# - If you give as an input file '-' then it will make a file -.s as the
+#   output file.  This behavior is not reproduced.
 
 my ($infile, $input, $tname) = get_input_and_tname();
 my $rel_tmpfile = "." . uniquify_filename($tname);
