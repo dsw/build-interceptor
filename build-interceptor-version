@@ -1,0 +1,19 @@
+#!/usr/bin/perl -w
+# See License.txt for copyright and terms of use
+
+use warnings;
+use strict;
+use FindBin;
+use lib "${FindBin::RealBin}";
+use BuildInterceptor ':all';
+
+my $print_newline = 1;
+if ($ARGV[0] && $ARGV[0] eq '-n') {
+    $print_newline = 0;
+}
+
+print $BUILD_INTERCEPTOR_VERSION;
+if ($print_newline) {
+    print "\n";
+}
+
