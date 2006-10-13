@@ -8,11 +8,24 @@ use lib "${FindBin::RealBin}";
 use BuildInterceptor ':all';
 
 my $print_newline = 1;
+my $print_protocol_version = 0;
+
 if ($ARGV[0] && $ARGV[0] eq '-n') {
     $print_newline = 0;
+    shift @ARGV;
 }
 
-print $BUILD_INTERCEPTOR_VERSION;
+if ($ARGV[0] && $ARGV[0] eq '-p') {
+    $print_protocol_version = 1;
+    shift @ARGV;
+}
+
+if ($print_protocol_version) {
+    print $BUILD_INTERCEPTOR_PROTOCOL_VERSION;
+} else {
+    print $BUILD_INTERCEPTOR_VERSION;
+}
+
 if ($print_newline) {
     print "\n";
 }
