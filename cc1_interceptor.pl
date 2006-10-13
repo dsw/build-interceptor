@@ -45,7 +45,8 @@ my $tmpfile = "$prefix/$rel_tmpfile";
 # put the contents there
 copy_file($input, $tmpfile);
 
-my $md5 = md5_file($tmpfile);
+my $precpp_md5 = md5_file($orig_filename);
+my $postcpp_md5 = md5_file($tmpfile);
 
 unshift @$argv, $tmpfile;        # add input file to @$argv
 
@@ -70,6 +71,7 @@ END
 $infile = '-' unless defined $infile;
 $metadata .= <<END                                  # do interpolate!
         .ascii "("
+        .ascii "\\n\\tbuild_interceptor_protocol_version:${BUILD_INTERCEPTOR_PROTOCOL_VERSION}"
         .ascii "\\n\\tpwd:${pwd}"
         .ascii "\\n\\tdollar_zero:$0"
         .ascii "\\n\\traw_args: ("
@@ -96,7 +98,8 @@ $metadata .= <<END                                  # do interpolate!
         .ascii "\\n\\ttmpfile:${tmpfile}"
         .ascii "\\n\\tifile:${rel_tmpfile}"
         .ascii "\\n\\tpackage:${pkg} ${timestamp} ${vm_id}"
-        .ascii "\\n\\tmd5:${md5}"
+        .ascii "\\n\\tprecpp_md5:${precpp_md5}"
+        .ascii "\\n\\tpostcpp_md5:${postcpp_md5}"
         .ascii "\\n)\\n"
 END
   ;

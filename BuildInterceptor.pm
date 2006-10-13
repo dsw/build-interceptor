@@ -29,6 +29,7 @@ our @EXPORT_OK = qw(
      tab_indent_lines
      check_output_file
      split_var
+     $BUILD_INTERCEPTOR_PROTOCOL_VERSION
      $arg0
      $prog
      $raw_args
@@ -36,6 +37,8 @@ our @EXPORT_OK = qw(
 );
 
 our %EXPORT_TAGS = (all => [@EXPORT_OK]);
+
+our $BUILD_INTERCEPTOR_PROTOCOL_VERSION = "2";
 
 my $p0 = $0;
 # if invoked directly, e.g. make_interceptor.pl.

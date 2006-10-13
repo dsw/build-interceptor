@@ -164,8 +164,13 @@ if ($? || !$cc1_note) {
 
 my ($tmpfile) = ($cc1_note =~ /^\ttmpfile:(.*)$/m) or
   die "$0: couldn't find tmpfile in .note.cc1_interceptor in $outfile:\n$cc1_note\n";
-my ($md5) = ($cc1_note =~ /^\tmd5:(.*)$/m) or
-  die "$0: couldn't find md5 in .note.cc1_interceptor in $outfile:\n$cc1_note\n";
+my ($postcpp_md5) = ($cc1_note =~ /^\tpostcpp_md5:(.*)$/m) or
+  die "$0: couldn't find postcpp_md5 in .note.cc1_interceptor in $outfile:\n$cc1_note\n";
+
+my ($orig_filename) = ($cc1_note =~ /^\torig_filename:(.*)$/m) or
+  die "$0: couldn't find orig_filename in .note.cc1_interceptor in $outfile:\n$cc1_note\n";
+my ($precpp_md5) = ($cc1_note =~ /^\tprecpp_md5:(.*)$/m) or
+  die "$0: couldn't find precpp_md5 in .note.cc1_interceptor in $outfile:\n$cc1_note\n";
 
 
 if (!-f $tmpfile) {
@@ -173,6 +178,8 @@ if (!-f $tmpfile) {
 }
 
 if (! $ENV{BUILD_INTERCEPTOR_DONT_EMBED_PREPROC}) {
-    system('objcopy', $outfile, '--add-section', ".file.$md5=$tmpfile") &&
-      die "$0: couldn't objcopy .file.$md5=$tmpfile";
+    system('objcopy', $outfile, '--add-section', ".file.$postcpp_md5=$tmpfile") &&
+      die "$0: couldn't objcopy .file.$postcpp_md5=$tmpfile";
+    system('objcopy', $outfile, '--add-section', ".file.$precpp_md5=$orig_filename") &&
+      die "$0: couldn't objcopy .file.$precpp_md5=$orig_filename";
 }
