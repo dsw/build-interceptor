@@ -3,7 +3,7 @@
 
 PROJ_NAME = 'build-interceptor'
 
-REPO_BASE = 'https://build-interceptor.tigris.org/svn/%(PROJ_NAME)s'%locals()
+REPO_BASE = 'http://build-interceptor.tigris.org/svn/%(PROJ_NAME)s'%locals()
 
 REPO_TRUNK = '%(REPO_BASE)s/trunk'%locals()
 REPO_TAG_DIR = '%(REPO_BASE)s/tags'%locals()
