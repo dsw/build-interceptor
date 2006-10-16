@@ -99,7 +99,7 @@ load_config(const char *filename)
     f = fopen(filename, "r");
     if (f == NULL) {
         die("libintercept: Could not open configuration file '%s': %s\n",
-                filename, strerror(errno));
+            filename, strerror(errno));
     }
     while (1) {
         if (fgets(buffer, BUFFER_SIZE, f) == NULL) {
@@ -134,7 +134,7 @@ load_config(const char *filename)
             dst = p = strchr(src, '=');
             if (p == NULL) {
                 die("libintercept: Missing '=' separator in config file entry."
-                        "\n");
+                    "\n");
             }
 
             /* Strip trailing and leading whitespace */
@@ -174,7 +174,7 @@ load_config(const char *filename)
                 }
             } else {
                 die("libintercept: Expected section header in config file."
-                        "\n");
+                    "\n");
             }
         }
     }
@@ -183,11 +183,11 @@ load_config(const char *filename)
     /* Check we have valid library and scripts paths */
     ret = stat(lib_path, &s);
     if (ret < 0 || !S_ISREG(s.st_mode))
-            die("Invalid or missing library path in configuration file\n");
+        die("Invalid or missing library path in configuration file\n");
 
     ret = stat(scripts_path, &s);
     if (ret < 0 || !S_ISDIR(s.st_mode))
-            die("Invalid or missing script path in configuration file\n");
+        die("Invalid or missing script path in configuration file\n");
 }
 
 
@@ -199,33 +199,33 @@ extern char ** __environ;
 static int
 my_unsetenv(const char *name)
 {
-  size_t len;
-  char **ep;
+    size_t len;
+    char **ep;
 
-  if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
+    if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
     {
-      errno = (EINVAL);
-      return -1;
+        errno = (EINVAL);
+        return -1;
     }
 
-  len = strlen (name);
+    len = strlen (name);
 
-  ep = __environ;
-  while (*ep != NULL)
-    if (!strncmp (*ep, name, len) && (*ep)[len] == '=')
-      {
-    /* Found it.  Remove this pointer by moving later ones back.  */
-    char **dp = ep;
+    ep = __environ;
+    while (*ep != NULL)
+        if (!strncmp (*ep, name, len) && (*ep)[len] == '=')
+        {
+            /* Found it.  Remove this pointer by moving later ones back.  */
+            char **dp = ep;
 
-    do
-      dp[0] = dp[1];
-    while (*dp++);
-    /* Continue the loop in case NAME appears again.  */
-      }
-    else
-      ++ep;
+            do
+                dp[0] = dp[1];
+            while (*dp++);
+            /* Continue the loop in case NAME appears again.  */
+        }
+        else
+            ++ep;
 
-  return 0;
+    return 0;
 }
 
 /* Library initialization function. Called automatically when the library
@@ -241,8 +241,8 @@ initialize(void)
 
     config_filename = getenv(BI_CONFIG_FILE_VAR);
     if (!config_filename) {
-            die("Missing configuration file environment variable %s\n",
-                    BI_CONFIG_FILE_VAR);
+        die("Missing configuration file environment variable %s\n",
+            BI_CONFIG_FILE_VAR);
     }
     strncpy(config_path, config_filename, sizeof(config_path));
     config_path[sizeof(config_path)-1] = 0;
@@ -253,20 +253,20 @@ initialize(void)
     my_unsetenv(BI_FROMLIBRARY_VAR);
 
     snprintf(config_evar, sizeof(config_evar), "%s=%s", BI_CONFIG_FILE_VAR,
-            config_filename);
+             config_filename);
     config_evar[sizeof(config_evar) - 1] = 0;
     snprintf(fromlibrary_evar, sizeof(fromlibrary_evar), "%s=1",
-            BI_FROMLIBRARY_VAR);
+             BI_FROMLIBRARY_VAR);
     fromlibrary_evar[sizeof(fromlibrary_evar) - 1] = 0;
 
     ld_preload = getenv("LD_PRELOAD");
     if (ld_preload) {
         /* Strip the first element of the LD_PRELOAD list, assuming that
          * it must be us. */
-        p = strchr(ld_preload, ' ');
+        p = strchr(ld_preload, ':');
         if (p != NULL) {
             strncpy(ld_preload_var, p+1,
-                sizeof(ld_preload_var));
+                    sizeof(ld_preload_var));
             ld_preload_var[sizeof(ld_preload_var) - 1] = 0;
             setenv("LD_PRELOAD", ld_preload_var, 1);
         } else {
@@ -341,7 +341,7 @@ execve(const char *filename, char *const argv[], char *const env[])
     } else {
         /* We need to make sure that we appear at the front of LD_PRELOAD */
         snprintf(buffer, BUFFER_SIZE, "LD_PRELOAD=%s%s%s", lib_path,
-                (ld_preload ? " " : ""), (ld_preload ? ld_preload : ""));
+                 (ld_preload ? ":" : ""), (ld_preload ? ld_preload : ""));
         buffer[BUFFER_SIZE - 1] = 0;
         //printf("%s\n", (getenv("LD_PRELOAD")?getenv("LD_PRELOAD"):"(nil)"));
 
@@ -357,9 +357,9 @@ execve(const char *filename, char *const argv[], char *const env[])
     newargs[j] = NULL;
 
 /*    fprintf(stderr, "req: %s running %s ", filename, new_file);
-    for (i=0; newargs[i]; i++)
-        fprintf(stderr, " %s", newargs[i]);
-    fprintf(stderr, "\n"); */
+      for (i=0; newargs[i]; i++)
+      fprintf(stderr, " %s", newargs[i]);
+      fprintf(stderr, "\n"); */
     ret = real_execve(new_file, newargs, newenv);
 //    fprintf(stderr, "failed\n");
     return ret;
