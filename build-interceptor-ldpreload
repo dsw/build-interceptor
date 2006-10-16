@@ -116,4 +116,5 @@ sub add_ld_preload {
 
     # needed by preload_lib to get back here.
     $ENV{BUILD_INTERCEPTOR_LDPRELOAD} = File::Spec->rel2abs($0);
+    # TODO: if installing, this should be hard-coded.
 }
