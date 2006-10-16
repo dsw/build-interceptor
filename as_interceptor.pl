@@ -159,7 +159,11 @@ if ($? || !$cc1_note) {
         exit 0;
     }
 
-    die "$0: assembled file with no .note.cc1_interceptor: $outfile\n";
+    if ($ENV{BUILD_INTERCEPTOR_ALLOW_UNINTERCEPTED}) {
+        # compiling a hand-written assembly file.
+    } else {
+        die "$0: assembled file with no .note.cc1_interceptor: $outfile (set \$BUILD_INTERCEPTOR_ALLOW_UNINTERCEPTED to allow this)\n";
+    }
 }
 
 my ($tmpfile) = ($cc1_note =~ /^\ttmpfile:(.*)$/m) or
