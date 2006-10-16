@@ -2,7 +2,7 @@
 # first place.  Generally, run targets in this makefile as a normal
 # user.
 
-ifeq ($(wildcard Intercept.mk),)
+ifeq ($(wildcard build-interceptor-version),)
   $(error Run this makefile in the build-interceptor directory.)
 endif
 
@@ -21,17 +21,6 @@ INSTALL_LIBDIR = $(INSTALL_PREFIX)/lib/build-interceptor
 
 .PHONY: all
 all: lib/build-interceptor/make_interceptor rc/intercept.progs
-
-# timestamp the $HOME/build-interceptor.log; useful to run between
-# compilations
-.PHONY: stamp-log
-stamp-log: stamp-log/---
-.PHONY: stamp-log/%
-stamp-log/%:
-	echo >> ${HOME}/build-interceptor.log
-	date >> ${HOME}/build-interceptor.log
-	echo '$*' >> ${HOME}/build-interceptor.log
-	echo >> ${HOME}/build-interceptor.log
 
 .PHONY: clean
 clean: clean-intercept.progs clean-script-interceptor
