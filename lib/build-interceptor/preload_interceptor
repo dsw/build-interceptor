@@ -34,7 +34,7 @@ if (scalar(@ARGV) < 1) {
 if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
     my $l = $ENV{LD_PRELOAD} || '';
     my $b = $ENV{BUILD_INTERCEPTOR_LDPRELOAD_SCRIPT} || '';
-    print "preload_interceptor $ARGV[0]: LD_PRELOAD=$l, BILPS=$b\n";
+    print STDERR "preload_interceptor $ARGV[0]: LD_PRELOAD=$l, BILPS=$b\n";
 }
 
 my @intercept_progs = load();
@@ -81,7 +81,7 @@ if ($interceptor) {
             '--build-interceptor-program', $program,
             '--build-interceptor-argv0', $argv0);
     if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
-        print STDERR "build-interceptor-ldpreload: intercepted $program_target=$interceptor\n";
+        print STDERR "preload_interceptor: intercepted $program_target=$interceptor\n";
     }
 } else {
     # No, don't intercept this program.
@@ -91,12 +91,12 @@ if ($interceptor) {
     # But *do* use ld_preload so we can intercept its children!
     BuildInterceptor::Preload::add_ld_preload();
     if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
-        print STDERR "build-interceptor-ldpreload: tracing non-intercepted $program\n";
+        print STDERR "preload_interceptor: tracing non-intercepted $program\n";
     }
 }
 
 if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
-    print STDERR "build-interceptor-ldpreload: exec { $executable } @ARGV\n";
+    print STDERR "preload_interceptor: exec { $executable } @ARGV\n";
 }
 
 exec { $executable } @ARGV;
