@@ -1,7 +1,12 @@
-
-/* Library of functions that are used in place of libc functions
- * Author: Peter Hawkins <hawkinsp@cs.stanford.edu>
- */
+// Build-Interceptor LD_PRELOAD mode.
+//
+//   This is the shared library portion of the implementation.
+//
+//   It simply calls replaces all execve() calls with an execve call to
+//   $BUILD_INTERCEPTOR_LDPRELOAD, which decides whether to then instead call an
+//   interceptor script, or call the original intended script with LD_PRELOAD set.
+//
+//   Based on implementation by Peter Hawkins <hawkinsp@cs.stanford.edu>
 
 #define _GNU_SOURCE 1
 
@@ -19,41 +24,15 @@
 
 #define MAX_ENV_STRINGS 1024
 #define PATH_MAX 1024
-#define BUFFER_SIZE 2048
-#define MAX_MAPPINGS 1024
 
-static const char *BI_CONFIG_FILE_VAR = "BUILD_INTERCEPTOR_CONFIG";
-static const char *BI_FROMLIBRARY_VAR = "BUILD_INTERCEPTOR_FROM_LIBRARY";
-
+extern size_t strlcpy(char *dst, char const *src, size_t siz);
 
 /* Pointers to the libc versions of the functions we are initializing.
  * These are lazily initialized on the first use
  */
 static int (*real_execve)(const char *, char *const [], char * const []) = NULL;
 
-/* Path name of the build interceptor library (me!) as determined by
- * the configuration file*/
-static char config_path[PATH_MAX];
-static char lib_path[PATH_MAX];
-static char scripts_path[PATH_MAX];
-
-/* Environment variable strings */
-
-/* The original configuration environment string */
-static char config_evar[PATH_MAX];
-static char fromlibrary_evar[PATH_MAX];
-
-/* The ld_preload given to the victim */
-static char ld_preload_var[BUFFER_SIZE];
-
-typedef struct {
-    char *src;
-    char *dst;
-} mapping_t;
-
-static mapping_t mappings[MAX_MAPPINGS];
-static int num_mappings = 0;
-
+static char build_interceptor_ldpreload[1024];
 
 /* Print an error message and abort execution */
 static void
@@ -80,289 +59,52 @@ load_symbol(void **fptr, const char *name)
     }
 }
 
-/* Load the file name mappings */
-static void
-load_config(const char *filename)
-{
-    FILE *f;
-    char buffer[BUFFER_SIZE];
-    char buffer2[BUFFER_SIZE];
-    char *p, *src, *dst;
-    int section = -1;
-    const int PATHS_SECTION = 0;
-    const int REDIRS_SECTION = 1;
-    int len, ret;
-    struct stat s;
-
-    lib_path[0] = scripts_path[0] = 0;
-
-    f = fopen(filename, "r");
-    if (f == NULL) {
-        die("libintercept: Could not open configuration file '%s': %s\n",
-            filename, strerror(errno));
-    }
-    while (1) {
-        if (fgets(buffer, BUFFER_SIZE, f) == NULL) {
-            if (feof(f)) break;
-            die("libintercept: Error reading from mapping file: %s\n",
-                strerror(errno));
-        }
-
-        /* Strip leading spaces */
-        src = &buffer[0];
-        while (*src && isspace(*src)) src++;
-
-        /* Skip comments */
-        if (src[0] == '#') continue;
-
-        /* Strip any trailing spaces or newlines */
-        p = src + strlen(src) - 1;
-        while (p >= src && isspace(*p)) p--;
-        *(p+1) = '\0';
-
-        /* Skip blank lines */
-        if (src[0] == 0) continue;
-
-        len = strlen(src);
-
-        /* Parse section headers */
-        if (!strcasecmp("[paths]", src)) {
-            section = PATHS_SECTION;
-        } else if (!strcasecmp("[redirections]", src)) {
-            section = REDIRS_SECTION;
-        } else {
-            dst = p = strchr(src, '=');
-            if (p == NULL) {
-                die("libintercept: Missing '=' separator in config file entry."
-                    "\n");
-            }
-
-            /* Strip trailing and leading whitespace */
-            while (*p == ' ' && p > src) p--;
-            *p = '\0';
-            dst++;
-            while (*dst == ' ') dst++;
-
-            if (section == REDIRS_SECTION) {
-                /* If the source file doesn't exist, ignore this entry */
-                mappings[num_mappings].src = canonicalize_file_name(src);
-                if (mappings[num_mappings].src == NULL) continue;
-
-                if (!strchr(dst, '/')) {
-                    snprintf(buffer2, BUFFER_SIZE, "%s%s", scripts_path, dst);
-                    buffer2[BUFFER_SIZE - 1] = 0;
-                    dst = buffer2;
-                }
-                mappings[num_mappings].dst = canonicalize_file_name(dst);
-                if (mappings[num_mappings].dst == NULL) {
-                    die("libintercept: %s does not exist\n", dst);
-                }
-
-                num_mappings++;
-            } else if (section == PATHS_SECTION) {
-                if (!strcmp(src, "intercept_scripts")) {
-                    strncpy(scripts_path, dst, PATH_MAX);
-                    scripts_path[PATH_MAX - 2] = 0;
-                    len = strlen(scripts_path);
-                    if (len > 0 && scripts_path[len - 1] != '/') {
-                        scripts_path[len++] = '/';
-                        scripts_path[len] = 0;
-                    }
-                } else if (!strcmp(src, "intercept_library")) {
-                    strncpy(lib_path, dst, PATH_MAX);
-                    lib_path[PATH_MAX - 1] = 0;
-                }
-            } else {
-                die("libintercept: Expected section header in config file."
-                    "\n");
-            }
-        }
-    }
-    fclose(f);
-
-    /* Check we have valid library and scripts paths */
-    ret = stat(lib_path, &s);
-    if (ret < 0 || !S_ISREG(s.st_mode))
-        die("Invalid or missing library path in configuration file\n");
-
-    ret = stat(scripts_path, &s);
-    if (ret < 0 || !S_ISDIR(s.st_mode))
-        die("Invalid or missing script path in configuration file\n");
-}
-
-
-/* XXX: Something weird happens when we are linked against bash -- we seem
- * to get another copy of unsetenv from somewhere which doesn't work.
- * This one is copied out of the C library
- */
-extern char ** __environ;
-static int
-my_unsetenv(const char *name)
-{
-    size_t len;
-    char **ep;
-
-    if (name == NULL || *name == '\0' || strchr (name, '=') != NULL)
-    {
-        errno = (EINVAL);
-        return -1;
-    }
-
-    len = strlen (name);
-
-    ep = __environ;
-    while (*ep != NULL)
-        if (!strncmp (*ep, name, len) && (*ep)[len] == '=')
-        {
-            /* Found it.  Remove this pointer by moving later ones back.  */
-            char **dp = ep;
-
-            do
-                dp[0] = dp[1];
-            while (*dp++);
-            /* Continue the loop in case NAME appears again.  */
-        }
-        else
-            ++ep;
-
-    return 0;
-}
-
 /* Library initialization function. Called automatically when the library
  * is loaded */
 static void __attribute__((constructor))
 initialize(void)
 {
-    char *config_filename;
-    char *ld_preload, *p;
-
     /* Find the addresses of the real copies of the symbols we are faking */
     load_symbol((void **)&real_execve, "execve");
 
-    config_filename = getenv(BI_CONFIG_FILE_VAR);
-    if (!config_filename) {
-        die("Missing configuration file environment variable %s\n",
-            BI_CONFIG_FILE_VAR);
+    // This is the helper script to call
+    char const *BUILD_INTERCEPTOR_LDPRELOAD = getenv("BUILD_INTERCEPTOR_LDPRELOAD");
+    if (!BUILD_INTERCEPTOR_LDPRELOAD) {
+        die("Missing BUILD_INTERCEPTOR_LDPRELOAD\n");
     }
-    strncpy(config_path, config_filename, sizeof(config_path));
-    config_path[sizeof(config_path)-1] = 0;
-    load_config(config_filename);
 
-    /* Hide our environment variables from the victim */
-    my_unsetenv(BI_CONFIG_FILE_VAR);
-    my_unsetenv(BI_FROMLIBRARY_VAR);
+    strlcpy(build_interceptor_ldpreload, BUILD_INTERCEPTOR_LDPRELOAD, sizeof(build_interceptor_ldpreload));
 
-    snprintf(config_evar, sizeof(config_evar), "%s=%s", BI_CONFIG_FILE_VAR,
-             config_filename);
-    config_evar[sizeof(config_evar) - 1] = 0;
-    snprintf(fromlibrary_evar, sizeof(fromlibrary_evar), "%s=1",
-             BI_FROMLIBRARY_VAR);
-    fromlibrary_evar[sizeof(fromlibrary_evar) - 1] = 0;
-
-    ld_preload = getenv("LD_PRELOAD");
-    if (ld_preload) {
-        /* Strip the first element of the LD_PRELOAD list, assuming that
-         * it must be us. */
-        p = strchr(ld_preload, ':');
-        if (p != NULL) {
-            strncpy(ld_preload_var, p+1,
-                    sizeof(ld_preload_var));
-            ld_preload_var[sizeof(ld_preload_var) - 1] = 0;
-            setenv("LD_PRELOAD", ld_preload_var, 1);
-        } else {
-            my_unsetenv("LD_PRELOAD");
-        }
+    // Reset LD_PRELOAD to its value before we messed with it.
+    // build-interceptor-ldpreload will add it as needed.
+    char const *BUILD_INTERCEPTOR_ORIG_LD_PRELOAD = getenv("BUILD_INTERCEPTOR_ORIG_LD_PRELOAD");
+    if (!BUILD_INTERCEPTOR_ORIG_LD_PRELOAD) {
+        BUILD_INTERCEPTOR_ORIG_LD_PRELOAD = "";
     }
+    setenv("LD_PRELOAD", BUILD_INTERCEPTOR_ORIG_LD_PRELOAD, 1);
 }
 
-/* Map an absolute filename via the mapping table. Returns either the
- * original string or a pointer into the mapping table (which should not be
- * freed). */
-static const char *
-map_file(const char *oldfile)
+void copy_argv(char **new_argv, char * const * argv, int max)
 {
-    int i;
-    const char *ret;
-    char *canon;
-
-    canon = canonicalize_file_name(oldfile);
-    /* Use the old filename if canonicalization fails */
-    if (!canon) canon = strdup(oldfile);
-
-    ret = oldfile;
-    for (i = 0; i < num_mappings; i++) {
-        if (!strcmp(canon, mappings[i].src)) {
-            ret = mappings[i].dst;
-            break;
-        }
+    int count = 0;
+    while (*argv && count < max) {
+        *new_argv++ = *argv++;
+        count++;
     }
-    free((void *)canon);
-    return ret;
+    *new_argv = NULL;
 }
 
-/* --------------------------------------------------------------------------*/
-/* Intercepted symbols */
 int
 execve(const char *filename, char *const argv[], char *const env[])
 {
-    char *newenv[MAX_ENV_STRINGS];
-    char *newargs[MAX_ENV_STRINGS];
-    const char *ld_preload;
-    char buffer[BUFFER_SIZE];
-    const char *new_file;
-    char * const *oldenv = env;
-    char * const *a;
-    int i, mapped, j;
-    int ret;
+    char *newargv[MAX_ENV_STRINGS];
 
-    buffer[0] = 0;
-    new_file = map_file(filename);
-    /* If we're diverting, don't trace the diverted file */
-    mapped = strcmp(new_file, filename);
+    newargv[0] = build_interceptor_ldpreload;
+    newargv[1] = (char*) filename;
+    newargv[2] = "--argv0";
+    copy_argv(newargv+3, argv, MAX_ENV_STRINGS-4);
 
-    i = mapped ? 0 : 1;
-    newenv[i++] = config_evar;
-    newenv[i++] = fromlibrary_evar;
-    ld_preload = NULL;
-    while (*oldenv && i < MAX_ENV_STRINGS - 1) {
-        if (!mapped && !strncmp("LD_PRELOAD=", *oldenv, 11)) {
-            ld_preload = strchr(*oldenv, '=') + 1;
-        } else {
-            newenv[i] = *oldenv;
-            i++;
-        }
-        oldenv++;
-    }
-
-    j = 0;
-    if (mapped) {
-        newargs[j++] = (char *)new_file;
-//        fprintf(stderr, "not mapped\n");
-    } else {
-        /* We need to make sure that we appear at the front of LD_PRELOAD */
-        snprintf(buffer, BUFFER_SIZE, "LD_PRELOAD=%s%s%s", lib_path,
-                 (ld_preload ? ":" : ""), (ld_preload ? ld_preload : ""));
-        buffer[BUFFER_SIZE - 1] = 0;
-        //printf("%s\n", (getenv("LD_PRELOAD")?getenv("LD_PRELOAD"):"(nil)"));
-
-        newenv[0] = buffer;
-    }
-    newenv[i] = NULL;
-
-    a = argv;
-    while (*a && j < MAX_ENV_STRINGS - 1) {
-        newargs[j++] = *a;
-        a++;
-    }
-    newargs[j] = NULL;
-
-/*    fprintf(stderr, "req: %s running %s ", filename, new_file);
-      for (i=0; newargs[i]; i++)
-      fprintf(stderr, " %s", newargs[i]);
-      fprintf(stderr, "\n"); */
-    ret = real_execve(new_file, newargs, newenv);
-//    fprintf(stderr, "failed\n");
-    return ret;
+    return real_execve(newargv[0], (char**) newargv, env);
 }
 
 int
