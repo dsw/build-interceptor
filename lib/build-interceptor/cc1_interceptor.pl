@@ -6,6 +6,7 @@ use warnings;
 use FindBin;
 use lib "${FindBin::RealBin}";
 use BuildInterceptor ':all';
+use BuildInterceptor::Version;
 
 use Cwd;
 use File::Spec;
@@ -71,7 +72,7 @@ END
 $infile = '-' unless defined $infile;
 $metadata .= <<END                                  # do interpolate!
         .ascii "("
-        .ascii "\\n\\tbuild_interceptor_protocol_version:${BUILD_INTERCEPTOR_PROTOCOL_VERSION}"
+        .ascii "\\n\\tbuild_interceptor_protocol_version:${BuildInterceptor::Version::BUILD_INTERCEPTOR_PROTOCOL_VERSION}"
         .ascii "\\n\\tpwd:${pwd}"
         .ascii "\\n\\tdollar_zero:$0"
         .ascii "\\n\\traw_args: ("
