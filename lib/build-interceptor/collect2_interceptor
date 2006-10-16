@@ -6,14 +6,13 @@ use FindBin;
 use lib "${FindBin::RealBin}";
 use BuildInterceptor ':all';
 
-use FindBin;
 use Cwd;
 use Cwd 'abs_path';
 use File::Spec;
 use File::Path;                 # provides mkpath
 use File::Basename;
 use File::Temp;
-use FileHandle;
+use IO::File;
 use Memoize;
 
 # When used as a replacement to the system collect2 will just pass the
@@ -248,7 +247,7 @@ my $EXTRA_IGNORE_LINES = $ENV{BUILD_INTERCEPTOR_EXTRA_IGNORE_LINES};
 
 # don't bother proclaiming failures for ocaml files
 if (check_object_ocaml($outfile_abs)) {
-    my $good = new FileHandle(">>$tmpdir/cc1_ignored_ocaml") or die $!;
+    my $good = IO::File->new("$tmpdir/cc1_ignored_ocaml",'a') or die $!;
     print $good "$outfile_abs\n";
     exit 0;
 }
@@ -364,7 +363,7 @@ for my $line (split '\n', $trace_output0) {
 
 if (@not_intercepted) {
     # bad; some files we were built with were not intercepted
-    my $bad = new FileHandle(">>$tmpdir/cc1_bad") or die $!;
+    my $bad = IO::File->new("$tmpdir/cc1_bad",'a') or die $!;
     print $bad "$outfile_abs\n";
     for my $input (@not_intercepted) {
         print $bad "\t$input\n";
@@ -374,7 +373,7 @@ if (@not_intercepted) {
     # be conservative, since non-executables are more dangerous and we're
     # checking for dangerous situations)
     my $bad_ftype = $executable_p ? "exec" : "nonexec";
-    $bad = new FileHandle(">>$tmpdir/cc1_bad_${bad_ftype}") or die $!;
+    $bad = IO::File->new("$tmpdir/cc1_bad_${bad_ftype}",'a') or die $!;
     print $bad "$outfile_abs\n";
     for my $input (@not_intercepted) {
         print $bad "\t$input\n";
@@ -386,7 +385,7 @@ if (@not_intercepted) {
                           $bad_section_data);
 } else {
     # good
-    my $good = new FileHandle(">>$tmpdir/cc1_good") or die $!;
+    my $good = IO::File->new("$tmpdir/cc1_good", 'a') or die $!;
     print $good "$outfile_abs\n";
 }
 
@@ -413,13 +412,13 @@ sub getCanonIdForFile {
 sub touchFile {
     my ($file) = @_;
     mkpath(dirname($file));
-    new FileHandle(">$file") || die $!;
+    IO::File->new($file,'w') || die $!;
 }
 
 sub outputToFile {
     my ($file, $data) = @_;
     die unless defined $file && defined $data;
     mkpath(dirname($file));
-    my $f = new FileHandle(">>$file") || die $!;
+    my $f = IO::File->new($file,'a') || die $!;
     print $f $data;
 }
