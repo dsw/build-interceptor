@@ -36,7 +36,7 @@ These methods have advantages and disadvantages:
     * Con: susceptible to user modifying environment [1]_
 
 * PATH PREFIX:
-    * Con: susceptible to user modifying environment [1]_
+    * Con: susceptible to hard-coded paths as well as user modifying environment [1]_
 
 
 .. [1] Don't underestimate the user modifying environment variables in the
