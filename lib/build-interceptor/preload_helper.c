@@ -111,7 +111,8 @@ char **fudge_env(char * const *env)
     while (env[i]) {
         ++i;
     }
-    char **new_env = malloc(i * sizeof(char*));
+    char **new_env = malloc((i+3) * sizeof(char*));
+    // static char *new_env[MAX_ENV_STRINGS];
 
     i = 0;
     while (env[i]) {
@@ -122,6 +123,9 @@ char **fudge_env(char * const *env)
             new_env[i] = env[i];
         }
         ++i;
+        if (i >= MAX_ENV_STRINGS-1) {
+            break;
+        }
     }
     new_env[i] = 0;
     return new_env;
