@@ -138,6 +138,15 @@ execve(const char *filename, char *const argv[], char *const env[])
         die("execve after failed initialization");
     }
 
+    if (getenv("BUILD_INTERCEPTOR_DEBUG")) {
+        fprintf(stderr, "build-interceptor preload_helper.so: execve");
+        char * const *p = argv;
+        while (*p) {
+            fprintf(stderr, " %s", *p++);
+        }
+        fprintf(stderr, "\n");
+    }
+
     if (0 != access(filename, X_OK)) {
         // file doesn't exist, or not executable, etc.
         //
@@ -154,7 +163,7 @@ execve(const char *filename, char *const argv[], char *const env[])
     copy_argv(newargv+3, argv, MAX_ENV_STRINGS-4);
 
     if (getenv("BUILD_INTERCEPTOR_DEBUG")) {
-        fprintf(stderr, "build-interceptor preload_helper.so: execve");
+        fprintf(stderr, "build-interceptor preload_helper.so: real_execve");
         char **p = newargv;
         while (*p) {
             fprintf(stderr, " %s", *p++);
