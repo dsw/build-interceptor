@@ -1,0 +1,179 @@
+#!/usr/bin/perl
+
+# $Id$
+
+# This script implements "RENAME MODE" (see doc/modes.txt).
+#
+# It will move your system gcc toolchain away and point softlinks at the
+# intereceptor scripts.  Generally, run targets in this makefile as root.  Use
+# Makefile to build intercept.progs as a normal user.
+
+use strict;
+use warnings;
+use FindBin;
+use IO::File;
+
+my $intercept_progs_filename = "$FindBin::RealBin/intercept.progs";
+
+my $interceptors_dir = "$FindBin::RealBin/lib/build-interceptor";
+
+if (!-d $interceptors_dir) {
+    # TODO: allow configuration
+    die "$0: couldn't find interceptors directory ($interceptors_dir)\n";
+}
+
+if (!-f $intercept_progs_filename) {
+    # TODO: allow intercept.progs to live in a different directory
+    die "$0: couldn't find $intercept_progs_filename; run `make' first.\n";
+}
+
+my $cmd;
+
+if (scalar(@ARGV) > 2) { syntax(); }
+
+if (scalar(@ARGV) == 0) {
+    $cmd = 'status';
+} elsif ($ARGV[0] eq 'status') {
+    $cmd = 'status';
+} elsif ($ARGV[0] eq 'on') {
+    $cmd = 'on';
+} elsif ($ARGV[0] eq 'off') {
+    $cmd = 'off';
+} else {
+    syntax();
+}
+
+my @intercept_progs = load();
+
+if ($cmd eq 'status') {
+    show_status();
+} elsif ($cmd eq 'on') {
+    on();
+} elsif ($cmd eq 'off') {
+    off();
+} else {
+    die "20cb5818-4b26-4aee-9d81-7c43854d0627";
+}
+
+sub syntax {
+    print <<END
+$0  -- manage rename-mode build interception.
+
+   $0 [status]    -- show current status
+   $0 on          -- turn on, i.e. modify /usr/bin/gcc, etc.
+   $0 off         -- turn off, restore the way it was before 'on'
+
+END
+;
+    exit 240;
+}
+
+sub load {
+    my $f = IO::File->new($intercept_progs_filename, 'r') || die "$0: can't read $intercept_progs_filename: $!\n";
+    my $line;
+    my @r = ();
+    while ($line = <$f>) {
+        chomp $line;
+        push(@r, $line);
+    }
+    return @r;
+}
+
+# Print the current interception state.
+sub show_status {
+    print "Interception is:\n";
+    for my $file (@intercept_progs) {
+        my $exists = -e $file;
+        my $orig_exists = -e "${file}_orig";
+
+        if ($exists && !$orig_exists) {
+            print "OFF    for $file\n";
+        } elsif (!$exists && $orig_exists) {
+            print "ON     for $file\n";
+        } else {
+            print "BROKEN for $file\n";
+        }
+    }
+}
+
+sub check_root {
+    if ($> != 0) {
+        die "$0: need root access.\n";
+    }
+}
+
+sub on {
+    check_root();
+
+    system("chmod", "a-w", $intercept_progs_filename)
+        and warn "$0: couldn't chmod a-w $intercept_progs_filename\n";
+
+    for my $f (@intercept_progs) {
+        # At this point, we shouldn't have any redundant links, since they've
+        # been filtered out by list-programs-to-intercept.
+
+        # TODO: be more robust if user has done something crazy, e.g. if
+        # $f doesn't exist.
+
+        print "$f:\n";
+        if (! -e "${f}_orig") {
+            print "    rename $f ${f}_orig\n";
+            rename($f, "${f}_orig") || die "$0: couldn't rename $f to ${f}_orig\n";
+
+            my ($vol,$dir,$file) = File::Spec->splitpath($f);
+            my $base = $file;
+            $base =~ s/-.*//;
+
+            my $interceptor_script = "$interceptors_dir/${base}_interceptor.pl";
+            my $interceptor_script_helper = "$interceptors_dir/{$base}_interceptor";
+            if (!-f $interceptor_script) {
+                die "$0: missing $interceptor_script\n";
+            }
+
+            if (-f $interceptor_script_helper) {
+                # e.g. make_interceptor, so it can be used as a shebang
+                # executable.
+
+                print "    symlink $interceptor_script_helper $f\n";
+                symlink($interceptor_script_helper, $f)
+                    or die "$0: couldn't symlink $interceptor_script_helper to $f\n";
+
+                if (!-e "${f}_interceptor.pl") {
+                    # Put it in path so script_interceptor.c can find
+                    # it.  TODO: get rid of this requirement.
+                    print "    symlink $interceptor_script ${f}_interceptor.pl\n";
+                    symlink($interceptor_script, "${f}_interceptor.pl")
+                        or die "$0: couldn't symlink $interceptor_script to${f}_interceptor.pl\n";
+                }
+            } else {
+                # regular interceptor script.
+                print "    symlink $interceptor_script $f\n";
+                symlink($interceptor_script, $f)
+                    or die "$0: couldn't symlink $interceptor_script to $f\n";
+            }
+        } else {
+            print "    [Nothing to do]\n";
+        }
+    }
+}
+
+sub off {
+    check_root();
+
+    for my $f (@intercept_progs) {
+        print "$f:\n";
+        if (-e "${f}_orig") {
+            if (-e $f) {
+                # TODO: make sure $f is a build-interceptor symlink!
+                print "    unlink $f\n";
+                unlink($f) or die "$0: couldn't unlink $f\n";
+            }
+            print "    rename ${f}_orig $f\n";
+            rename("${f}_orig", $f)
+                or die "$0: couldn't rename ${f}_orig $f\n";
+        }
+    }
+
+    system("chmod", "u+w", $intercept_progs_filename)
+        and warn "$0: couldn't chmod u+w $intercept_progs_filename\n";
+}
