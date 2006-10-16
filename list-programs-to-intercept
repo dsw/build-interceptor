@@ -1,0 +1,50 @@
+#!/bin/sh
+
+# $Id$
+
+# This program lists programs that should be intercepted to stdout.
+
+# TODO: detect and avoid ccache
+
+existingfiles() {
+    for f in $@; do
+        test -f $f && echo $f
+    done
+}
+
+get_paths() {
+    for f in $@; do
+        which $f 2>/dev/null
+    done
+}
+
+gccs="gcc `existingfiles /usr/bin/gcc-* /usr/bin/*-linux-gcc`"
+
+usrtools="$usrtools $gccs"
+usrtools="$usrtools g++ `existingfiles /usr/bin/g++-*`"
+usrtools="$usrtools gcc `existingfiles /usr/bin/gcc-*`"
+# usrtools="$usrtools make"
+usrtools="$usrtools cc"
+usrtools="$usrtools c++"
+usrtools="$usrtools as"
+usrtools="$usrtools ld"
+
+# Internal gcc tools usually not called by the user.
+gcccomponents=""
+gcccomponents="$gcccomponents cpp0"
+gcccomponents="$gcccomponents tradcpp0"
+gcccomponents="$gcccomponents cc1"
+gcccomponents="$gcccomponents cc1plus"
+# at least under gcc 3.4 this just runs ld
+# gcccomponents="$gcccomponents collect2"
+gcccomponents="$gcccomponents f771"
+
+# print full paths of user tools
+get_paths $usrtools | sort -u
+
+# print full paths of gcc components
+for f in $gcccomponents; do
+    for gcc in $gccs; do
+        $gcc -print-prog-name=$f
+    done
+done | sort -u
