@@ -98,6 +98,10 @@ sub is_ccache {
 sub filter_out_ccache {
     return map {
         if (is_ccache($_)) {
+
+            # for now, just disallow.  Figure out later how to make it work correctly.
+            die "$0: $_ appears to be a symlink to ccache; do not use Build-Interceptor in conjunction with ccache.\n";
+
             print STDERR "$0: ignoring $_: it's apparently a ccache symlink\n";
             ();
         } else {
