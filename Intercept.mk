@@ -2,7 +2,7 @@
 
 # $Id$
 
-# This makefile is a deprecated way of invoking build-interceptor in rename-mode.
+# This makefile is a deprecated way of invoking build-interceptor-rename.
 
 ifeq ($(wildcard Intercept.mk),)
   $(error Run this makefile in the build-interceptor directory.)
