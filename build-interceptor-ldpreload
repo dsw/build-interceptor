@@ -55,7 +55,8 @@ $program = canonpath_except_file($program);
 my $interceptor = get_interception($program);
 
 if ($interceptor) {
-    # Yes, we do want to intercept this program.
+    # Yes, we do want to intercept this program; no more LD_PRELOAD.
+    $ENV{BUILD_INTERCEPTOR_MODE} = 'LD_PRELOAD';
     $ARGV[0] = $interceptor;
 } else {
     # No, don't intercept this program.
