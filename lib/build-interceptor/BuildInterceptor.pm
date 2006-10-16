@@ -63,6 +63,7 @@ our $raw_args = [@ARGV];
 our $argv = [@ARGV];
 
 # POSIXLY_CORRECT breaks objcopy
+# TODO: only remove it locally when calling objcopy
 delete $ENV{POSIXLY_CORRECT};
 
 if (!$ENV{HOME}) {
