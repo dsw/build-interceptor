@@ -201,7 +201,9 @@ sub _follow_interceptor_links {
     my ($prog) = @_;
     my $l;
     while ( ($l=readlink($prog)) && $l !~ /interceptor/ ) {
-        $prog = $l;
+        my ($vol,$dir,$file) = File::Spec->splitpath($prog);
+        my $basedir = File::Spec->catpath($vol, $dir, "");
+        $prog = File::Spec->rel2abs($l, $basedir);
     }
     return $prog;
 }
