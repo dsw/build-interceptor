@@ -36,7 +36,7 @@ if (scalar(@ARGV) < 1) {
 
 clean_ld_preload();
 
-my $program = $ARGV[1];
+my $program = shift @ARGV;
 
 if ($program !~ m,/,) {
     my $program1 = which($program);
@@ -60,12 +60,12 @@ if ($interceptor) {
     if (! -x $interceptor) {
         die "$0: interceptor $interceptor not executable\n";
     }
-    shift @ARGV;
     unshift(@ARGV, $interceptor,
             '--build-interceptor-mode', 'LD_PRELOAD',
             '--build-interceptor-program', $program);
 } else {
     # No, don't intercept this program.
+    unshift(@ARGV, $program);
     #
     # But *do* use ld_preload so we can intercept its children!
     add_ld_preload();
@@ -100,7 +100,7 @@ sub get_interception {
 }
 
 sub clean_ld_preload {
-    my $ld_preload = $ENV{LD_PRELOAD};
+    my $ld_preload = $ENV{BUILD_INTERCEPTOR_ORIG_LD_PRELOAD} = $ENV{LD_PRELOAD};
     # remove existing $PRELOAD, if any.
     $ld_preload =~ s/ /:/g;
     $ld_preload =~ s/::/:/g;
