@@ -17,7 +17,7 @@ and three other known methods, not yet implemented:
 Comparison
 ==========
 
-These methods have advantages and disadvantages:
+The five methods have advantages and disadvantages:
 
 * RENAME:
     * Expected success in the face of complex builds: perfect.
