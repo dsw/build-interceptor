@@ -1,0 +1,41 @@
+
+There are two implemented modes of using Build-Interceptor:
+
+* RENAME: renames the original executables, e.g. /usr/bin/gcc to
+  /usr/bin/gcc_orig, and replaces it with gcc_intercept.
+
+* LD_PRELOAD: uses LD_PRELOAD to override exec* libc calls
+
+and three other known methods, not yet implemented:
+
+* PTRACE
+
+* GCC_EXEC_PREFIX: uses the GCC_EXEC_PREFIX environment variable
+
+* PATH PREFIX: create a new program "gcc" earlier in $PATH
+
+These methods have advantages and disadvantages:
+
+* RENAME:
+    * Pro: always works.
+    * Con: requires root or virtual machine; messes with system.
+
+* LD_PRELOAD:
+    * Pro: almost always works (see Con).
+    * Con: doesn't work if program under interception is statically linked, or
+      makes direct libc calls.
+
+* PTRACE:
+    * Pro: always works.
+    * Con: not portable.
+
+* GCC_EXEC_PREFIX:
+    * Con: susceptible to user modifying environment[1]
+
+* PREFIX:
+    * Con: susceptible to user modifying environment[1]
+
+
+[1] Don't underestimate the user modifying environment variables in the build
+    process.  For example, "Cons" always clears the environment and then sets
+    it to fixed values.
