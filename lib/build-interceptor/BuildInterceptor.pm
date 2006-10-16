@@ -87,8 +87,8 @@ sub _open_log
 {
     return if defined($logfh);
     if ($ENV{BUILD_INTERCEPTOR_LOG}) {
-        my $logfile = "$ENV{HOME}/build-interceptor.log";
-        $logfh = new FileHandle(">>$logfile") || die "$0: $!";
+        my $logfile = $ENV{BUILD_INTERCEPTOR_LOG}; #"$ENV{HOME}/build-interceptor.log";
+        $logfh = IO::File->new($logfile,'a') || die "$0: $!";
     } else {
         $logfh = 0;
     }
