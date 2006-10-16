@@ -20,6 +20,7 @@ get_paths() {
 
 gccs="gcc `existingfiles /usr/bin/gcc-* /usr/bin/*-linux-gcc`"
 
+# User tools to intercept.
 usrtools="$usrtools $gccs"
 usrtools="$usrtools g++ `existingfiles /usr/bin/g++-*`"
 usrtools="$usrtools gcc `existingfiles /usr/bin/gcc-*`"
