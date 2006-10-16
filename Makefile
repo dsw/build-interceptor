@@ -12,43 +12,6 @@ ifneq (${BUILD_INTERCEPTOR_FORCE_ROOT},1)
   endif
 endif
 
-# The list of user tools that we are intercepting.  The user could
-# build this file by hand if this automated way doesn't work.
-USRTOOLS :=
-# dsw: this makes it a pain to use the build-interceptor makefiles;
-# turn it on only if you need it
-#USRTOOLS += make
-USRTOOLS_GCC = gcc $(notdir $(wildcard /usr/bin/gcc-* /usr/bin/*-linux-gcc))
-USRTOOLS += $(USRTOOLS_GCC)
-USRTOOLS += g++ $(notdir $(wildcard /usr/bin/g++-*))
-USRTOOLS += cpp $(notdir $(wildcard /usr/bin/cpp-*))
-USRTOOLS += cc
-USRTOOLS += c++
-USRTOOLS += as
-USRTOOLS += ld
-
-# Internal gcc tools usually not called by the user.
-GCCTOOLS :=
-GCCTOOLS += cpp0
-GCCTOOLS += tradcpp0
-GCCTOOLS += cc1
-GCCTOOLS += cc1plus
-# at least under gcc 3.4 this just runs ld
-# GCCTOOLS += collect2
-GCCTOOLS += f771
-
-get_paths = $(shell for F in $(1); do which $$F 2>/dev/null; done | sort -u)
-
-USRTOOLS_FULL = $(call get_paths,$(USRTOOLS))
-
-# the wildcard function filters out non-existing files
-USRTOOLS_GCC_FULL = $(wildcard $(shell          \
-	for F in $(GCCTOOLS); do                \
-	    for gcc in $(USRTOOLS_GCC); do      \
-	        $$gcc -print-prog-name=$$F;     \
-	    done                                \
-	done | sort -u) )
-
 .PHONY: all interceptor.specs.ALL
 all: intercept.progs make_interceptor interceptor.specs.ALL
 
@@ -98,7 +61,7 @@ clean-script-interceptor:
 	rm -rf make_interceptor
 
 intercept.progs: clean-intercept.progs
-	echo $(USRTOOLS_FULL) $(USRTOOLS_GCC_FULL) | xargs -n 1 > $@
+	./list-programs-to-intercept > $@
 	@echo
 	@echo "$@: " && cat $@
 
