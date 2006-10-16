@@ -84,11 +84,12 @@ sub show_status {
     print "Interception is:\n";
     for my $file (@intercept_progs) {
         my $exists = -e $file;
+        my $exists_symlink = -l $file;
         my $orig_exists = -e "${file}_orig";
 
-        if ($exists && !$orig_exists) {
+        if ($exists && !$exists_symlink && !$orig_exists) {
             print "OFF    for $file\n";
-        } elsif (!$exists && $orig_exists) {
+        } elsif ($exists && $exists_symlink && $orig_exists) {
             print "ON     for $file\n";
         } else {
             print "BROKEN for $file\n";
@@ -164,16 +165,29 @@ sub off {
         print "$f:\n";
         if (-e "${f}_orig") {
             if (-e $f) {
-                # TODO: make sure $f is a build-interceptor symlink!
+                if (!is_build_interceptor_symlink($f)) {
+                    die "$0: both $f and ${f}_orig exist, but $f is not a build-interceptor symlink!\n";
+                }
                 print "    unlink $f\n";
                 unlink($f) or die "$0: couldn't unlink $f\n";
             }
             print "    rename ${f}_orig $f\n";
             rename("${f}_orig", $f)
                 or die "$0: couldn't rename ${f}_orig $f\n";
+        } else {
+            print "    [Nothing to do]\n";
         }
     }
 
     system("chmod", "u+w", $intercept_progs_filename)
         and warn "$0: couldn't chmod u+w $intercept_progs_filename\n";
+}
+
+sub is_build_interceptor_symlink {
+    my ($f) = @_;
+    return 0 unless -l $f;
+    my $link = readlink($f);
+    return 0 unless $link;
+    return 0 unless $link =~ /build-interceptor/;
+    return 1;
 }
