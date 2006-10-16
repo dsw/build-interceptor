@@ -42,6 +42,10 @@ our %EXPORT_TAGS = (all => [@EXPORT_OK]);
 
 my $ETC_DIR = "$FindBin::RealBin/../../rc";
 
+if ($ENV{LD_PRELOAD} && $ENV{LD_PRELOAD} =~ /preload_helper/) {
+    die "$0: LD_PRELOAD shouldn't have preload_helper.so here!";
+}
+
 our $BUILD_INTERCEPTOR_MODE = 'RENAME';
 
 if (scalar(@ARGV) >= 2 && $ARGV[0] eq '--build-interceptor-mode') {
