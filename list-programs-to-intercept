@@ -4,15 +4,11 @@
 
 # This program lists programs that should be intercepted to stdout.
 
-# TODO: detect and avoid ccache
-
-# TODO: readlink and check for ccache
-
-# TODO: readlink and check to see if interception rename mode is already on!
-
 use strict;
 use warnings;
 use File::Spec;
+
+$::quiet = 0;
 
 sub isprog {
     return 1 if !-d $_[0] && -x $_[0];
@@ -49,7 +45,14 @@ sub sortuniq {
 }
 
 sub filter_out_orig {
-    map { /_orig$/ ? $_ : () } @_;
+    map {
+        if (/_orig$/) {
+            print STDERR "$0: ignoring $_\n" unless $::quiet;
+            ();
+        } else {
+            $_;
+        }
+    } @_;
 }
 
 sub readlinkfull {
@@ -83,10 +86,34 @@ sub filter_out_redundant_symlinks {
     } @progs;
 }
 
+sub is_ccache {
+    my ($path) = @_;
+    while ($path = readlinkfull($path)) {
+        my ($vol,$dir,$file) = File::Spec->splitpath($path);
+        return $file if ($file =~ /ccache/);
+    }
+    return 0;
+}
+
+sub filter_out_ccache {
+    return map {
+        if (is_ccache($_)) {
+            print STDERR "$0: ignoring $_: it's apparently a ccache symlink\n";
+            ();
+        } else {
+            $_;
+        }
+    } @_;
+}
+
 # versions of gcc
 my @gccs = (whichm('gcc'),
             </usr/bin/gcc-*>,
             </usr/bin/*-linux-gcc>);
+{
+    local $::quiet = 1;
+    @gccs = filter_out_orig(@gccs);
+}
 
 # User tools to intercept.
 my @usrtools = sortuniq(@gccs,
@@ -98,7 +125,11 @@ my @usrtools = sortuniq(@gccs,
                         whichm('as'),
                         whichm('ld'));
 
+@usrtools = filter_out_orig(@usrtools);
+
 @usrtools = filter_out_redundant_symlinks(@usrtools);
+
+@usrtools = filter_out_ccache(@usrtools);
 
 ## Internal gcc tools usually not called by the user.
 # at least under gcc 3.4 this just runs ld: collect2
