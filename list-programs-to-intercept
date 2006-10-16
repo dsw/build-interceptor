@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/perl
 
 # $Id$
 
@@ -6,51 +6,115 @@
 
 # TODO: detect and avoid ccache
 
-existingfiles() {
-    for f in $@; do
-        test -f $f && echo $f
-    done
-}
-
-get_paths() {
-    for f in $@; do
-        which $f 2>/dev/null
-    done
-}
-
-gccs="gcc `existingfiles /usr/bin/gcc-* /usr/bin/*-linux-gcc`"
-
-# User tools to intercept.
-usrtools="$usrtools $gccs"
-usrtools="$usrtools g++ `existingfiles /usr/bin/g++-*`"
-usrtools="$usrtools gcc `existingfiles /usr/bin/gcc-*`"
-# usrtools="$usrtools make"
-usrtools="$usrtools cc"
-usrtools="$usrtools c++"
-usrtools="$usrtools as"
-usrtools="$usrtools ld"
-
-# Internal gcc tools usually not called by the user.
-gcccomponents=""
-gcccomponents="$gcccomponents cpp0"
-gcccomponents="$gcccomponents tradcpp0"
-gcccomponents="$gcccomponents cc1"
-gcccomponents="$gcccomponents cc1plus"
-# at least under gcc 3.4 this just runs ld
-# gcccomponents="$gcccomponents collect2"
-gcccomponents="$gcccomponents f771"
-
-# print full paths of user tools
-get_paths $usrtools | sort -u
-
-# print full paths of gcc components
-for f in $gcccomponents; do
-    for gcc in $gccs; do
-        t=`$gcc -print-prog-name=$f`
-        [ -f $t ] && echo "$t"
-    done
-done | sort -u
-
 # TODO: readlink and check for ccache
 
 # TODO: readlink and check to see if interception rename mode is already on!
+
+use strict;
+use warnings;
+use File::Spec;
+
+sub isprog {
+    return 1 if !-d $_[0] && -x $_[0];
+}
+
+sub which {
+    my ($x) = @_;
+    if ($x =~ m,^/,) {
+        return $x if isprog $x;
+        return;
+    }
+
+    for my $dir (File::Spec->path()) {
+        my $f = File::Spec->catfile($dir, $x);
+        return $f if isprog($f);
+    }
+}
+
+sub whichm {
+    my @r = ();
+    for my $prog (@_) {
+        my $progpath = which($prog);
+        push(@r, $progpath) if $progpath;
+    }
+    return @r;
+}
+
+sub sortuniq {
+    my %h = ();
+    for my $x (@_) {
+        $h{$x} = 1;
+    }
+    return sort keys %h;
+}
+
+sub filter_out_orig {
+    map { /_orig$/ ? $_ : () } @_;
+}
+
+sub readlinkfull {
+    my ($x) = @_;
+    die unless $x;
+    my $link = readlink($x);
+    return unless $link;
+    my ($vol,$dir,$file) = File::Spec->splitpath($x);
+    my $basedir = File::Spec->catpath($vol, $dir, "");
+    return File::Spec->rel2abs($link, $basedir);
+}
+
+sub find_link {
+    my ($path, $list) = @_;
+    die unless $path;
+    while ($path = readlinkfull($path)) {
+        return $path if (grep { $path eq $_ } @$list);
+    }
+    return;
+}
+
+sub filter_out_redundant_symlinks {
+    my (@progs) = @_;
+    return map {
+        if (my $l = find_link($_, \@progs)) {
+            print STDERR "$0: ignoring $_: it's a symlink to $l, also intercepted.\n";
+            ();
+        } else {
+            $_;
+        }
+    } @progs;
+}
+
+# versions of gcc
+my @gccs = (whichm('gcc'),
+            </usr/bin/gcc-*>,
+            </usr/bin/*-linux-gcc>);
+
+# User tools to intercept.
+my @usrtools = sortuniq(@gccs,
+                        whichm('g++'), </usr/bin/g++-*>,
+                        whichm('gcc'), </usr/bin/gcc-*>,
+                        # whichm('make')
+                        whichm('cc'),
+                        whichm('c++'),
+                        whichm('as'),
+                        whichm('ld'));
+
+@usrtools = filter_out_redundant_symlinks(@usrtools);
+
+## Internal gcc tools usually not called by the user.
+# at least under gcc 3.4 this just runs ld: collect2
+my @gcc_component_names = qw/cpp0 tradcpp0 cc1 cc1plus f771/;
+
+# get full paths of gcc components
+my @gcc_components = ();
+for my $component_name (@gcc_component_names) {
+    for my $gcc (@gccs) {
+        my $t = `$gcc -print-prog-name=$component_name 2>/dev/null`; chomp $t;
+        push(@gcc_components, $t) if (-f $t);
+    }
+}
+
+@gcc_components = sortuniq(@gcc_components);
+
+for my $prog (@usrtools, @gcc_components) {
+    print "$prog\n";
+}
