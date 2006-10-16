@@ -152,7 +152,7 @@ sub logline {
 sub run_prog {
     logline("  system([$PROGRAM @$argv])");
     local %ENV = %ENV;
-    BuildInterceptor::Preload::add_ld_preload() if $BUILD_INTERCEPTOR_MODE eq 'PRELOAD';
+    BuildInterceptor::Preload::add_ld_preload() if $BUILD_INTERCEPTOR_MODE eq 'LD_PRELOAD';
     # system($PROGRAM, @$argv);
     IPC::Run::run( [ $PROGRAM, @$argv ] );
     check_exit_code($?);
@@ -164,15 +164,15 @@ sub exec_prog {
         print STDERR "$0: exec_prog $PROGRAM\n";
     }
     # Make sure our children are intercepted.
-    BuildInterceptor::Preload::add_ld_preload() if $BUILD_INTERCEPTOR_MODE eq 'PRELOAD';
-    logline("     LD_PRELOAD=$ENV{LD_PRELOAD}") if $BUILD_INTERCEPTOR_MODE eq 'PRELOAD';
+    BuildInterceptor::Preload::add_ld_preload() if $BUILD_INTERCEPTOR_MODE eq 'LD_PRELOAD';
+    logline("     LD_PRELOAD=$ENV{LD_PRELOAD}") if $BUILD_INTERCEPTOR_MODE eq 'LD_PRELOAD';
     exec($PROGRAM, @$argv) or die "$0: couldn't exec $argv->[0]";
 }
 
 sub pipe_prog {
     logline("  pipe([$PROGRAM @$argv])");
     local %ENV = %ENV;
-    BuildInterceptor::Preload::add_ld_preload() if $BUILD_INTERCEPTOR_MODE eq 'PRELOAD';
+    BuildInterceptor::Preload::add_ld_preload() if $BUILD_INTERCEPTOR_MODE eq 'LD_PRELOAD';
     # my $quoted_argv = [map{_quoteit($_)} @$argv];
     # my $stdout = `$PROGRAM @$quoted_argv`;
 
