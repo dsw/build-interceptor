@@ -15,7 +15,7 @@ my $interceptors_dir = "$INSTALL_PREFIX/lib/build-interceptor";
 $::quiet = 0;
 
 sub isprog {
-    return 1 if !-d $_[0] && -x $_[0];
+    return 1 if -x $_[0] && !-d $_[0];
 }
 
 sub which {
