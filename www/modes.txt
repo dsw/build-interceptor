@@ -8,11 +8,14 @@ There are two implemented modes of using Build-Interceptor:
 
 and three other known methods, not yet implemented:
 
-* PTRACE: uses ptrace(2) to intercept exec* syscalls
+* PTRACE: uses ptrace(2) to intercept the execve syscall
 
 * GCC_EXEC_PREFIX: uses the GCC_EXEC_PREFIX environment variable
 
 * PATH PREFIX: create a new program "gcc" earlier in $PATH
+
+Comparison
+==========
 
 These methods have advantages and disadvantages:
 
