@@ -13,7 +13,7 @@ ifneq (${BUILD_INTERCEPTOR_FORCE_ROOT},1)
 endif
 
 .PHONY: all interceptor.specs.ALL
-all: intercept.progs make_interceptor interceptor.specs.ALL
+all: intercept.progs lib/build-interceptor/make_interceptor interceptor.specs.ALL
 
 # timestamp the $HOME/build-interceptor.log; useful to run between
 # compilations
@@ -65,5 +65,5 @@ intercept.progs: clean-intercept.progs
 	@echo
 	@echo "$@: " && cat $@
 
-make_interceptor: script_interceptor.c
+lib/build-interceptor/make_interceptor: script_interceptor.c
 	gcc -o $@ -DIPROGNAME='"make"' -DINTERCEPTORPATH='"make_interceptor.pl"' $^
