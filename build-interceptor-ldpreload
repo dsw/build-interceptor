@@ -35,6 +35,7 @@ if (scalar(@ARGV) < 1) {
 }
 
 clean_ld_preload();
+
 my $program = $ARGV[1];
 
 if ($program !~ m,/,) {
@@ -56,11 +57,13 @@ my $interceptor = get_interception($program);
 
 if ($interceptor) {
     # Yes, we do want to intercept this program; no more LD_PRELOAD.
-    $ENV{BUILD_INTERCEPTOR_MODE} = 'LD_PRELOAD';
-    $ARGV[0] = $interceptor;
     if (! -x $interceptor) {
         die "$0: interceptor $interceptor not executable\n";
     }
+    shift @ARGV;
+    unshift(@ARGV, $interceptor,
+            '--build-interceptor-mode', 'LD_PRELOAD',
+            '--build-interceptor-program', $program);
 } else {
     # No, don't intercept this program.
     #
@@ -68,9 +71,7 @@ if ($interceptor) {
     add_ld_preload();
 }
 
-# Even when intercepting, the child's argv[0] should be propagated from the
-# original program name.
-exec { $program } @ARGV;
+exec { $ARGV[0] } @ARGV;
 die "$0: failed to exec $ARGV[0]\n";
 
 

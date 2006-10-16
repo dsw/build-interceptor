@@ -29,43 +29,61 @@ our @EXPORT_OK = qw(
      tab_indent_lines
      check_output_file
      split_var
-     $SCRIPT_PATH
+     my_dirname
      $BUILD_INTERCEPTOR_MODE
+     $ARGV0
+     $PROGRAM
      $EXTRACT_SECTION
-     $arg0
-     $prog
      $raw_args
      $argv
 );
 
 our %EXPORT_TAGS = (all => [@EXPORT_OK]);
 
-our $SCRIPT_PATH = $FindBin::RealBin;
+my $ETC_DIR = "$FindBin::RealBin/../../rc";
 
-our $BUILD_INTERCEPTOR_MODE = $ENV{BUILD_INTERCEPTOR_MODE} || 'RENAME';
+our $BUILD_INTERCEPTOR_MODE = 'RENAME';
+
+if (scalar(@ARGV) >= 2 && $ARGV[0] eq '--build-interceptor-mode') {
+    shift @ARGV;
+    $BUILD_INTERCEPTOR_MODE = shift @ARGV;
+}
+
+if ($BUILD_INTERCEPTOR_MODE eq 'RENAME') {
+    if (! -f "$ETC_DIR/rename-mode.on") {
+        die "$0: invoked in RENAME mode; enable with `build-interceptor-rename on'\n";
+    }
+} elsif ($BUILD_INTERCEPTOR_MODE eq 'LD_PRELOAD') {
+    # ok
+} else {
+    die "$0: invalid Build-Interceptor mode '$BUILD_INTERCEPTOR_MODE'\n";
+}
+
+our $ARGV0 = $0;
+our $PROGRAM;
+
+if (scalar(@ARGV) >= 2 && $ARGV[0] eq '--build-interceptor-program') {
+    shift @ARGV;
+    $ARGV0 = $PROGRAM = shift @ARGV;
+}
+
+if ($BUILD_INTERCEPTOR_MODE eq 'RENAME') {
+    if ($ARGV0 =~ s/_interceptor$//) {
+        $ARGV0 =~ s,.*/,,;
+    }
+    $ARGV0 = _follow_interceptor_links($ARGV0);
+    $PROGRAM = "${ARGV0}_orig";
+}
+
+if (!$PROGRAM) {
+    die "$0: unknown program under interception\n";
+}
 
 # we're in build-interceptor/lib/build-interceptor
 our $EXTRACT_SECTION = "$FindBin::RealBin/../../extract_section";
 
 if (! -x $EXTRACT_SECTION) {
     die "$0: Couldn't find extract_section (looked at $EXTRACT_SECTION)\n";
-}
-
-my $p0 = $0;
-# if invoked directly or via build-interceptor-ld-preload.
-if ($0 =~ /_interceptor/) {
-    $p0 =~ s,_interceptor.*,,;
-    $p0 =~ s,.*/,,;
-    # $p0 = `which $p0`; chomp $p0;
-}
-
-our $arg0 = _follow_interceptor_links($p0);
-# compute the new executable name we are calling
-our $prog;
-if ($BUILD_INTERCEPTOR_MODE eq 'RENAME') {
-    $prog = "${arg0}_orig";
-} else {
-    $prog = $arg0;
 }
 
 our $raw_args = [@ARGV];
@@ -109,21 +127,21 @@ sub logline {
 }
 
 sub run_prog {
-    logline("  system([$prog @$argv])");
-    system($prog, @$argv);
+    logline("  system([$PROGRAM @$argv])");
+    system($PROGRAM, @$argv);
     check_exit_code($?);
 }
 
 sub exec_prog {
-    logline("  exec([$prog @$argv])");
-    exec($prog, @$argv) or die "$0: couldn't exec $argv->[0]";
+    logline("  exec([$PROGRAM @$argv])");
+    exec($PROGRAM, @$argv) or die "$0: couldn't exec $argv->[0]";
 }
 
 sub pipe_prog {
     # TODO: use IPC::Run
-    logline("  pipe([$prog @$argv])");
+    logline("  pipe([$PROGRAM @$argv])");
     my $quoted_argv = [map{_quoteit($_)} @$argv];
-    my $stdout = `$prog @$quoted_argv`;
+    my $stdout = `$PROGRAM @$quoted_argv`;
     check_exit_code($?);
     return $stdout;
 }
@@ -217,9 +235,7 @@ sub _follow_interceptor_links {
     my ($prog) = @_;
     my $l;
     while ( ($l=readlink($prog)) && $l !~ /interceptor/ ) {
-        my ($vol,$dir,$file) = File::Spec->splitpath($prog);
-        my $basedir = File::Spec->catpath($vol, $dir, "");
-        $prog = File::Spec->rel2abs($l, $basedir);
+        $prog = File::Spec->rel2abs($l, my_dirname($prog));
     }
     return $prog;
 }
@@ -247,7 +263,7 @@ sub tab_indent_lines {
 sub check_output_file {
     my ($outfile) = @_;
     if ($outfile ne '-' && !-f $outfile) {
-        die "$0: $prog didn't produce $outfile\n";
+        die "$0: $PROGRAM didn't produce $outfile\n";
     }
 }
 
@@ -264,6 +280,12 @@ sub split_var {
     my @r = map { s/$q/ /g; $_ } split(/ +/, $x);
 
     return @r;
+}
+
+sub my_dirname {
+    my ($path) = @_;
+    my ($vol,$dir,$file) = File::Spec->splitpath($path);
+    return File::Spec->catpath($vol, $dir, "");
 }
 
 1;

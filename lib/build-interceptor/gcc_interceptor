@@ -50,14 +50,14 @@ unshift(@$argv, @$BUILD_INTERCEPTOR_EXTRA_GCC_ARGS);
 exec_prog();
 
 sub get_gcc_version {
-    my $version_data = ` ($prog -v >/dev/null ) 2>&1 `;
+    my $version_data = ` ($PROGRAM -v >/dev/null ) 2>&1 `;
     if ($? != 0) {
-        die "$0: couldn't run $prog to get gcc version; exit code $?\n";
+        die "$0: couldn't run $PROGRAM to get gcc version; exit code $?\n";
     }
 
     # get major and minor version numbers (but not patch level)
     if ($version_data !~ /^gcc version (\d+[.]\d+)/m) {
-        die "$0: couldn't parse version number from $prog -v\n";
+        die "$0: couldn't parse version number from $PROGRAM -v\n";
     }
 
     my $version = $1;

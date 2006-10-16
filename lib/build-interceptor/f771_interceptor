@@ -12,7 +12,7 @@ use BuildInterceptor ':all';
 
 my $outfile = get_output_filename() || 'a.out';
 
-run_prog($prog, $argv);
+run_prog($PROGRAM, $argv);
 check_output_file($outfile);
 
 # append metadata to output

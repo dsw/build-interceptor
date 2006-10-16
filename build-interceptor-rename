@@ -27,6 +27,8 @@ my $ETC_DIR = "$FindBin::RealBin/rc";
 
 my $intercept_progs_filename = "$ETC_DIR/intercept.progs";
 
+my $on_filename = "$ETC_DIR/rename-mode.on";
+
 if (!-f $intercept_progs_filename) {
     # TODO: allow intercept.progs to live in a different directory
     die "$0: couldn't find $intercept_progs_filename; run `make' first.\n";
@@ -79,7 +81,8 @@ sub load {
 
 # Print the current interception state.
 sub show_status {
-    print "Interception is:\n";
+    my $s = (-f $on_filename) ? "ON" : "OFF";
+    print "Build-Interceptor RENAME mode is $s.\n";
     for my $r (@intercept_progs) {
         my ($prog, $interceptor) = @$r;
         my $exists = -e $prog;
@@ -112,6 +115,13 @@ sub on {
     system("chmod", "a-w", $intercept_progs_filename)
         and warn "$0: couldn't chmod a-w $intercept_progs_filename\n";
 
+    if (-f $on_filename) {
+        print STDERR "$0: warning: $on_filename already exists\n";
+    } else {
+        # touch
+        my $f = IO::File->new($on_filename, 'w') || die "$0: couldn't write to $on_filename\n";
+    }
+
     for my $r (@intercept_progs) {
         my ($prog, $interceptor) = @$r;
         # At this point, we shouldn't have any redundant links, since they've
@@ -138,6 +148,12 @@ sub on {
 
 sub off {
     check_root();
+
+    if (-f $on_filename) {
+        unlink($on_filename) or die "$0: couldn't unlink $on_filename\n";
+    } else {
+        print STDERR "$0: warning: $on_filename doesn't exist\n";
+    }
 
     for my $r (@intercept_progs) {
         my ($prog, $interceptor) = @$r;
