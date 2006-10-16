@@ -2,7 +2,7 @@
 
 # $Id$
 
-# This script implements "RENAME MODE" (see doc/modes.txt).
+# This script implements Build-Interceptor RENAME MODE (see doc/modes.txt).
 #
 # It will move your system gcc toolchain away and point softlinks at the
 # intereceptor scripts.  Generally, run targets in this makefile as root.  Use
