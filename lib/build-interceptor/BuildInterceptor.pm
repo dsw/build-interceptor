@@ -30,6 +30,7 @@ our @EXPORT_OK = qw(
      check_output_file
      split_var
      $SCRIPT_PATH
+     $BUILD_INTERCEPTOR_MODE
      $EXTRACT_SECTION
      $arg0
      $prog
