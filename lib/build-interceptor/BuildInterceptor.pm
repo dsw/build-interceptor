@@ -41,6 +41,8 @@ our %EXPORT_TAGS = (all => [@EXPORT_OK]);
 
 our $SCRIPT_PATH = $FindBin::RealBin;
 
+our $BUILD_INTERCEPTOR_MODE = $ENV{BUILD_INTERCEPTOR_MODE} || 'RENAME';
+
 # we're in build-interceptor/lib/build-interceptor
 our $EXTRACT_SECTION = "$FindBin::RealBin/../../extract_section";
 
@@ -49,7 +51,7 @@ if (! -x $EXTRACT_SECTION) {
 }
 
 my $p0 = $0;
-# if invoked directly, e.g. make_interceptor.pl.
+# if invoked directly or via build-interceptor-ld-preload.
 if ($0 =~ /_interceptor/) {
     $p0 =~ s,_interceptor.*,,;
     $p0 =~ s,.*/,,;
@@ -58,7 +60,13 @@ if ($0 =~ /_interceptor/) {
 
 our $arg0 = _follow_interceptor_links($p0);
 # compute the new executable name we are calling
-our $prog = "${arg0}_orig";
+our $prog;
+if ($BUILD_INTERCEPTOR_MODE eq 'RENAME') {
+    $prog = "${arg0}_orig";
+} else {
+    $prog = $arg0;
+}
+
 our $raw_args = [@ARGV];
 our $argv = [@ARGV];
 
