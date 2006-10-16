@@ -50,7 +50,7 @@ mkpath($ar_cache);
 # You can't re-use a section name, and it seems that sometimes both
 # collect2 and ld are called on the same file.  Update: It seems that
 # collect2 calls ld.
-my $sec_name = basename($0);
+my $sec_name = basename($arg0);
 die "$0: bad sec_name:$sec_name:" unless
   $sec_name eq 'ld' ||
   $sec_name eq 'collect2';
