@@ -13,6 +13,7 @@ use FindBin;
 use POSIX qw(strftime);
 use Carp;
 use BuildInterceptor::Preload;
+use IPC::Run;
 
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
@@ -143,11 +144,17 @@ sub logline {
     }
 }
 
+# In PRELOAD, we preserve the invariant that we execve() exactly once to get
+# to the target intercepted program.  This is necessary because the current
+# process is not LD_PRELOAD-traced, but our child will be, so our
+# grand-children will be re-intercepted.
+
 sub run_prog {
     logline("  system([$PROGRAM @$argv])");
     local %ENV = %ENV;
-    BuildInterceptor::Preload::add_ld_preload();
-    system($PROGRAM, @$argv);
+    BuildInterceptor::Preload::add_ld_preload() if $BUILD_INTERCEPTOR_MODE eq 'PRELOAD';
+    # system($PROGRAM, @$argv);
+    IPC::Run::run( [ $PROGRAM, @$argv ] );
     check_exit_code($?);
 }
 
@@ -157,18 +164,24 @@ sub exec_prog {
         print STDERR "$0: exec_prog $PROGRAM\n";
     }
     # Make sure our children are intercepted.
-    BuildInterceptor::Preload::add_ld_preload();
+    BuildInterceptor::Preload::add_ld_preload() if $BUILD_INTERCEPTOR_MODE eq 'PRELOAD';
     logline("     LD_PRELOAD=$ENV{LD_PRELOAD}") if $BUILD_INTERCEPTOR_MODE eq 'PRELOAD';
     exec($PROGRAM, @$argv) or die "$0: couldn't exec $argv->[0]";
 }
 
 sub pipe_prog {
-    # TODO: use IPC::Run
     logline("  pipe([$PROGRAM @$argv])");
-    my $quoted_argv = [map{_quoteit($_)} @$argv];
     local %ENV = %ENV;
-    BuildInterceptor::Preload::add_ld_preload();
-    my $stdout = `$PROGRAM @$quoted_argv`;
+    BuildInterceptor::Preload::add_ld_preload() if $BUILD_INTERCEPTOR_MODE eq 'PRELOAD';
+    # my $quoted_argv = [map{_quoteit($_)} @$argv];
+    # my $stdout = `$PROGRAM @$quoted_argv`;
+
+    # We must use IPC::Run here instead of `...`, to maintain the invariant
+    # that we execute one process, absolutely necessary for preload mode.
+
+    my $stdout;
+    IPC::Run::run( [ $PROGRAM, @$argv ], '>', \$stdout);
+
     check_exit_code($?);
     return $stdout;
 }
