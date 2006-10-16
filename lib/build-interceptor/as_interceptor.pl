@@ -11,11 +11,6 @@ use File::Spec;
 use FileHandle;
 use File::Basename;
 
-my $extract_pl = "${FindBin::RealBin}/extract_section.pl";
-if (!-f $extract_pl) {
-    die "$0: Couldn't find extract_section.pl (should be $extract_pl)\n";
-}
-
 sub find_input_filename {
     my @infiles = grep { /[.][sS]$/ } @$argv;
     return $infiles[0];
@@ -127,33 +122,33 @@ if (do_not_add_interceptions_to_this_file_p($outfile_abs)) {
     exit(0);
 }
 
-my $cc1_note = `$extract_pl .note.cc1_interceptor $outfile 2>/dev/null`;
+my $cc1_note = `$EXTRACT_SECTION .note.cc1_interceptor $outfile 2>/dev/null`;
 if ($? || !$cc1_note) {
-    my $empty_note = `$extract_pl .note.as_interceptor_empty $outfile 2>/dev/null`;
+    my $empty_note = `$EXTRACT_SECTION .note.as_interceptor_empty $outfile 2>/dev/null`;
     if ($empty_note && !$?) {
         # ignore empty .S files
         exit 0;
     }
 
-    my $f771_note = `$extract_pl .note.f771_interceptor $outfile 2>/dev/null`;
+    my $f771_note = `$EXTRACT_SECTION .note.f771_interceptor $outfile 2>/dev/null`;
     if ($f771_note && !$?) {
         # Ignore fortran files for now
         exit 0;
     }
 
-    my $ocaml_note = `$extract_pl .note.ocaml_interceptor $outfile 2>/dev/null`;
+    my $ocaml_note = `$EXTRACT_SECTION .note.ocaml_interceptor $outfile 2>/dev/null`;
     if ($ocaml_note && !$?) {
         # Ignore ocaml files for now
         exit 0;
     }
 
-    my $java_note = `$extract_pl .note.java_interceptor $outfile 2>/dev/null`;
+    my $java_note = `$EXTRACT_SECTION .note.java_interceptor $outfile 2>/dev/null`;
     if ($java_note && !$?) {
         # Ignore java files for now
         exit 0;
     }
 
-    my $java_resource_note = `$extract_pl .note.java_resource_interceptor $outfile 2>/dev/null`;
+    my $java_resource_note = `$EXTRACT_SECTION .note.java_resource_interceptor $outfile 2>/dev/null`;
     if ($java_resource_note && !$?) {
         # Ignore java resource files
         exit 0;

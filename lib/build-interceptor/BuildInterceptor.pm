@@ -29,8 +29,8 @@ our @EXPORT_OK = qw(
      tab_indent_lines
      check_output_file
      split_var
-     $BUILD_INTERCEPTOR_VERSION
-     $BUILD_INTERCEPTOR_PROTOCOL_VERSION
+     $SCRIPT_PATH
+     $EXTRACT_SECTION
      $arg0
      $prog
      $raw_args
@@ -39,8 +39,14 @@ our @EXPORT_OK = qw(
 
 our %EXPORT_TAGS = (all => [@EXPORT_OK]);
 
-our $BUILD_INTERCEPTOR_VERSION = "1.2";
-our $BUILD_INTERCEPTOR_PROTOCOL_VERSION = "2";
+our $SCRIPT_PATH = $FindBin::RealBin;
+
+# we're in build-interceptor/lib/build-interceptor
+our $EXTRACT_SECTION = "$FindBin::RealBin/../../extract_section";
+
+if (! -x $EXTRACT_SECTION) {
+    die "$0: Couldn't find extract_section (looked at $EXTRACT_SECTION)\n";
+}
 
 my $p0 = $0;
 # if invoked directly, e.g. make_interceptor.pl.

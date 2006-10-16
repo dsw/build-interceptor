@@ -4,8 +4,8 @@
 use warnings;
 use strict;
 use FindBin;
-use lib "${FindBin::RealBin}";
-use BuildInterceptor ':all';
+use lib "${FindBin::RealBin}/lib/build-interceptor";
+use BuildInterceptor::Version;
 
 my $print_newline = 1;
 my $print_protocol_version = 0;
@@ -21,9 +21,9 @@ if ($ARGV[0] && $ARGV[0] eq '-p') {
 }
 
 if ($print_protocol_version) {
-    print $BUILD_INTERCEPTOR_PROTOCOL_VERSION;
+    print $BuildInterceptor::Version::BUILD_INTERCEPTOR_PROTOCOL_VERSION;
 } else {
-    print $BUILD_INTERCEPTOR_VERSION;
+    print $BuildInterceptor::Version::BUILD_INTERCEPTOR_VERSION;
 }
 
 if ($print_newline) {

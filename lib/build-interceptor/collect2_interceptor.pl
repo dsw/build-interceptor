@@ -56,11 +56,7 @@ die "$0: bad sec_name:$sec_name:" unless
   $sec_name eq 'collect2';
 
 # test-only extract
-my $extract_pl = "${FindBin::RealBin}/extract_section.pl";
-if (!-f $extract_pl) {
-    die "$0: Couldn't find extract_section.pl (should be $extract_pl)\n";
-}
-my $extract = "$extract_pl -t -q";
+my $extract = "$EXTRACT_SECTION -t -q";
 
 memoize('md5_file');
 
@@ -163,7 +159,7 @@ sub remove_section {
 sub add_or_append_section {
     my ($file, $section, $content) = @_;
 
-    my $existing_note = `$extract_pl .note.$section $file 2>/dev/null`;
+    my $existing_note = `$EXTRACT_SECTION .note.$section $file 2>/dev/null`;
     my $err = $? >> 8;
     if ($err == 1) {
         # no existing note
