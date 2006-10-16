@@ -95,7 +95,8 @@ sub try_one_prefix {
     %friendly_name2md5sum = ();
     # try this prefix length of the md5 to see if it makes things
     # unique
-    while(my ($md5, $orig_filename) = each %md5sum2orig_filename) {
+    foreach my $md5 (keys %md5sum2orig_filename) {
+        my $orig_filename = $md5sum2orig_filename{$md5};
         $md5 =~ /(.{$len})/;
         my $stuff = $1;
         die unless length($stuff) == $len;
