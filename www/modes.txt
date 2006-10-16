@@ -26,11 +26,12 @@ These methods have advantages and disadvantages:
 * LD_PRELOAD:
     * Expected success in the face of complex builds: excellent.
     * Con: fails if any program used in build is statically linked, or makes
-      direct libc calls.
+      direct libc calls; fails if any program is setuid root.
 
 * PTRACE:
     * Expected success in the face of complex builds: perfect.
-    * Con: not portable, small performance hit.
+    * Con: not portable, small performance hit; fails if any program is setuid
+      root.
 
 * GCC_EXEC_PREFIX:
     * Expected success in the face of complex builds: mediocre.
