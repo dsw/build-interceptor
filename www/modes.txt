@@ -20,22 +20,24 @@ Comparison
 These methods have advantages and disadvantages:
 
 * RENAME:
-    * Pro: always works.
+    * Expected success in the face of complex builds: perfect.
     * Con: requires root or virtual machine; modifies the system.
 
 * LD_PRELOAD:
-    * Pro: almost always works (see Con).
-    * Con: doesn't work if program under interception is statically linked, or
+    * Expected success in the face of complex builds: excellent.
+    * Con: doesn't work if any program used in build is statically linked, or
       makes direct libc calls.
 
 * PTRACE:
-    * Pro: always works.
+    * Expected success in the face of complex builds: perfect.
     * Con: not portable, small performance hit.
 
 * GCC_EXEC_PREFIX:
+    * Expected success in the face of complex builds: mediocre.
     * Con: susceptible to user modifying environment [1]_
 
 * PATH PREFIX:
+    * Expected success in the face of complex builds: poor.
     * Con: susceptible to hard-coded paths as well as user modifying environment [1]_
 
 
