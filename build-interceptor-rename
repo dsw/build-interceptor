@@ -127,33 +127,14 @@ sub on {
             my $base = $file;
             $base =~ s/-.*//;
 
-            my $interceptor_script = "$interceptors_dir/${base}_interceptor.pl";
-            my $interceptor_script_helper = "$interceptors_dir/{$base}_interceptor";
+            my $interceptor_script = "$interceptors_dir/${base}_interceptor";
             if (!-f $interceptor_script) {
                 die "$0: missing $interceptor_script\n";
             }
 
-            if (-f $interceptor_script_helper) {
-                # e.g. make_interceptor, so it can be used as a shebang
-                # executable.
-
-                print "    symlink $interceptor_script_helper $f\n";
-                symlink($interceptor_script_helper, $f)
-                    or die "$0: couldn't symlink $interceptor_script_helper to $f\n";
-
-                if (!-e "${f}_interceptor.pl") {
-                    # Put it in path so script_interceptor.c can find
-                    # it.  TODO: get rid of this requirement.
-                    print "    symlink $interceptor_script ${f}_interceptor.pl\n";
-                    symlink($interceptor_script, "${f}_interceptor.pl")
-                        or die "$0: couldn't symlink $interceptor_script to${f}_interceptor.pl\n";
-                }
-            } else {
-                # regular interceptor script.
-                print "    symlink $interceptor_script $f\n";
-                symlink($interceptor_script, $f)
-                    or die "$0: couldn't symlink $interceptor_script to $f\n";
-            }
+            print "    symlink $interceptor_script $f\n";
+            symlink($interceptor_script, $f)
+                or die "$0: couldn't symlink $interceptor_script to $f\n";
         } else {
             print "    [Nothing to do]\n";
         }

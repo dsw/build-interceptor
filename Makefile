@@ -12,6 +12,12 @@ ifneq (${BUILD_INTERCEPTOR_FORCE_ROOT},1)
   endif
 endif
 
+# Prefix to install to, e.g. /usr.  To use build-interceptor from the source
+# location, just leave this as is (run from the source directory).
+INSTALL_PREFIX = ${PWD}
+
+INSTALL_LIBDIR = $(INSTALL_PREFIX)/lib/build-interceptor
+
 .PHONY: all
 all: intercept.progs lib/build-interceptor/make_interceptor
 
@@ -66,4 +72,4 @@ intercept.progs: clean-intercept.progs
 	@echo "$@: " && cat $@
 
 lib/build-interceptor/make_interceptor: script_interceptor.c
-	gcc -o $@ -DIPROGNAME='"make"' -DINTERCEPTORPATH='"make_interceptor.pl"' $^
+	gcc -o $@ -DIPROGNAME='"make"' -DINTERCEPTORPATH='"$(INSTALL_LIBDIR)/make_interceptor1"' $^
