@@ -30,12 +30,12 @@ These methods have advantages and disadvantages:
     * Con: not portable.
 
 * GCC_EXEC_PREFIX:
-    * Con: susceptible to user modifying environment[1]
+    * Con: susceptible to user modifying environment [1]_
 
 * PATH PREFIX:
-    * Con: susceptible to user modifying environment[1]
+    * Con: susceptible to user modifying environment [1]_
 
 
-[1] Don't underestimate the user modifying environment variables in the build
-    process.  For example, "Cons" always clears the environment and then sets
-    it to fixed values.
+.. [1] Don't underestimate the user modifying environment variables in the
+       build process.  For example, "Cons" always clears the environment and
+       then sets it to fixed values.
