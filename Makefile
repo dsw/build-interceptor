@@ -28,12 +28,12 @@ clean: clean-intercept.progs
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
-	@if test -w rc/intercept.progs; then  \
-          C="rm -f rc/intercept.progs"; echo $$C; $$C; \
-        elif test -e rc/intercept.progs; then \
-          echo "Do not attempt to change intercept.progs while interception is on."; \
-          false; \
-        else echo "No intercept.progs to remove."; \
+	@if test -w rc/intercept.progs; then                                            \
+          C="rm -f rc/intercept.progs"; echo $$C; $$C;                                  \
+        elif test -e rc/intercept.progs; then                                           \
+          echo "Do not attempt to change intercept.progs while interception is on.";    \
+          false;                                                                        \
+        else echo "No intercept.progs to remove.";                                      \
         fi
 
 rc/intercept.progs: clean-intercept.progs
