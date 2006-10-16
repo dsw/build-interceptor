@@ -34,6 +34,9 @@ extern size_t strlcpy(char *dst, char const *src, size_t siz);
 static int (*real_execve)(const char *, char *const [], char * const []) = NULL;
 
 static char build_interceptor_ldpreload_script[1024];
+
+static char env_ld_preload[1024+sizeof("LD_PRELOAD=")] = "LD_PRELOAD=";
+
 static int initialized_success = 0;
 
 /* Print an error message and abort execution */
@@ -85,6 +88,8 @@ initialize(void)
         BUILD_INTERCEPTOR_ORIG_LD_PRELOAD = "";
     }
     setenv("LD_PRELOAD", BUILD_INTERCEPTOR_ORIG_LD_PRELOAD, 1);
+    strlcpy(env_ld_preload+sizeof("LD_PRELOAD=")-1,
+            BUILD_INTERCEPTOR_ORIG_LD_PRELOAD, sizeof(env_ld_preload)-(sizeof("LD_PRELOAD=")));
     initialized_success = 1;
 }
 
@@ -96,6 +101,30 @@ void copy_argv(char **new_argv, char * const * argv, int max)
         count++;
     }
     *new_argv = NULL;
+}
+
+// remove LD_PRELOAD from the environment that's passed to execve -- this is
+// often different from 'environ' which setenv messes with, e.g. in sh.
+char **fudge_env(char * const *env)
+{
+    int i = 0;
+    while (env[i]) {
+        ++i;
+    }
+    char **new_env = malloc(i * sizeof(char*));
+
+    i = 0;
+    while (env[i]) {
+        if (0==strncmp(env[i],"LD_PRELOAD=", sizeof("LD_PRELOAD=")-1)) {
+            // fprintf(stderr, "## replaced %s with %s\n", env[i], env_ld_preload);
+            new_env[i] = env_ld_preload;
+        } else {
+            new_env[i] = env[i];
+        }
+        ++i;
+    }
+    new_env[i] = 0;
+    return new_env;
 }
 
 int
@@ -128,6 +157,8 @@ execve(const char *filename, char *const argv[], char *const env[])
         }
         fprintf(stderr, "\n");
     }
+
+    env = fudge_env(env);
 
     return real_execve(newargv[0], (char**) newargv, env);
 }
