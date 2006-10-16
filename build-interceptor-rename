@@ -23,14 +23,9 @@ use warnings;
 use FindBin;
 use IO::File;
 
-my $intercept_progs_filename = "$FindBin::RealBin/intercept.progs";
+my $ETC_DIR = "$FindBin::RealBin/rc";
 
-my $interceptors_dir = "$FindBin::RealBin/lib/build-interceptor";
-
-if (!-d $interceptors_dir) {
-    # TODO: allow configuration
-    die "$0: couldn't find interceptors directory ($interceptors_dir)\n";
-}
+my $intercept_progs_filename = "$ETC_DIR/intercept.progs";
 
 if (!-f $intercept_progs_filename) {
     # TODO: allow intercept.progs to live in a different directory

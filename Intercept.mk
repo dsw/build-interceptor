@@ -9,5 +9,5 @@ ifeq ($(wildcard Intercept.mk),)
 endif
 
 .PHONY: print
-print on off: intercept.progs
+print on off: rc/intercept.progs
 	./build-interceptor-rename $@

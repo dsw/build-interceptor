@@ -20,7 +20,7 @@ export INSTALL_PREFIX
 INSTALL_LIBDIR = $(INSTALL_PREFIX)/lib/build-interceptor
 
 .PHONY: all
-all: intercept.progs lib/build-interceptor/make_interceptor
+all: lib/build-interceptor/make_interceptor rc/intercept.progs
 
 # timestamp the $HOME/build-interceptor.log; useful to run between
 # compilations
@@ -34,23 +34,17 @@ stamp-log/%:
 	echo >> ${HOME}/build-interceptor.log
 
 .PHONY: clean
-clean: clean-intercept.progs clean-script-interceptor clean-bak
+clean: clean-intercept.progs clean-script-interceptor
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
-	@if test -w intercept.progs; then  \
-          C="rm -f intercept.progs"; echo $$C; $$C; \
-        elif test -e intercept.progs; then \
+	@if test -w rc/intercept.progs; then  \
+          C="rm -f rc/intercept.progs"; echo $$C; $$C; \
+        elif test -e rc/intercept.progs; then \
           echo "Do not attempt to change intercept.progs while interception is on."; \
           false; \
         else echo "No intercept.progs to remove."; \
         fi
-
-# .bak files are created when perl -i.bak filters files; this is done
-# by loud-on/loud-off
-.PHONY: clean-bak
-clean-bak:
-	rm -f *.bak
 
 .PHONY: clean-build-interceptor
 clean-build-interceptor: clean-build-interceptor-tmp clean-preproc
@@ -65,9 +59,9 @@ clean-preproc:
 
 .PHONY: clean-script-interceptor
 clean-script-interceptor:
-	rm -rf make_interceptor
+	rm -f lib/build-interceptor/make_interceptor
 
-intercept.progs: clean-intercept.progs
+rc/intercept.progs: clean-intercept.progs
 	./list-programs-to-intercept > $@
 	@echo
 	@echo "$@: " && cat $@
