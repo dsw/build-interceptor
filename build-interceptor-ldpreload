@@ -38,8 +38,8 @@ clean_ld_preload();
 my $program = $ARGV[1];
 
 if ($program !~ m,/,) {
-    my $program1 = `which $program 2>/dev/null`;
-    if ($? || !$program1) {
+    my $program1 = which($program);
+    if (!$program1) {
         die "$0: can't find $program\n";
     }
     $program = $program1;
@@ -58,13 +58,19 @@ if ($interceptor) {
     # Yes, we do want to intercept this program; no more LD_PRELOAD.
     $ENV{BUILD_INTERCEPTOR_MODE} = 'LD_PRELOAD';
     $ARGV[0] = $interceptor;
+    if (! -x $interceptor) {
+        die "$0: interceptor $interceptor not executable\n";
+    }
 } else {
     # No, don't intercept this program.
     #
     # But *do* use ld_preload so we can intercept its children!
     add_ld_preload();
 }
-exec { $ARGV[0] } @ARGV;
+
+# Even when intercepting, the child's argv[0] should be propagated from the
+# original program name.
+exec { $program } @ARGV;
 die "$0: failed to exec $ARGV[0]\n";
 
 
@@ -118,4 +124,21 @@ sub add_ld_preload {
     # needed by preload_lib to get back here.
     $ENV{BUILD_INTERCEPTOR_LDPRELOAD} = File::Spec->rel2abs($0);
     # TODO: if installing, this should be hard-coded.
+}
+
+sub isprog {
+    return 1 if -x $_[0] && !-d $_[0];
+}
+
+sub which {
+    my ($x) = @_;
+    if ($x =~ m,^/,) {
+        return $x if isprog $x;
+        return;
+    }
+
+    for my $dir (File::Spec->path()) {
+        my $f = File::Spec->catfile($dir, $x);
+        return $f if isprog($f);
+    }
 }
