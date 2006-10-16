@@ -15,6 +15,7 @@ endif
 # Prefix to install to, e.g. /usr.  To use build-interceptor from the source
 # location, just leave this as is (run from the source directory).
 INSTALL_PREFIX = ${PWD}
+export INSTALL_PREFIX
 
 INSTALL_LIBDIR = $(INSTALL_PREFIX)/lib/build-interceptor
 

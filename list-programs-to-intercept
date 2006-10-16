@@ -6,7 +6,11 @@
 
 use strict;
 use warnings;
+use FindBin;
 use File::Spec;
+
+my $INSTALL_PREFIX = $ENV{INSTALL_PREFIX} || $FindBin::RealBin;
+my $interceptors_dir = "$INSTALL_PREFIX/lib/build-interceptor";
 
 $::quiet = 0;
 
@@ -110,6 +114,19 @@ sub filter_out_ccache {
     } @_;
 }
 
+sub prog_to_interceptor {
+    my ($prog) = @_;
+    my ($vol,$dir,$file) = File::Spec->splitpath($prog);
+    my $base = $file;
+    $base =~ s/-.*//;
+
+    my $interceptor_script = "$interceptors_dir/${base}_interceptor";
+    if (!-f $interceptor_script || !-x $interceptor_script) {
+        die "$0: missing $interceptor_script, needed to intercept $prog\n";
+    }
+    return $interceptor_script;
+}
+
 # versions of gcc
 my @gccs = (whichm('gcc'),
             </usr/bin/gcc-*>,
@@ -151,5 +168,6 @@ for my $component_name (@gcc_component_names) {
 @gcc_components = sortuniq(@gcc_components);
 
 for my $prog (@usrtools, @gcc_components) {
-    print "$prog\n";
+    my $interceptor = prog_to_interceptor($prog);
+    print "$prog=$interceptor\n";
 }

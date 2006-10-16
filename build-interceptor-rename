@@ -72,11 +72,12 @@ sub syntax {
 
 sub load {
     my $f = IO::File->new($intercept_progs_filename, 'r') || die "$0: can't read $intercept_progs_filename: $!\n";
-    my $line;
+    local $_;
     my @r = ();
-    while ($line = <$f>) {
-        chomp $line;
-        push(@r, $line);
+    while ($_ = <$f>) {
+        chomp;
+        m,^(/.+?)=(/.+)$, or die "bad line $_ from $intercept_progs_filename";
+        push(@r, [$1, $2]);
     }
     return @r;
 }
@@ -84,17 +85,22 @@ sub load {
 # Print the current interception state.
 sub show_status {
     print "Interception is:\n";
-    for my $file (@intercept_progs) {
-        my $exists = -e $file;
-        my $exists_symlink = -l $file;
-        my $orig_exists = -e "${file}_orig";
+    for my $r (@intercept_progs) {
+        my ($prog, $interceptor) = @$r;
+        my $exists = -e $prog;
+        my $exists_symlink = -l $prog;
+        my $symlink_target;
+        if ($exists_symlink) {
+            $symlink_target = readlink($prog);
+        }
+        my $orig_exists = -e "${prog}_orig";
 
         if ($exists && !$exists_symlink && !$orig_exists) {
-            print "OFF    for $file\n";
-        } elsif ($exists && $exists_symlink && $orig_exists) {
-            print "ON     for $file\n";
+            print "OFF    for $prog\n";
+        } elsif ($exists && $exists_symlink && $symlink_target eq $interceptor && $orig_exists) {
+            print "ON     for $prog => $interceptor\n";
         } else {
-            print "BROKEN for $file\n";
+            print "BROKEN for $prog\n";
         }
     }
 }
@@ -111,30 +117,24 @@ sub on {
     system("chmod", "a-w", $intercept_progs_filename)
         and warn "$0: couldn't chmod a-w $intercept_progs_filename\n";
 
-    for my $f (@intercept_progs) {
+    for my $r (@intercept_progs) {
+        my ($prog, $interceptor) = @$r;
         # At this point, we shouldn't have any redundant links, since they've
         # been filtered out by list-programs-to-intercept.
 
         # TODO: be more robust if user has done something crazy, e.g. if
-        # $f doesn't exist.
+        # $prog doesn't exist.
 
-        print "$f:\n";
-        if (! -e "${f}_orig") {
-            print "    rename $f ${f}_orig\n";
-            rename($f, "${f}_orig") || die "$0: couldn't rename $f to ${f}_orig\n";
+        print "$prog:\n";
+        if (! -e "${prog}_orig") {
+            print "    rename $prog ${prog}_orig\n";
+            rename($prog, "${prog}_orig") || die "$0: couldn't rename $prog to ${prog}_orig\n";
 
-            my ($vol,$dir,$file) = File::Spec->splitpath($f);
-            my $base = $file;
-            $base =~ s/-.*//;
+            die "$0: missing $interceptor\n" unless -f $interceptor && -x $interceptor;
 
-            my $interceptor_script = "$interceptors_dir/${base}_interceptor";
-            if (!-f $interceptor_script) {
-                die "$0: missing $interceptor_script\n";
-            }
-
-            print "    symlink $interceptor_script $f\n";
-            symlink($interceptor_script, $f)
-                or die "$0: couldn't symlink $interceptor_script to $f\n";
+            print "    symlink $interceptor $prog\n";
+            symlink($interceptor, $prog)
+                or die "$0: couldn't symlink $interceptor to $prog\n";
         } else {
             print "    [Nothing to do]\n";
         }
@@ -144,19 +144,20 @@ sub on {
 sub off {
     check_root();
 
-    for my $f (@intercept_progs) {
-        print "$f:\n";
-        if (-e "${f}_orig") {
-            if (-e $f) {
-                if (!is_build_interceptor_symlink($f)) {
-                    die "$0: both $f and ${f}_orig exist, but $f is not a build-interceptor symlink!\n";
+    for my $r (@intercept_progs) {
+        my ($prog, $interceptor) = @$r;
+        print "$prog:\n";
+        if (-e "${prog}_orig") {
+            if (-e $prog) {
+                if (!-l $prog || readlink($prog) ne $interceptor) {
+                    die "$0: both $prog and ${prog}_orig exist, but $prog is not a symlink to $interceptor!\n";
                 }
-                print "    unlink $f\n";
-                unlink($f) or die "$0: couldn't unlink $f\n";
+                print "    unlink $prog\n";
+                unlink($prog) or die "$0: couldn't unlink $prog\n";
             }
-            print "    rename ${f}_orig $f\n";
-            rename("${f}_orig", $f)
-                or die "$0: couldn't rename ${f}_orig $f\n";
+            print "    rename ${prog}_orig $prog\n";
+            rename("${prog}_orig", $prog)
+                or die "$0: couldn't rename ${prog}_orig $prog\n";
         } else {
             print "    [Nothing to do]\n";
         }
