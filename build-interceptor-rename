@@ -33,7 +33,7 @@ if (scalar(@ARGV) > 2) { syntax(); }
 
 if (scalar(@ARGV) == 0) {
     $cmd = 'status';
-} elsif ($ARGV[0] eq 'status') {
+} elsif ($ARGV[0] eq 'status' || $ARGV[0] eq 'print') {
     $cmd = 'status';
 } elsif ($ARGV[0] eq 'on') {
     $cmd = 'on';
