@@ -1,0 +1,119 @@
+#!/usr/bin/perl
+
+# $Id$
+
+# This script implements Build-Interceptor LD_PRELOAD mode (see
+# doc/modes.txt).
+#
+# It is the user entry point for LD_PRELOAD mode as well as an intermediate
+# script for intercepting child processes.
+
+use strict;
+use warnings;
+use FindBin;
+use lib "${FindBin::RealBin}";
+use Cwd;
+use File::Spec;
+
+my $LIB_DIR = "$FindBin::RealBin/lib/build-interceptor";
+my $ETC_DIR = "$FindBin::RealBin/rc";
+
+my $intercept_progs_filename = "$ETC_DIR/intercept.progs";
+my $preload_lib_filename = "$LIB_DIR/build-interceptor.so";
+
+if (!-f $intercept_progs_filename) {
+    # TODO: allow intercept.progs to live in a different directory
+    die "$0: couldn't find $intercept_progs_filename.\n";
+}
+
+if (! -f $preload_lib_filename) {
+    die "$0: couldn't find $preload_lib_filename.\n";
+}
+
+if (scalar(@ARGV) < 1) {
+    die "syntax: $0 program args...\n";
+}
+
+clean_ld_preload();
+my $program = $ARGV[1];
+
+if ($program !~ m,/,) {
+    my $program1 = `which $program 2>/dev/null`;
+    if ($? || !$program1) {
+        die "$0: can't find $program\n";
+    }
+    $program = $program1;
+}
+
+if (!-x $program) {
+    die "$0: $program not executable\n";
+}
+
+$program = canonpath_except_file($program);
+
+# Check if it's on our list of programs to intercept.
+my $interceptor = get_interception($program);
+
+if ($interceptor) {
+    # Yes, we do want to intercept this program.
+    $ARGV[0] = $interceptor;
+} else {
+    # No, don't intercept this program.
+    #
+    # But *do* use ld_preload so we can intercept its children!
+    add_ld_preload();
+}
+exec { $ARGV[0] } @ARGV;
+die "$0: failed to exec $ARGV[0]\n";
+
+
+# Canonicalize the directory component of a filename.
+sub canonpath_except_file {
+    my ($prog) = @_;
+    my ($vol,$dir,$file) = File::Spec->splitpath($prog);
+    my $basedir = File::Spec->catpath($vol, $dir, "");
+    return File::Spec->catfile(Cwd::abs_path($basedir), $file);
+}
+
+sub get_interception {
+    my ($program0) = @_;
+    my $f = IO::File->new($intercept_progs_filename, 'r') or die "$0: couldn't read $intercept_progs_filename\n";
+    local $_;
+    while ($_ = <$f>) {
+        chomp;
+        m,^(/.+?)=(/.+)$, or die "bad line $_ from $intercept_progs_filename";
+        my $program = $1;
+        my $interceptor = $2;
+        if ($program eq $program0) {
+            return $interceptor;
+        }
+    }
+    return;
+}
+
+sub clean_ld_preload {
+    my $ld_preload = $ENV{LD_PRELOAD};
+    # remove existing $PRELOAD, if any.
+    $ld_preload =~ s/ /:/g;
+    $ld_preload =~ s/::/:/g;
+    $ld_preload = ":$ld_preload:";
+    $ld_preload =~ s/:$preload_lib_filename://g;
+
+    $ld_preload =~ s/^:+//;
+    $ld_preload =~ s/:+$//;
+    $ENV{LD_PRELOAD} = $ld_preload;
+}
+
+sub add_ld_preload {
+    my $ld_preload = $ENV{LD_PRELOAD};
+    # add new preload
+    $ld_preload = "$preload_lib_filename:$ld_preload";
+
+    # remove trailing ':' if empty.
+    $ld_preload =~ s/:$//;
+
+    $ENV{LD_PRELOAD} = $ld_preload;
+
+    # needed by preload_lib to get back here.
+    $ENV{BUILD_INTERCEPTOR_LDPRELOAD} = File::Spec->rel2abs($0);
+}
