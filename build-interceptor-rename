@@ -9,7 +9,7 @@
 # Makefile to build intercept.progs as a normal user.
 
 my $SYNTAX = <<END
-$0 -- manage rename-mode build interception.
+$0 -- manage rename-mode Build Interception.
 
    $0 [status]    -- show current status
    $0 on          -- turn on, i.e. modify /usr/bin/gcc, etc.
