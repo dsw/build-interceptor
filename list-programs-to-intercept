@@ -50,3 +50,7 @@ for f in $gcccomponents; do
         [ -f $t ] && echo "$t"
     done
 done | sort -u
+
+# TODO: readlink and check for ccache
+
+# TODO: readlink and check to see if interception rename mode is already on!
