@@ -11,6 +11,7 @@ use File::Path;
 use Digest::MD5;
 use FindBin;
 use POSIX qw(strftime);
+use Carp;
 
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
@@ -177,7 +178,9 @@ sub ensure_dir_of_file_exists($) {
 
 sub md5_file {
     my ($filename) = @_;
-    return Digest::MD5->new->addfile(new FileHandle($filename))->hexdigest;
+    Carp::confess unless $filename;
+    my $f = IO::File->new($filename, 'r') || die "$0: couldn't open $filename for md5: $!";
+    return Digest::MD5->new->addfile($f)->hexdigest;
 }
 
 sub get_output_filename {

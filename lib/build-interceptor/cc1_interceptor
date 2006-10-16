@@ -13,6 +13,7 @@ use File::Spec;
 use File::Copy;
 use FileHandle;
 use FindBin;
+use Carp;
 
 # When used as a replacement to the system cc1 or cc1plus this script
 # will intercept the build process and keep a copy of the .i files
@@ -41,12 +42,13 @@ my $orig_filename = get_orig_filename();
 #   output file.  This behavior is not reproduced.
 
 my ($infile, $input, $tname) = get_input_and_tname();
+# Carp::confess if ref($input);
 my $rel_tmpfile = "." . uniquify_filename($tname);
 my $tmpfile = "$prefix/$rel_tmpfile";
 # put the contents there
 copy_file($input, $tmpfile);
 
-my $precpp_md5 = md5_file($orig_filename);
+my $precpp_md5 = $orig_filename ? md5_file($orig_filename) : "";
 my $postcpp_md5 = md5_file($tmpfile);
 
 unshift @$argv, $tmpfile;        # add input file to @$argv
@@ -134,11 +136,12 @@ sub get_input_and_tname {
         @$argv = grep {!/\.ii?$/} @$argv;   # remove from @$argv
         # make the temp file name
         $input = File::Spec->rel2abs($infile);
+        # die "$0: no such file '$input' (rel2abs $infile)" unless -f $input;
         $tname = $orig_filename || $input;
     } else {
         $infile = '-';
         # make the temp file name
-        $input = \$STDIN;
+        $input = \*STDIN;
         $tname = $orig_filename || "$pwd/STDIN";
     }
 
@@ -186,6 +189,7 @@ sub uniquify_filename {
 
 sub copy_file {
     my ($input, $tmpfile) = @_;
+    # Carp::confess if ref($input);
     ensure_dir_of_file_exists($tmpfile);
     die "$0: tmpfile '$tmpfile' already exists" if -e $tmpfile;
     copy($input, $tmpfile) || die "$0: couldn't copy $input $tmpfile: $!";

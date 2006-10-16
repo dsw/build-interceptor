@@ -14,12 +14,13 @@ use FindBin;
 use lib "${FindBin::RealBin}";
 use Cwd;
 use File::Spec;
+use IO::File;
 
 my $LIB_DIR = "$FindBin::RealBin/lib/build-interceptor";
 my $ETC_DIR = "$FindBin::RealBin/rc";
 
 my $intercept_progs_filename = "$ETC_DIR/intercept.progs";
-my $preload_lib_filename = "$LIB_DIR/build-interceptor.so";
+my $preload_lib_filename = "$LIB_DIR/preload_helper.so";
 
 if (!-f $intercept_progs_filename) {
     # TODO: allow intercept.progs to live in a different directory
@@ -34,6 +35,7 @@ if (scalar(@ARGV) < 1) {
     die "syntax: $0 program args...\n";
 }
 
+my @intercept_progs = load();
 clean_ld_preload();
 
 my $program = shift @ARGV;
@@ -52,13 +54,17 @@ if (!-x $program) {
 
 $program = canonpath_except_file($program);
 
-# Check if it's on our list of programs to intercept.
-my $interceptor = get_interception($program);
-
 my $argv0 = $program;
 if (scalar(@ARGV) > 2 && $ARGV[0] eq '--argv0') {
     shift @ARGV;
     $argv0 = shift @ARGV;
+}
+
+# Check if it's on our list of programs to intercept.
+my $program_target = $program;
+my $interceptor;
+while (!($interceptor = get_interception($program_target)) and $program_target) {
+    $program_target = readlinkfull($program_target);
 }
 
 my $executable;
@@ -72,6 +78,9 @@ if ($interceptor) {
             '--build-interceptor-mode', 'LD_PRELOAD',
             '--build-interceptor-program', $program,
             '--build-interceptor-argv0', $argv0);
+    if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
+        print STDERR "build-interceptor-ldpreload: intercepted $program_target=$interceptor\n";
+    }
 } else {
     # No, don't intercept this program.
     $executable = $program;
@@ -79,6 +88,9 @@ if ($interceptor) {
     #
     # But *do* use ld_preload so we can intercept its children!
     add_ld_preload();
+    if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
+        print STDERR "build-interceptor-ldpreload: tracing non-intercepted $program\n";
+    }
 }
 
 exec { $executable } @ARGV;
@@ -93,24 +105,31 @@ sub canonpath_except_file {
     return File::Spec->catfile(Cwd::abs_path($basedir), $file);
 }
 
-sub get_interception {
-    my ($program0) = @_;
-    my $f = IO::File->new($intercept_progs_filename, 'r') or die "$0: couldn't read $intercept_progs_filename\n";
+sub load {
+    my $f = IO::File->new($intercept_progs_filename, 'r') || die "$0: can't read $intercept_progs_filename: $!\n";
     local $_;
+    my @r = ();
     while ($_ = <$f>) {
         chomp;
         m,^(/.+?)=(/.+)$, or die "bad line $_ from $intercept_progs_filename";
-        my $program = $1;
-        my $interceptor = $2;
-        if ($program eq $program0) {
-            return $interceptor;
+        push(@r, [$1, $2]);
+    }
+    return @r;
+}
+
+sub get_interception {
+    my ($program0) = @_;
+    # print STDERR "## get_interception $program0\n";
+    for my $r (@intercept_progs) {
+        if ($r->[0] eq $program0) {
+            return $r->[1];
         }
     }
     return;
 }
 
 sub clean_ld_preload {
-    my $ld_preload = $ENV{BUILD_INTERCEPTOR_ORIG_LD_PRELOAD} = $ENV{LD_PRELOAD};
+    my $ld_preload = $ENV{BUILD_INTERCEPTOR_ORIG_LD_PRELOAD} = $ENV{LD_PRELOAD} || '';
     # remove existing $PRELOAD, if any.
     $ld_preload =~ s/ /:/g;
     $ld_preload =~ s/::/:/g;
@@ -123,6 +142,24 @@ sub clean_ld_preload {
 }
 
 sub add_ld_preload {
+    # TODO: if installing, this should be hard-coded.
+    # NOTE: do this *before* setting LD_PRELOAD, because rel2abs calls pwd, an
+    # external program affected by LD_PRELOAD!
+    my $ld_interceptor_preload_script = File::Spec->rel2abs($0);
+    if (!$ld_interceptor_preload_script) {
+        die "$0: can't find myself (\$0=$0)\n";
+    }
+    if (!-e $ld_interceptor_preload_script) {
+        die "$0: can't find myself ($ld_interceptor_preload_script, \$0=$0)\n";
+    }
+    if (!-x $ld_interceptor_preload_script) {
+        die "$0: I'm not executable ($ld_interceptor_preload_script)\n";
+    }
+
+    # Needed by preload_lib to get back here.
+    $ENV{BUILD_INTERCEPTOR_LDPRELOAD_SCRIPT} = $ld_interceptor_preload_script;
+
+
     my $ld_preload = $ENV{LD_PRELOAD};
     # add new preload
     $ld_preload = "$preload_lib_filename:$ld_preload";
@@ -131,10 +168,6 @@ sub add_ld_preload {
     $ld_preload =~ s/:$//;
 
     $ENV{LD_PRELOAD} = $ld_preload;
-
-    # needed by preload_lib to get back here.
-    $ENV{BUILD_INTERCEPTOR_LDPRELOAD} = File::Spec->rel2abs($0);
-    # TODO: if installing, this should be hard-coded.
 }
 
 sub isprog {
@@ -152,4 +185,14 @@ sub which {
         my $f = File::Spec->catfile($dir, $x);
         return $f if isprog($f);
     }
+}
+
+sub readlinkfull {
+    my ($x) = @_;
+    die unless $x;
+    my $link = readlink($x);
+    return unless $link;
+    my ($vol,$dir,$file) = File::Spec->splitpath($x);
+    my $basedir = File::Spec->catpath($vol, $dir, "");
+    return File::Spec->rel2abs($link, $basedir);
 }

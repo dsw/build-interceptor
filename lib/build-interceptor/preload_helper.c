@@ -3,8 +3,9 @@
 //   This is the shared library portion of the implementation.
 //
 //   It simply calls replaces all execve() calls with an execve call to
-//   $BUILD_INTERCEPTOR_LDPRELOAD, which decides whether to then instead call an
-//   interceptor script, or call the original intended script with LD_PRELOAD set.
+//   $BUILD_INTERCEPTOR_LDPRELOAD_SCRIPT, which decides whether to then
+//   instead call an interceptor script, or call the original intended script
+//   with LD_PRELOAD set.
 //
 //   Based on implementation by Peter Hawkins <hawkinsp@cs.stanford.edu>
 
@@ -32,7 +33,8 @@ extern size_t strlcpy(char *dst, char const *src, size_t siz);
  */
 static int (*real_execve)(const char *, char *const [], char * const []) = NULL;
 
-static char build_interceptor_ldpreload[1024];
+static char build_interceptor_ldpreload_script[1024];
+static int initialized_success = 0;
 
 /* Print an error message and abort execution */
 static void
@@ -41,6 +43,7 @@ die(const char *fmt, ...)
     va_list args;
 
     va_start(args, fmt);
+    fprintf(stderr, "build-interceptor preload_helper.so: ");
     vfprintf(stderr, fmt, args);
     va_end(args);
     abort();
@@ -54,7 +57,7 @@ load_symbol(void **fptr, const char *name)
     assert(fptr != NULL && name != NULL);
     *fptr = dlsym(RTLD_NEXT, name);
     if (*fptr == NULL) {
-        die("libintercept: Couldn't locate symbol \"%s\" (%s).\n",
+        die("Couldn't locate symbol \"%s\" (%s).\n",
             name, dlerror());
     }
 }
@@ -68,12 +71,12 @@ initialize(void)
     load_symbol((void **)&real_execve, "execve");
 
     // This is the helper script to call
-    char const *BUILD_INTERCEPTOR_LDPRELOAD = getenv("BUILD_INTERCEPTOR_LDPRELOAD");
-    if (!BUILD_INTERCEPTOR_LDPRELOAD) {
-        die("Missing BUILD_INTERCEPTOR_LDPRELOAD\n");
+    char const *BUILD_INTERCEPTOR_LDPRELOAD_SCRIPT = getenv("BUILD_INTERCEPTOR_LDPRELOAD_SCRIPT");
+    if (!BUILD_INTERCEPTOR_LDPRELOAD_SCRIPT) {
+        die("Missing $BUILD_INTERCEPTOR_LDPRELOAD_SCRIPT\n");
     }
 
-    strlcpy(build_interceptor_ldpreload, BUILD_INTERCEPTOR_LDPRELOAD, sizeof(build_interceptor_ldpreload));
+    strlcpy(build_interceptor_ldpreload_script, BUILD_INTERCEPTOR_LDPRELOAD_SCRIPT, sizeof(build_interceptor_ldpreload_script));
 
     // Reset LD_PRELOAD to its value before we messed with it.
     // build-interceptor-ldpreload will add it as needed.
@@ -82,6 +85,7 @@ initialize(void)
         BUILD_INTERCEPTOR_ORIG_LD_PRELOAD = "";
     }
     setenv("LD_PRELOAD", BUILD_INTERCEPTOR_ORIG_LD_PRELOAD, 1);
+    initialized_success = 1;
 }
 
 void copy_argv(char **new_argv, char * const * argv, int max)
@@ -97,9 +101,13 @@ void copy_argv(char **new_argv, char * const * argv, int max)
 int
 execve(const char *filename, char *const argv[], char *const env[])
 {
+    if (!initialized_success) {
+        die("execve after failed initialization");
+    }
+
     char *newargv[MAX_ENV_STRINGS];
 
-    newargv[0] = build_interceptor_ldpreload;
+    newargv[0] = build_interceptor_ldpreload_script;
     newargv[1] = (char*) filename;
     newargv[2] = "--argv0";
     copy_argv(newargv+3, argv, MAX_ENV_STRINGS-4);

@@ -19,11 +19,16 @@ export INSTALL_PREFIX
 INSTALL_LIBDIR = $(INSTALL_PREFIX)/lib/build-interceptor
 
 .PHONY: all
-all: lib/build-interceptor/make_interceptor rc/intercept.progs
+all: rc/intercept.progs all-recurse
+
+all-recurse:
+	cd lib/build-interceptor && $(MAKE) all
 
 .PHONY: clean
-clean: clean-intercept.progs
-	rm -f lib/build-interceptor/make_interceptor
+clean: clean-intercept.progs clean-recurse
+
+clean-recurse:
+	cd lib/build-interceptor && $(MAKE) clean
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
@@ -39,6 +44,3 @@ rc/intercept.progs: clean-intercept.progs
 	./list-programs-to-intercept > $@
 	@echo
 	@echo "$@: " && sed 's/^/  /' $@
-
-lib/build-interceptor/make_interceptor: script_interceptor.c
-	gcc -o $@ -DIPROGNAME='"make"' -DINTERCEPTORPATH='"$(INSTALL_LIBDIR)/make_interceptor0"' $^
