@@ -55,24 +55,34 @@ $program = canonpath_except_file($program);
 # Check if it's on our list of programs to intercept.
 my $interceptor = get_interception($program);
 
+my $argv0 = $program;
+if (scalar(@ARGV) > 2 && $ARGV[0] eq '--argv0') {
+    shift @ARGV;
+    $argv0 = shift @ARGV;
+}
+
+my $executable;
 if ($interceptor) {
     # Yes, we do want to intercept this program; no more LD_PRELOAD.
     if (! -x $interceptor) {
         die "$0: interceptor $interceptor not executable\n";
     }
+    $executable = $interceptor;
     unshift(@ARGV, $interceptor,
             '--build-interceptor-mode', 'LD_PRELOAD',
-            '--build-interceptor-program', $program);
+            '--build-interceptor-program', $program,
+            '--build-interceptor-argv0', $argv0);
 } else {
     # No, don't intercept this program.
-    unshift(@ARGV, $program);
+    $executable = $program;
+    unshift(@ARGV, $argv0);
     #
     # But *do* use ld_preload so we can intercept its children!
     add_ld_preload();
 }
 
-exec { $ARGV[0] } @ARGV;
-die "$0: failed to exec $ARGV[0]\n";
+exec { $executable } @ARGV;
+die "$0: failed to exec $executable\n";
 
 
 # Canonicalize the directory component of a filename.

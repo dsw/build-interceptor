@@ -62,9 +62,16 @@ if ($BUILD_INTERCEPTOR_MODE eq 'RENAME') {
 our $ARGV0 = $0;
 our $PROGRAM;
 
+my $specified_program = 0;
 if (scalar(@ARGV) >= 2 && $ARGV[0] eq '--build-interceptor-program') {
     shift @ARGV;
     $ARGV0 = $PROGRAM = shift @ARGV;
+    $specified_program = 1;
+}
+
+if (scalar(@ARGV) >= 2 && $ARGV[0] eq '--build-interceptor-argv0') {
+    shift @ARGV;
+    $ARGV0 = shift @ARGV;
 }
 
 if ($BUILD_INTERCEPTOR_MODE eq 'RENAME') {
@@ -72,7 +79,7 @@ if ($BUILD_INTERCEPTOR_MODE eq 'RENAME') {
         $ARGV0 =~ s,.*/,,;
     }
     $ARGV0 = _follow_interceptor_links($ARGV0);
-    $PROGRAM = "${ARGV0}_orig";
+    $PROGRAM = "${ARGV0}_orig" unless $specified_program;
 }
 
 if (!$PROGRAM) {
