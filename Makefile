@@ -23,7 +23,8 @@ INSTALL_LIBDIR = $(INSTALL_PREFIX)/lib/build-interceptor
 all: lib/build-interceptor/make_interceptor rc/intercept.progs
 
 .PHONY: clean
-clean: clean-intercept.progs clean-script-interceptor
+clean: clean-intercept.progs
+	rm -f lib/build-interceptor/make_interceptor
 
 .PHONY: clean-intercept.progs
 clean-intercept.progs:
@@ -35,25 +36,10 @@ clean-intercept.progs:
         else echo "No intercept.progs to remove."; \
         fi
 
-.PHONY: clean-build-interceptor
-clean-build-interceptor: clean-build-interceptor-tmp clean-preproc
-
-.PHONY: clean-build-interceptor-tmp
-clean-build-interceptor-tmp:
-	rm -rf ${HOME}/build-interceptor-tmp
-
-.PHONY: clean-preproc
-clean-preproc:
-	rm -rf ${HOME}/preproc/*
-
-.PHONY: clean-script-interceptor
-clean-script-interceptor:
-	rm -f lib/build-interceptor/make_interceptor
-
 rc/intercept.progs: clean-intercept.progs
 	./list-programs-to-intercept > $@
 	@echo
-	@echo "$@: " && cat $@
+	@echo "$@: " && sed 's/^/  /' $@
 
 lib/build-interceptor/make_interceptor: script_interceptor.c
-	gcc -o $@ -DIPROGNAME='"make"' -DINTERCEPTORPATH='"$(INSTALL_LIBDIR)/make_interceptor1"' $^
+	gcc -o $@ -DIPROGNAME='"make"' -DINTERCEPTORPATH='"$(INSTALL_LIBDIR)/make_interceptor0"' $^
