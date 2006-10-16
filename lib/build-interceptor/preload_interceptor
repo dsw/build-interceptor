@@ -1,0 +1,159 @@
+#!/usr/bin/perl
+
+# $Id: build-interceptor-ldpreload 325 2006-10-16 11:00:04Z quarl $
+
+# This script implements Build-Interceptor LD_PRELOAD mode (see
+# doc/modes.txt).
+#
+# It is the user entry point for LD_PRELOAD mode as well as an intermediate
+# script for intercepting child processes.
+
+use strict;
+use warnings;
+use FindBin;
+use lib "${FindBin::RealBin}";
+use BuildInterceptor::Preload;
+use Cwd;
+use File::Spec;
+use IO::File;
+use Carp;
+
+my $ETC_DIR = "$FindBin::RealBin/../../rc";
+
+my $intercept_progs_filename = "$ETC_DIR/intercept.progs";
+
+if (!-f $intercept_progs_filename) {
+    # TODO: allow intercept.progs to live in a different directory
+    die "$0: couldn't find $intercept_progs_filename.\n";
+}
+
+if (scalar(@ARGV) < 1) {
+    die "syntax: $0 program args...\n";
+}
+
+if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
+    my $l = $ENV{LD_PRELOAD} || '';
+    my $b = $ENV{BUILD_INTERCEPTOR_LDPRELOAD_SCRIPT} || '';
+    print "preload_interceptor $ARGV[0]: LD_PRELOAD=$l, BILPS=$b\n";
+}
+
+my @intercept_progs = load();
+BuildInterceptor::Preload::clean_ld_preload();
+
+my $program = shift @ARGV;
+
+if ($program !~ m,/,) {
+    my $program1 = which($program);
+    if (!$program1) {
+        die "$0: can't find $program\n";
+    }
+    $program = $program1;
+}
+
+if (!-x $program) {
+    die "$0: $program not executable\n";
+}
+
+$program = canonpath_except_file($program);
+
+my $argv0 = $program;
+if (scalar(@ARGV) > 2 && $ARGV[0] eq '--argv0') {
+    shift @ARGV;
+    $argv0 = shift @ARGV;
+}
+
+# Check if it's on our list of programs to intercept.
+my $program_target = $program;
+my $interceptor;
+while ($program_target and !($interceptor = get_interception($program_target))) {
+    $program_target = readlinkfull($program_target);
+}
+
+my $executable;
+if ($interceptor) {
+    # Yes, we do want to intercept this program; no more LD_PRELOAD.
+    if (! -x $interceptor) {
+        die "$0: interceptor $interceptor not executable\n";
+    }
+    $executable = $interceptor;
+    unshift(@ARGV, $interceptor,
+            '--build-interceptor-mode', 'LD_PRELOAD',
+            '--build-interceptor-program', $program,
+            '--build-interceptor-argv0', $argv0);
+    if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
+        print STDERR "build-interceptor-ldpreload: intercepted $program_target=$interceptor\n";
+    }
+} else {
+    # No, don't intercept this program.
+    $executable = $program;
+    unshift(@ARGV, $argv0);
+    #
+    # But *do* use ld_preload so we can intercept its children!
+    BuildInterceptor::Preload::add_ld_preload();
+    if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
+        print STDERR "build-interceptor-ldpreload: tracing non-intercepted $program\n";
+    }
+}
+
+exec { $executable } @ARGV;
+die "$0: failed to exec $executable\n";
+
+
+# Canonicalize the directory component of a filename.
+sub canonpath_except_file {
+    my ($prog) = @_;
+    my ($vol,$dir,$file) = File::Spec->splitpath($prog);
+    my $basedir = File::Spec->catpath($vol, $dir, "");
+    return File::Spec->catfile(Cwd::abs_path($basedir), $file);
+}
+
+sub load {
+    my $f = IO::File->new($intercept_progs_filename, 'r') || die "$0: can't read $intercept_progs_filename: $!\n";
+    local $_;
+    my @r = ();
+    while ($_ = <$f>) {
+        chomp;
+        m,^(/.+?)=(/.+)$, or die "bad line $_ from $intercept_progs_filename";
+        push(@r, [$1, $2]);
+    }
+    return @r;
+}
+
+sub get_interception {
+    my ($program0) = @_;
+    Carp::confess unless $program0;
+    # print STDERR "## get_interception $program0\n";
+    for my $r (@intercept_progs) {
+        if ($r->[0] eq $program0) {
+            return $r->[1];
+        }
+    }
+    return;
+}
+
+sub isprog {
+    return 1 if -x $_[0] && !-d $_[0];
+}
+
+sub which {
+    my ($x) = @_;
+    if ($x =~ m,^/,) {
+        return $x if isprog $x;
+        return;
+    }
+
+    for my $dir (File::Spec->path()) {
+        my $f = File::Spec->catfile($dir, $x);
+        return $f if isprog($f);
+    }
+}
+
+sub readlinkfull {
+    my ($x) = @_;
+    die unless $x;
+    my $link = readlink($x);
+    return unless $link;
+    my ($vol,$dir,$file) = File::Spec->splitpath($x);
+    my $basedir = File::Spec->catpath($vol, $dir, "");
+    return File::Spec->rel2abs($link, $basedir);
+}

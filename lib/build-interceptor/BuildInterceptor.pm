@@ -12,6 +12,7 @@ use Digest::MD5;
 use FindBin;
 use POSIX qw(strftime);
 use Carp;
+use BuildInterceptor::Preload;
 
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(
@@ -59,7 +60,7 @@ if ($BUILD_INTERCEPTOR_MODE eq 'RENAME') {
         die "$0: invoked in RENAME mode; enable with `build-interceptor-rename on'\n";
     }
 } elsif ($BUILD_INTERCEPTOR_MODE eq 'LD_PRELOAD') {
-    # ok
+    BuildInterceptor::Preload::clean_ld_preload();
 } else {
     die "$0: invalid Build-Interceptor mode '$BUILD_INTERCEPTOR_MODE'\n";
 }
@@ -89,6 +90,10 @@ if ($BUILD_INTERCEPTOR_MODE eq 'RENAME') {
 
 if (!$PROGRAM) {
     die "$0: unknown program under interception\n";
+}
+
+if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
+    print STDERR "$0 $BUILD_INTERCEPTOR_MODE ARGV0=$ARGV0 PROGRAM=$PROGRAM\n";
 }
 
 # we're in build-interceptor/lib/build-interceptor
@@ -140,12 +145,20 @@ sub logline {
 
 sub run_prog {
     logline("  system([$PROGRAM @$argv])");
+    local %ENV = %ENV;
+    BuildInterceptor::Preload::add_ld_preload();
     system($PROGRAM, @$argv);
     check_exit_code($?);
 }
 
 sub exec_prog {
     logline("  exec([$PROGRAM @$argv])");
+    if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
+        print STDERR "$0: exec_prog $PROGRAM\n";
+    }
+    # Make sure our children are intercepted.
+    BuildInterceptor::Preload::add_ld_preload();
+    logline("     LD_PRELOAD=$ENV{LD_PRELOAD}") if $BUILD_INTERCEPTOR_MODE eq 'PRELOAD';
     exec($PROGRAM, @$argv) or die "$0: couldn't exec $argv->[0]";
 }
 
@@ -153,6 +166,8 @@ sub pipe_prog {
     # TODO: use IPC::Run
     logline("  pipe([$PROGRAM @$argv])");
     my $quoted_argv = [map{_quoteit($_)} @$argv];
+    local %ENV = %ENV;
+    BuildInterceptor::Preload::add_ld_preload();
     my $stdout = `$PROGRAM @$quoted_argv`;
     check_exit_code($?);
     return $stdout;
