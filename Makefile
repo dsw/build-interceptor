@@ -1,6 +1,5 @@
-# You need to run targets in this makefile to get things set up in the
-# first place.  Generally, run targets in this makefile as a normal
-# user.
+# You need to run targets in this makefile to get things set up in the first
+# place.  Run targets in this makefile as a normal user.
 
 ifeq ($(wildcard build-interceptor-version),)
   $(error Run this makefile in the build-interceptor directory.)
