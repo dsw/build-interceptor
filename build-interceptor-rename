@@ -8,6 +8,16 @@
 # intereceptor scripts.  Generally, run targets in this makefile as root.  Use
 # Makefile to build intercept.progs as a normal user.
 
+my $SYNTAX = <<END
+$0 -- manage rename-mode build interception.
+
+   $0 [status]    -- show current status
+   $0 on          -- turn on, i.e. modify /usr/bin/gcc, etc.
+   $0 off         -- turn off, restore the way it was before 'on'
+
+END
+    ;
+
 use strict;
 use warnings;
 use FindBin;
@@ -56,15 +66,7 @@ if ($cmd eq 'status') {
 }
 
 sub syntax {
-    print <<END
-$0  -- manage rename-mode build interception.
-
-   $0 [status]    -- show current status
-   $0 on          -- turn on, i.e. modify /usr/bin/gcc, etc.
-   $0 off         -- turn off, restore the way it was before 'on'
-
-END
-;
+    print $SYNTAX;
     exit 240;
 }
 
