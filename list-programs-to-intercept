@@ -45,6 +45,7 @@ get_paths $usrtools | sort -u
 # print full paths of gcc components
 for f in $gcccomponents; do
     for gcc in $gccs; do
-        $gcc -print-prog-name=$f
+        t=`$gcc -print-prog-name=$f`
+        [ -f $t ] && echo "$t"
     done
 done | sort -u
