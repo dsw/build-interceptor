@@ -12,8 +12,8 @@ ifneq (${BUILD_INTERCEPTOR_FORCE_ROOT},1)
   endif
 endif
 
-.PHONY: all interceptor.specs.ALL
-all: intercept.progs lib/build-interceptor/make_interceptor interceptor.specs.ALL
+.PHONY: all
+all: intercept.progs lib/build-interceptor/make_interceptor
 
 # timestamp the $HOME/build-interceptor.log; useful to run between
 # compilations
