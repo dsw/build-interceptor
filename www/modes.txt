@@ -30,7 +30,7 @@ These methods have advantages and disadvantages:
 
 * PTRACE:
     * Pro: always works.
-    * Con: not portable.
+    * Con: not portable, small performance hit.
 
 * GCC_EXEC_PREFIX:
     * Con: susceptible to user modifying environment [1]_
