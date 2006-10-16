@@ -57,7 +57,7 @@ if (!-x $program) {
 $program = canonpath_except_file($program);
 
 my $argv0 = $program;
-if (scalar(@ARGV) > 2 && $ARGV[0] eq '--argv0') {
+if (scalar(@ARGV) >= 2 && $ARGV[0] eq '--argv0') {
     shift @ARGV;
     $argv0 = shift @ARGV;
 }
@@ -93,6 +93,10 @@ if ($interceptor) {
     if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
         print STDERR "build-interceptor-ldpreload: tracing non-intercepted $program\n";
     }
+}
+
+if ($ENV{BUILD_INTERCEPTOR_DEBUG}) {
+    print STDERR "build-interceptor-ldpreload: exec { $executable } @ARGV\n";
 }
 
 exec { $executable } @ARGV;
