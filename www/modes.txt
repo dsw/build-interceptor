@@ -21,7 +21,7 @@ These methods have advantages and disadvantages:
 
 * RENAME:
     * Pro: always works.
-    * Con: requires root or virtual machine; messes with system.
+    * Con: requires root or virtual machine; modifies the system.
 
 * LD_PRELOAD:
     * Pro: almost always works (see Con).
