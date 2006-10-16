@@ -37,6 +37,7 @@ static char build_interceptor_ldpreload_script[1024];
 
 static char env_ld_preload[1024+sizeof("LD_PRELOAD=")] = "LD_PRELOAD=";
 
+static int initialized = 0;
 static int initialized_success = 0;
 
 /* Print an error message and abort execution */
@@ -70,6 +71,14 @@ load_symbol(void **fptr, const char *name)
 static void __attribute__((constructor))
 initialize(void)
 {
+    if (getenv("BUILD_INTERCEPTOR_DEBUG")) {
+        fprintf(stderr, "preload_helper: initialize\n");
+    }
+    if (initialized) {
+        return;
+    }
+
+    initialized = 1;
     /* Find the addresses of the real copies of the symbols we are faking */
     load_symbol((void **)&real_execve, "execve");
 
@@ -90,6 +99,7 @@ initialize(void)
     setenv("LD_PRELOAD", BUILD_INTERCEPTOR_ORIG_LD_PRELOAD, 1);
     strlcpy(env_ld_preload+sizeof("LD_PRELOAD=")-1,
             BUILD_INTERCEPTOR_ORIG_LD_PRELOAD, sizeof(env_ld_preload)-(sizeof("LD_PRELOAD=")));
+    setenv("BUILD_INTERCEPTOR_ORIG_LD_PRELOAD", "", 1);
     initialized_success = 1;
 }
 
@@ -119,6 +129,9 @@ char **fudge_env(char * const *env)
         if (0==strncmp(env[i],"LD_PRELOAD=", sizeof("LD_PRELOAD=")-1)) {
             // fprintf(stderr, "## replaced %s with %s\n", env[i], env_ld_preload);
             new_env[i] = env_ld_preload;
+        } else if (0 == strncmp(env[i], "BUILD_INTERCEPTOR_ORIG_LD_PRELOAD=",
+                                sizeof("BUILD_INTERCEPTOR_ORIG_LD_PRELOAD")-1)) {
+            new_env[i] = "BUILD_INTERCEPTOR_ORIG_LD_PRELOAD=";
         } else {
             new_env[i] = env[i];
         }
@@ -139,7 +152,7 @@ execve(const char *filename, char *const argv[], char *const env[])
     }
 
     if (getenv("BUILD_INTERCEPTOR_DEBUG")) {
-        fprintf(stderr, "build-interceptor preload_helper.so: execve");
+        fprintf(stderr, "build-interceptor preload_helper.so: execve { %s }", filename);
         char * const *p = argv;
         while (*p) {
             fprintf(stderr, " %s", *p++);
@@ -163,7 +176,7 @@ execve(const char *filename, char *const argv[], char *const env[])
     copy_argv(newargv+3, argv, MAX_ENV_STRINGS-4);
 
     if (getenv("BUILD_INTERCEPTOR_DEBUG")) {
-        fprintf(stderr, "build-interceptor preload_helper.so: real_execve");
+        fprintf(stderr, "build-interceptor preload_helper.so: real_execve { %s }", newargv[0]);
         char **p = newargv;
         while (*p) {
             fprintf(stderr, " %s", *p++);
