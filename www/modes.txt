@@ -26,7 +26,8 @@ The five methods have advantages and disadvantages:
 * LD_PRELOAD:
     * Expected success in the face of complex builds: excellent.
     * Con: fails if any program used in build is statically linked, or makes
-      direct libc calls; fails if any program is setuid root.
+      direct libc calls; fails if any program is setuid root.  May also fail
+      when used in conjunction with other LD_PRELOAD programs.
 
 * PTRACE:
     * Expected success in the face of complex builds: perfect.
