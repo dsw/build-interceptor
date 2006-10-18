@@ -19,7 +19,7 @@ export INSTALL_PREFIX
 INSTALL_LIBDIR = $(INSTALL_PREFIX)/lib/build-interceptor
 
 .PHONY: all
-all: rc/intercept.progs all-recurse
+all: rc/intercept.progs all-recurse PRINT-INSTRUCTIONS
 
 all-recurse:
 	cd lib/build-interceptor && $(MAKE) all
@@ -44,3 +44,10 @@ rc/intercept.progs: clean-intercept.progs
 	./list-programs-to-intercept > $@
 	@echo
 	@echo "$@: " && sed 's/^/  /' $@
+
+.PHONY: PRINT-INSTRUCTIONS
+PRINT-INSTRUCTIONS:
+	@echo
+	@echo "**** Done building Build-Interceptor."
+	@echo
+	@cat www/quickstart.txt
