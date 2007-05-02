@@ -43,7 +43,12 @@ my $orig_filename = get_orig_filename();
 
 my ($infile, $input, $tname) = get_input_and_tname();
 # Carp::confess if ref($input);
-my $rel_tmpfile = "." . uniquify_filename($tname);
+
+my $language = get_language_from_programname();
+
+my $extension = get_doti_extension_from_language($language);
+
+my $rel_tmpfile = "." . uniquify_filename($tname) . ".$extension";
 my $tmpfile = "$prefix/$rel_tmpfile";
 # put the contents there
 copy_file($input, $tmpfile);
@@ -77,6 +82,8 @@ $metadata .= <<END                                  # do interpolate!
         .ascii "\\n\\tbuild_interceptor_protocol_version:${BuildInterceptor::Version::BUILD_INTERCEPTOR_PROTOCOL_VERSION}"
         .ascii "\\n\\tpwd:${pwd}"
         .ascii "\\n\\tdollar_zero:$0"
+        .ascii "\\n\\tlanguage:$language"
+        .ascii "\\n\\textension:$extension"
         .ascii "\\n\\traw_args: ("
 END
     ;
@@ -194,4 +201,21 @@ sub copy_file {
     die "$0: tmpfile '$tmpfile' already exists" if -e $tmpfile;
     copy($input, $tmpfile) || die "$0: couldn't copy $input $tmpfile: $!";
     die "$0: couldn't copy to tmpfile '$tmpfile'" unless -e $tmpfile;
+}
+
+sub get_language_from_programname {
+    my $p = $PROGRAM;
+    $p =~ s,_orig$,,;
+    $p =~ s,.*/,,;
+    return 'C' if $p eq 'cc1';
+    return 'C++' if $p eq 'cc1plus';
+    die "$0: unknown source language based on program name $p\n";
+}
+
+sub get_doti_extension_from_language {
+    my ($language) = @_;
+
+    return 'i' if $language eq 'C';
+    return 'ii' if $language eq 'C++';
+    die "$0: unknown language $language\n";
 }
