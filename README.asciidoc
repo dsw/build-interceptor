@@ -19,7 +19,7 @@ http://www.cs.berkeley.edu/~daw/[David Wagner] and was done at UC
 Berkeley.
 
 Here are the current releases. Feel free to just get the current
-Subversion repository version as a guest user.
+github repository version as a guest user.
 
 * *build-interceptor-2005.08.31*:
   md5: ` 02982e53fdd79deb8b0563ca3fefe06e`
