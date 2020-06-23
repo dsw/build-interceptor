@@ -30,7 +30,7 @@ Subversion repository version as a guest user.
 
 A warning on the toxicity of the techniques necessary while operating in
 a Byzantine Compilation Regime
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 *WARNING: During its install process, build-interceptor searches for
 programs on your system that resemble a compiler tool-chain and messes
@@ -369,14 +369,14 @@ the link.
 +
 Before compiling anything else with gcc:
 +
-\1) Make the data read-only.
+(1) Make the data read-only.
 +
 -------------------------------
     $ cd
     $ chmod -R a-w preproc-foo1
 -------------------------------
 +
-\2) Point the preprocessor capture at another file.
+(2) Point the preprocessor capture at another file.
 +
 --------------------------------
     $ mkdir preproc-junk
@@ -478,20 +478,16 @@ very unlucky.
             . . .
             tmpfile:/home/dsw/preproc/./home/dsw/foo/hello.c-1153018736-18133
     )
-
-
+---------------------------------------------------------------------------------
 
 Files
+^^^^^
 
 Build-interceptor needs a place to put the pre-processed output,
 the .i files.  The name of the directory where it puts them is
 hard-coded into the scripts:
 
-
-
-$HOME/preproc: where the scripts put the .i files.
-
-
+ * $HOME/preproc: where the scripts put the .i files.
 
 However it is not recommended to use the tool by simply making a
 preproc directory since after interception is over, you want to move
@@ -499,17 +495,13 @@ that directory so that other compilations on your system do not
 inadvertently put more .i files in there.  Thus in the above
 instructions I use a layer of indirection as follows:
 
+ * $HOME/preproc-foo1: An actual directory for holding the .i files.
 
-
-$HOME/preproc-foo1: An actual directory for holding the .i
-files.
-
-$HOME/preproc: a softlink to preproc-foo1 that should
-be moved as soon as interception is done.
-
-
+ * $HOME/preproc: a softlink to preproc-foo1 that should be moved as
+   soon as interception is done.
 
 Weaknesses / Bugs
+^^^^^^^^^^^^^^^^^
 
 The primary assumption is that there is a binary file gcc-VERSION
 and that all other names such as "gcc" or "cc" are symbolic links (not
@@ -528,21 +520,18 @@ explicitly mention that you should use a script, then it is not
 guaranteed to work.
 
 Acknowledgments
+~~~~~~~~~~~~~~~
 
-This work was supported by professors Alex Aiken and David Wagner and was done at
-UC Berkeley.
+This work was supported by professors Alex Aiken and David Wagner and
+was done at UC Berkeley.
 
 I used code and ideas for build-process interception from two
-different previous projects that dealt with this same problem. 
+different previous projects that dealt with this same problem.
 
-The "The
-Cooperative Bug Isolation Project" by Ben Liblit
+ * The "The Cooperative Bug Isolation Project" by Ben Liblit
 
-The MOPS
-project by Hao Chen where he and Geoff Morrison in particular worked
-on the build-process interception aspect.
-
-
+ * The MOPS project by Hao Chen where he and Geoff Morrison in
+   particular worked on the build-process interception aspect.
 
 The idea of inserting metadata into an unused section in ELF .o files
 was borrowed from Ben and Hao.  I extended it back to the assembly
@@ -555,8 +544,5 @@ responsibility for any remaining mistakes].
 
 Thanks to Andy Begel for his in-depth explanation of dynamic linking
 under various circumstances and operating systems.
-
- 
-
 
 ---------------------------------------------------------------------------------
