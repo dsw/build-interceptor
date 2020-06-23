@@ -21,12 +21,12 @@ Berkeley.
 Here are the current releases. Feel free to just get the current
 Subversion repository version as a guest user.
 
-*
-http://build-interceptor.tigris.org/files/documents/2710/25273/build-interceptor-2005.08.31.tar.gz[build-interceptor-2005.08.31.tar.gz]
+* *build-interceptor-2005.08.31*:
   md5: ` 02982e53fdd79deb8b0563ca3fefe06e`
-*
-http://build-interceptor.tigris.org/files/documents/2710/22718/build-interceptor-2004.11.19.tar.gz[build-interceptor-2004.11.19.tar.gz]
+  This release is retired.
+* *build-interceptor-2004.11.19*
   md5: ` a4299ddab5ad0e3c7aecc53a5e750101`
+  This release is retired.
 
 A warning on the toxicity of the techniques necessary while operating in
 a Byzantine Compilation Regime
@@ -155,7 +155,7 @@ was often failing but this was going undetected.
 
 Another reason to not separate them is that if your analysis does fail,
 you often want to re-run it multiple times as you gradually minimize the
-input, such as while using the http://delta.tigris.org[Delta interesting
+input, such as while using the https://github.com/dsw/delta[Delta interesting
 file minimizer tool]. This is only possible if you have already
 materialized the .i file somewhere separately.
 

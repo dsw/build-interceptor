@@ -12,7 +12,8 @@ default_target:; @echo "You must give an explicit target to make -f Dist.mk"
 # **** make a distribution
 .PHONY: dist
 dist: distclean
-	svn export http://build-interceptor.tigris.org/svn/build-interceptor/trunk $(DIR)
+	@echo "fix this target"; exit 1
+#	svn export http://build-interceptor.tigris.org/svn/build-interceptor/trunk $(DIR)
 	mv $(DIR) $(DIR)-$(VERSION)
 	tar cvzf $(DIR)-$(VERSION).tar.gz $(DIR)-$(VERSION)
 	chmod 444 $(DIR)-$(VERSION).tar.gz
